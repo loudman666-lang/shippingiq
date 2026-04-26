@@ -6,6 +6,10 @@ export default function Dashboard() {
   const { profile, merchant, signOut, isAdmin } = useAuth()
   const navigate = useNavigate()
 
+  console.log('PROFILE:', JSON.stringify(profile))
+  console.log('IS ADMIN:', isAdmin)
+  console.log('MERCHANT:', JSON.stringify(merchant))
+
   async function handleSignOut() {
     await signOut()
     navigate('/signin')
@@ -57,7 +61,7 @@ export default function Dashboard() {
               {profile?.full_name?.charAt(0) || '?'}
             </div>
             <div className="user-info">
-              <div className="user-name">{profile?.full_name}</div>
+              <div className="user-name">{profile?.full_name || 'Loading...'}</div>
               <div className="user-role">{isAdmin ? 'Admin' : 'User'}</div>
             </div>
           </div>
