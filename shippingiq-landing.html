@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShippingIQ — Accurate freight at checkout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #18181A;
+    --ink-mid: #46464A;
+    --ink-muted: #7A7A80;
+    --accent: #E8521A;
+    --accent-hover: #D04515;
+    --accent-light: #FEF0EA;
+    --surface: #ffffff;
+    --surface-2: #F8F7F4;
+    --surface-3: #F0EDE8;
+    --border: rgba(24,24,26,0.09);
+    --border-mid: rgba(24,24,26,0.15);
+    --radius: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+    background: var(--surface);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-logo {
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .nav-logo-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 2.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 14px;
+    color: var(--ink-mid);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--ink); }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-ghost {
+    font-size: 14px;
+    color: var(--ink-mid);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .btn-ghost:hover { background: var(--surface-2); color: var(--ink); }
+
+  .btn-primary {
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    background: var(--accent);
+    text-decoration: none;
+    padding: 9px 20px;
+    border-radius: var(--radius);
+    transition: background 0.2s, transform 0.15s;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-block;
+  }
+
+  .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* HERO */
+  .hero {
+    padding: 96px 40px 80px;
+    max-width: 1160px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 5px 13px;
+    border-radius: 100px;
+    margin-bottom: 32px;
+  }
+
+  .hero-badge-pulse {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(46px, 5.5vw, 70px);
+    line-height: 1.07;
+    letter-spacing: -1.5px;
+    color: var(--ink);
+    margin-bottom: 26px;
+    font-weight: 400;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero-sub {
+    font-size: 18px;
+    color: var(--ink-mid);
+    line-height: 1.65;
+    margin-bottom: 40px;
+    font-weight: 300;
+    max-width: 440px;
+  }
+
+  .hero-cta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 52px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary-lg {
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+    background: var(--accent);
+    text-decoration: none;
+    padding: 13px 26px;
+    border-radius: var(--radius);
+    transition: background 0.2s, transform 0.15s;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-block;
+  }
+
+  .btn-primary-lg:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+  .cta-note {
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  .hero-carriers {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .carriers-label {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--ink-muted);
+    white-space: nowrap;
+  }
+
+  .carrier-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .carrier-pill {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-mid);
+    background: var(--surface-2);
+    border: 1px solid var(--border-mid);
+    padding: 4px 11px;
+    border-radius: 100px;
+  }
+
+  /* HERO MOCKUP */
+  .hero-right { position: relative; }
+
+  .mockup-wrap {
+    position: relative;
+  }
+
+  .mockup-card {
+    background: var(--surface);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: 0 28px 80px rgba(24,24,26,0.11), 0 4px 14px rgba(24,24,26,0.05);
+  }
+
+  .mockup-accent-bar {
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent) 0%, #F5A260 100%);
+  }
+
+  .mockup-topbar {
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    padding: 13px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .mockup-dots { display: flex; gap: 5px; }
+
+  .mockup-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .dot-r { background: #FF5F57; }
+  .dot-y { background: #FFBD2E; }
+  .dot-g { background: #28C840; }
+
+  .mockup-url-bar {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .mockup-url {
+    font-size: 11px;
+    color: var(--ink-muted);
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    padding: 3px 14px;
+    border-radius: 6px;
+  }
+
+  .mockup-body { padding: 22px; }
+
+  .mock-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    color: var(--ink-muted);
+    margin-bottom: 10px;
+  }
+
+  .mock-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .mock-line:last-of-type { border-bottom: none; }
+  .mock-line-label { color: var(--ink-mid); }
+  .mock-line-val { font-weight: 500; }
+
+  .ship-options {
+    margin: 14px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .ship-opt {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 13px;
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  .ship-opt.active {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .ship-opt-left { display: flex; align-items: center; gap: 10px; }
+
+  .ship-radio {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid var(--border-mid);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ship-opt.active .ship-radio { border-color: var(--accent); }
+
+  .ship-radio-inner {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: none;
+  }
+
+  .ship-opt.active .ship-radio-inner { display: block; }
+
+  .ship-name { font-size: 13px; font-weight: 500; }
+  .ship-eta { font-size: 11px; color: var(--ink-muted); }
+  .ship-price { font-size: 14px; font-weight: 500; }
+  .ship-opt.active .ship-price { color: var(--accent); }
+
+  .mock-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 0 6px;
+    border-top: 1px solid var(--border-mid);
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .mock-ai-badge {
+    margin-top: 14px;
+    background: var(--accent-light);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .mockup-floating-tag {
+    position: absolute;
+    top: -14px;
+    right: 20px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 13px;
+    border-radius: 100px;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
+  }
+
+  /* LOGOS */
+  .logos-strip {
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 30px 40px;
+    text-align: center;
+  }
+
+  .logos-label {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--ink-muted);
+    margin-bottom: 18px;
+  }
+
+  .logos-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 48px;
+    flex-wrap: wrap;
+  }
+
+  .logo-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    letter-spacing: -0.2px;
+  }
+
+  .logo-sep { color: var(--border-mid); font-size: 20px; }
+
+  /* SECTIONS */
+  .section {
+    padding: 100px 40px;
+    max-width: 1160px;
+    margin: 0 auto;
+  }
+
+  .sec-label {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+
+  h2 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(34px, 4vw, 50px);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+    color: var(--ink);
+    margin-bottom: 18px;
+    font-weight: 400;
+  }
+
+  .sec-sub {
+    font-size: 17px;
+    color: var(--ink-mid);
+    font-weight: 300;
+    max-width: 520px;
+    line-height: 1.65;
+    margin-bottom: 60px;
+  }
+
+  /* HOW IT WORKS */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: var(--border-mid);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .step {
+    background: var(--surface);
+    padding: 40px 34px 36px;
+  }
+
+  .step-num {
+    font-family: 'Instrument Serif', serif;
+    font-size: 52px;
+    color: var(--surface-3);
+    line-height: 1;
+    margin-bottom: 22px;
+    display: block;
+  }
+
+  .step-icon {
+    width: 42px;
+    height: 42px;
+    background: var(--accent-light);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+
+  .step-title {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 10px;
+    letter-spacing: -0.2px;
+  }
+
+  .step-body {
+    font-size: 14px;
+    color: var(--ink-mid);
+    line-height: 1.65;
+  }
+
+  .step-time {
+    display: inline-block;
+    margin-top: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 3px 10px;
+    border-radius: 100px;
+  }
+
+  /* FEATURES */
+  .features-bg {
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 44px 60px;
+  }
+
+  .feat-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accent-light);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+
+  .feat-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 7px;
+    letter-spacing: -0.15px;
+  }
+
+  .feat-body {
+    font-size: 14px;
+    color: var(--ink-mid);
+    line-height: 1.65;
+  }
+
+  /* PRICING */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+
+  .pricing-card {
+    background: var(--surface);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-lg);
+    padding: 30px 24px;
+    position: relative;
+    transition: box-shadow 0.2s;
+  }
+
+  .pricing-card:hover { box-shadow: 0 8px 32px rgba(24,24,26,0.07); }
+
+  .pricing-card.popular {
+    border-color: var(--accent);
+    border-width: 2px;
+  }
+
+  .popular-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 13px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+
+  .plan-name {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--ink-muted);
+    margin-bottom: 10px;
+  }
+
+  .plan-price {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+    margin-bottom: 6px;
+  }
+
+  .price-dollar {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--ink-mid);
+    align-self: flex-start;
+    margin-top: 8px;
+  }
+
+  .price-amount {
+    font-family: 'Instrument Serif', serif;
+    font-size: 46px;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+
+  .price-period {
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  .plan-desc {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-bottom: 20px;
+    line-height: 1.5;
+    min-height: 38px;
+  }
+
+  .plan-divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 20px;
+  }
+
+  .plan-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-bottom: 24px;
+  }
+
+  .plan-feat {
+    font-size: 13px;
+    color: var(--ink-mid);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+  }
+
+  .check-icon {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--accent);
+  }
+
+  .btn-plan {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    font-family: inherit;
+  }
+
+  .btn-outline {
+    border: 1px solid var(--border-mid);
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .btn-outline:hover { background: var(--surface-2); }
+
+  .btn-filled {
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    color: #fff;
+  }
+
+  .btn-filled:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+  .pricing-footnote {
+    text-align: center;
+    margin-top: 26px;
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  /* WAITLIST */
+  .waitlist-bg {
+    background: var(--ink);
+    padding: 100px 40px;
+  }
+
+  .waitlist-inner {
+    max-width: 580px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .waitlist-label {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+
+  .waitlist-headline {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(34px, 4vw, 50px);
+    color: #fff;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+    margin-bottom: 18px;
+    font-weight: 400;
+  }
+
+  .waitlist-headline em { font-style: italic; color: var(--accent); }
+
+  .waitlist-sub {
+    font-size: 16px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 300;
+    margin-bottom: 40px;
+    line-height: 1.65;
+  }
+
+  .waitlist-form {
+    display: flex;
+    gap: 10px;
+    max-width: 460px;
+    margin: 0 auto 14px;
+  }
+
+  .waitlist-input {
+    flex: 1;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: var(--radius);
+    font-size: 14px;
+    color: #fff;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .waitlist-input::placeholder { color: rgba(255,255,255,0.32); }
+  .waitlist-input:focus { border-color: var(--accent); }
+
+  .waitlist-note {
+    font-size: 13px;
+    color: rgba(255,255,255,0.3);
+  }
+
+  /* FOOTER */
+  footer {
+    background: var(--ink);
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding: 28px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-logo {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.4);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .footer-logo-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+
+  .footer-copy { font-size: 13px; color: rgba(255,255,255,0.28); }
+
+  .footer-links { display: flex; gap: 24px; }
+
+  .footer-links a {
+    font-size: 13px;
+    color: rgba(255,255,255,0.32);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: rgba(255,255,255,0.6); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-badge { animation: fadeUp 0.5s ease both; }
+  h1 { animation: fadeUp 0.5s 0.08s ease both; }
+  .hero-sub { animation: fadeUp 0.5s 0.16s ease both; }
+  .hero-cta { animation: fadeUp 0.5s 0.24s ease both; }
+  .hero-carriers { animation: fadeUp 0.5s 0.32s ease both; }
+  .hero-right { animation: fadeUp 0.6s 0.18s ease both; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .hero { grid-template-columns: 1fr; padding: 60px 20px; gap: 40px; }
+    .hero-right { display: none; }
+    .section { padding: 72px 20px; }
+    .logos-strip { padding: 24px 20px; }
+    .logos-row { gap: 20px; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr 1fr; gap: 32px 36px; }
+    .pricing-grid { grid-template-columns: 1fr 1fr; }
+    .waitlist-bg { padding: 72px 20px; }
+    .waitlist-form { flex-direction: column; }
+    footer { flex-direction: column; gap: 14px; padding: 24px 20px; text-align: center; }
+  }
+
+  @media (max-width: 560px) {
+    .pricing-grid { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <span class="nav-logo-dot"></span>
+    ShippingIQ
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="#" class="btn-ghost">Sign in</a>
+    <a href="#waitlist" class="btn-primary">Get early access</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section>
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-badge">
+        <span class="hero-badge-pulse"></span>
+        Now in early access
+      </div>
+
+      <h1>Accurate freight<br>at checkout.<br><em>Finally.</em></h1>
+
+      <p class="hero-sub">Upload your carrier rate card. ShippingIQ reads it, maps your zones, and quotes the right freight cost to every customer — automatically.</p>
+
+      <div class="hero-cta">
+        <a href="#waitlist" class="btn-primary-lg">Join the waitlist</a>
+        <span class="cta-note">Free to start · No credit card required</span>
+      </div>
+
+      <div class="hero-carriers">
+        <span class="carriers-label">Works with</span>
+        <div class="carrier-pills">
+          <span class="carrier-pill">Allied Express</span>
+          <span class="carrier-pill">Hunter Express</span>
+          <span class="carrier-pill">StarTrack</span>
+          <span class="carrier-pill">Mainfreight</span>
+          <span class="carrier-pill">+ any carrier</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="mockup-wrap">
+        <div class="mockup-floating-tag">Live freight quote</div>
+        <div class="mockup-card">
+          <div class="mockup-accent-bar"></div>
+          <div class="mockup-topbar">
+            <div class="mockup-dots">
+              <div class="mockup-dot dot-r"></div>
+              <div class="mockup-dot dot-y"></div>
+              <div class="mockup-dot dot-g"></div>
+            </div>
+            <div class="mockup-url-bar">
+              <span class="mockup-url">yourstore.com.au/checkout</span>
+            </div>
+          </div>
+          <div class="mockup-body">
+            <div style="margin-bottom:18px;">
+              <div class="mock-label">Order summary</div>
+              <div class="mock-line">
+                <span class="mock-line-label">2× Dining Chair — Oak</span>
+                <span class="mock-line-val">$798.00</span>
+              </div>
+              <div class="mock-line">
+                <span class="mock-line-label">Delivery to 6000 Perth WA</span>
+                <span class="mock-line-val" style="font-size:11px;color:var(--ink-muted);">calculating...</span>
+              </div>
+            </div>
+
+            <div class="mock-label">Choose delivery</div>
+            <div class="ship-options">
+              <div class="ship-opt active">
+                <div class="ship-opt-left">
+                  <div class="ship-radio"><div class="ship-radio-inner"></div></div>
+                  <div>
+                    <div class="ship-name">Allied Express — Standard</div>
+                    <div class="ship-eta">5–7 business days</div>
+                  </div>
+                </div>
+                <div class="ship-price">$64.50</div>
+              </div>
+              <div class="ship-opt">
+                <div class="ship-opt-left">
+                  <div class="ship-radio"></div>
+                  <div>
+                    <div class="ship-name">StarTrack — Express</div>
+                    <div class="ship-eta">2–3 business days</div>
+                  </div>
+                </div>
+                <div class="ship-price">$112.00</div>
+              </div>
+            </div>
+
+            <div class="mock-total">
+              <span>Order total</span>
+              <span>$862.50</span>
+            </div>
+
+            <div class="mock-ai-badge">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6.5" stroke="#E8521A" stroke-width="1.5"/>
+                <path d="M5.5 8.5L7 10L10.5 6" stroke="#E8521A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Calculated from your Allied rate card · Zone 8
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGOS -->
+<div class="logos-strip">
+  <div class="logos-label">Built for Australian ecommerce merchants on</div>
+  <div class="logos-row">
+    <span class="logo-name">WooCommerce</span>
+    <span class="logo-sep">·</span>
+    <span class="logo-name">Shopify</span>
+    <span class="logo-sep">·</span>
+    <span class="logo-name">Magento</span>
+    <span class="logo-sep">·</span>
+    <span class="logo-name">BigCommerce</span>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="section">
+    <div class="sec-label">How it works</div>
+    <h2>Live in under an hour</h2>
+    <p class="sec-sub">No developer. No carrier API. No complex setup. Upload your files, set your rules, go live.</p>
+
+    <div class="steps-grid">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8521A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="step-title">Upload your rate card</div>
+        <div class="step-body">Drop in the PDF or Excel from your carrier. ShippingIQ's AI reads the zones, base charges, per-kg rates, and surcharges automatically. No manual data entry.</div>
+        <span class="step-time">About 10 minutes</span>
+      </div>
+
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8521A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <div class="step-title">Confirm and set your rules</div>
+        <div class="step-body">Review the parsed data, select which zones you ship to, set free shipping thresholds, surcharge handling, and carrier routing rules.</div>
+        <span class="step-time">About 20 minutes</span>
+      </div>
+
+      <div class="step">
+        <span class="step-num">03</span>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8521A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div class="step-title">Connect and go live</div>
+        <div class="step-body">Install the WooCommerce plugin, paste your API key, and test a quote. Every customer gets the right freight rate automatically from checkout.</div>
+        <span class="step-time">About 10 minutes</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<div class="features-bg" id="features">
+  <div class="section">
+    <div class="sec-label">What's included</div>
+    <h2>Everything you need.<br>Nothing you don't.</h2>
+    <p class="sec-sub">Built by someone who shipped bulky goods nationally for 12 years. Every feature exists because it solves a real problem.</p>
+
+    <div class="features-grid">
+
+      <div>
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8521A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="feat-title">AI rate card parsing</div>
+        <div class="feat-body">Upload a PDF or Excel from any carrier. AI extracts zones, rates, and surcharges — even from messy legacy formats.</div>
+      </div>
+
+      <div>
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8521A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+          </svg>
+        </div>
+        <div class="feat-title">Your rates, your carriers</div>
+        <div class="feat-body">Use the pricing you negotiated directly with Allied, Hunter, StarTrack or any carrier. No platform markup, ever.</div>
+      </div>
+
+      <div>
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8521A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/>
+            <path d="M8 2v16"/>
+            <path d="M16 6v16"/>
+          </svg>
+        </div>
+        <div class="feat-title">Zone management</div>
+        <div class="feat-body">Postcode-to-zone mapping from your carrier's zone file. Blacklist zones you won't ship to. Set individual postcode exceptions.</div>
+      </div>
+
+      <div>
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8521A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <div class="feat-title">Free shipping rules</div>
+        <div class="feat-body">Threshold-based free shipping, zone-specific offers, time-bounded promotions that revert automatically. No manual cleanup.</div>
+      </div>
+
+      <div>
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8521A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="3" width="15" height="13" rx="1"/>
+            <path d="M16 8h4l3 3v5h-7V8z"/>
+            <circle cx="5.5" cy="18.5" r="2.5"/>
+            <circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+        </div>
+        <div class="feat-title">Surcharge control</div>
+        <div class="feat-body">Tailgate, residential, hand unload, dangerous goods, overlength. Pass through at cost, add margin, or absorb. Per order or per product.</div>
+      </div>
+
+      <div>
+        <div class="feat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8521A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="18" r="3"/>
+            <circle cx="6" cy="6" r="3"/>
+            <path d="M13 6h3a2 2 0 0 1 2 2v7"/>
+            <line x1="6" y1="9" x2="6" y2="21"/>
+          </svg>
+        </div>
+        <div class="feat-title">Multi-carrier routing</div>
+        <div class="feat-body">Route orders to different carriers based on item size, weight, or zone. The customer always sees the right rate for the right carrier.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="section">
+    <div class="sec-label">Pricing</div>
+    <h2>Transparent pricing.<br>No surprises.</h2>
+    <p class="sec-sub">Start free. Upgrade when you're ready. 14-day free trial on all paid plans — no credit card required to start.</p>
+
+    <div class="pricing-grid">
+
+      <div class="pricing-card">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">
+          <span class="price-dollar">$</span>
+          <span class="price-amount">0</span>
+        </div>
+        <div class="plan-desc">Enough to prove it works. Not enough to run a real business on.</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>1 carrier</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>10 orders per month</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Basic rate calculation</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Community support</li>
+        </ul>
+        <a href="#waitlist" class="btn-plan btn-outline">Get started free</a>
+      </div>
+
+      <div class="pricing-card">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">
+          <span class="price-dollar">$</span>
+          <span class="price-amount">39</span>
+          <span class="price-period">/mo</span>
+        </div>
+        <div class="plan-desc">For growing stores ready to get freight right.</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>2 carriers</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Unlimited orders</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Core rules engine</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Free shipping threshold</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Zone blacklisting</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Basic surcharges</li>
+        </ul>
+        <a href="#waitlist" class="btn-plan btn-outline">Start free trial</a>
+      </div>
+
+      <div class="pricing-card popular">
+        <div class="popular-badge">Most popular</div>
+        <div class="plan-name">Growth</div>
+        <div class="plan-price">
+          <span class="price-dollar">$</span>
+          <span class="price-amount">79</span>
+          <span class="price-period">/mo</span>
+        </div>
+        <div class="plan-desc">Full rules engine for serious ecommerce operations.</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Unlimited carriers</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Full rules engine</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>All surcharge options</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Multi-carrier routing</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>B2B / B2C rate rules</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Promotional overrides</li>
+        </ul>
+        <a href="#waitlist" class="btn-plan btn-filled">Start free trial</a>
+      </div>
+
+      <div class="pricing-card">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">
+          <span class="price-dollar">$</span>
+          <span class="price-amount">149</span>
+          <span class="price-period">/mo</span>
+        </div>
+        <div class="plan-desc">Priority support and early access for high-volume operations.</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Everything in Growth</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Priority support</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Advanced analytics</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Early Phase 2 access</li>
+          <li class="plan-feat"><svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Custom carrier support</li>
+        </ul>
+        <a href="#waitlist" class="btn-plan btn-outline">Start free trial</a>
+      </div>
+
+    </div>
+
+    <p class="pricing-footnote">All prices in AUD · 14-day free trial on all paid plans · Cancel anytime</p>
+  </div>
+</section>
+
+<!-- WAITLIST -->
+<div class="waitlist-bg" id="waitlist">
+  <div class="waitlist-inner">
+    <div class="waitlist-label">Early access</div>
+    <h2 class="waitlist-headline">Stop guessing.<br>Start <em>knowing.</em></h2>
+    <p class="waitlist-sub">Join the waitlist and be first to get access. WooCommerce merchants are at the front of the queue.</p>
+    <div class="waitlist-form">
+      <input type="email" class="waitlist-input" placeholder="your@store.com.au">
+      <a href="#" class="btn-primary-lg">Get early access</a>
+    </div>
+    <p class="waitlist-note">No spam. No sales calls. Just a heads up when we're ready.</p>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <a href="#" class="footer-logo">
+    <span class="footer-logo-dot"></span>
+    ShippingIQ
+  </a>
+  <p class="footer-copy">© 2025 ShippingIQ · Part of IQ Suite · Melbourne, Australia</p>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="mailto:hello@shippingiq.com.au">Contact</a>
+  </div>
+</footer>
+
+</body>
+</html>
