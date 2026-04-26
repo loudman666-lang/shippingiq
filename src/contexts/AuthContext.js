@@ -10,14 +10,12 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
       else setLoading(false)
     })
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
@@ -31,7 +29,7 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  async function fetchProfile(userId) {
+  async function fetchProfile(userId, attempt = 1) {
     try {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -39,7 +37,13 @@ export function AuthProvider({ children }) {
         .eq('id', userId)
         .single()
 
-      if (profileError) throw profileError
+      if (profileError) {
+        if (attempt < 5) {
+          await new Promise(resolve => setTimeout(resolve, attempt * 500))
+          return fetchProfile(userId, attempt + 1)
+        }
+        throw profileError
+      }
 
       setProfile(profileData)
       setMerchant(profileData.merchants)
@@ -54,12 +58,7 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: {
-          full_name: fullName,
-          store_name: storeName
-        }
-      }
+      options: { data: { full_name: fullName, store_name: storeName } }
     })
     if (error) throw error
     return data
@@ -93,18 +92,8 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user,
-      profile,
-      merchant,
-      loading,
-      isAdmin,
-      planTier,
-      signUp,
-      signIn,
-      signOut,
-      resetPassword,
-      updatePassword,
-      fetchProfile
+      user, profile, merchant, loading, isAdmin, planTier,
+      signUp, signIn, signOut, resetPassword, updatePassword, fetchProfile
     }}>
       {children}
     </AuthContext.Provider>
