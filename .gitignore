@@ -13,3 +13,4 @@ build/
 
 # Editor
 .vscode/
+.env.local
