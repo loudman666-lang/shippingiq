@@ -42,43 +42,18 @@ export default function Carriers() {
       const rateCardText = await form.rateCard.text()
       const zoneFileText = await form.zoneFile.text()
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: `You are parsing Australian freight carrier files for a shipping rate engine.
-
-Carrier name: ${form.name}
-
-Rate Card CSV:
-${rateCardText.slice(0, 3000)}
-
-Zone File CSV:
-${zoneFileText.slice(0, 2000)}
-
-Respond ONLY with a JSON object, no markdown, no explanation:
-{
-  "carrier": "${form.name}",
-  "zones": ["list of zone names found"],
-  "weightBreaks": ["list of weight breaks found e.g. 0-1kg, 1-2kg"],
-  "serviceTypes": ["list of service types e.g. Express, Standard"],
-  "rateCount": number of rates detected,
-  "summary": "one sentence describing what was found"
-}`
-          }]
-        })
+      const { data, error } = await supabase.functions.invoke('parse-carrier', {
+        body: {
+          carrierName: form.name,
+          rateCardText,
+          zoneFileText
+        }
       })
 
-      const data = await response.json()
-      const text = data.content?.[0]?.text || ''
-      const clean = text.replace(/```json|```/g, '').trim()
-      const parsed = JSON.parse(clean)
-      setParseResult(parsed)
+      if (error) throw error
+      setParseResult(data)
     } catch (err) {
+      console.error(err)
       setError('Could not parse files. Please check they are valid CSV files.')
     } finally {
       setParsing(false)
