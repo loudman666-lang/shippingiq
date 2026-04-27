@@ -1,4 +1,4 @@
-// v6
+// v7
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
 
@@ -10,18 +10,14 @@ const corsHeaders = {
 function base64ToText(base64) {
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i)
-  }
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
   return new TextDecoder().decode(bytes)
 }
 
 function base64ToUint8Array(base64) {
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i)
-  }
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
   return bytes
 }
 
@@ -66,13 +62,18 @@ serve(async (req) => {
 
 Carrier: ${carrierName}
 
-You will receive up to three files: a rate card, a zone file, and optionally an additional charges schedule.
-Parse whatever you receive regardless of format or structure.
+Parse whatever files you receive regardless of format or structure.
 
 PRICING MODELS - detect which applies:
 - Model A: Weight break table. Flat rate per zone per weight range.
 - Model B: Basic charge + per kg rate, with minimum charge. Formula: MAX(basicCharge + weight x perKgRate, minimumCharge).
 - Model C: Depot-to-depot. Origin depot + destination depot determines rate.
+
+CRITICAL FOR MODEL B WITH MULTIPLE ORIGIN DEPOTS:
+If the rate card has multiple origin depots (e.g. columns for Sydney, Melbourne, Brisbane), you MUST create a separate modelBRates entry for EVERY combination of originDepot + zone. Every single row in modelBRates MUST include the "originDepot" field. Example:
+{ "originDepot": "Sydney", "service": "Road Express", "zone": "Melbourne Metro", "zoneCode": "MEL1", "basicCharge": 8.09, "perKgRate": 0.25, "minimumCharge": 11.04 }
+{ "originDepot": "Melbourne", "service": "Road Express", "zone": "Sydney Metro", "zoneCode": "SYD1", "basicCharge": 8.09, "perKgRate": 0.25, "minimumCharge": 11.04 }
+Never omit originDepot from any modelBRates row.
 
 Extract all zones, rates, postcode mappings, and surcharges.
 
@@ -81,14 +82,14 @@ Respond ONLY with a JSON object. No markdown, no backticks.
 {
   "carrier": "${carrierName}",
   "pricingModel": "A or B or C",
-  "zones": ["list of zone names"],
-  "weightBreaks": ["list of weight breaks"],
+  "zones": ["list of destination zone names"],
+  "weightBreaks": ["list of weight breaks if applicable"],
   "serviceTypes": ["list of service types"],
-  "originDepots": ["list of origin depots if applicable"],
+  "originDepots": ["list of origin depot names e.g. Sydney, Melbourne, Brisbane"],
   "rateCount": 0,
   "summary": "one sentence summary",
   "rates": [{ "service": "Road Express", "weight": "0-1kg", "ZoneName": 8.50 }],
-  "modelBRates": [{ "service": "Road Express", "zone": "Sydney Metro", "zoneCode": "SYD1", "basicCharge": 7.27, "perKgRate": 0.16, "minimumCharge": 9.97 }],
+  "modelBRates": [{ "originDepot": "Melbourne", "service": "Road Express", "zone": "Sydney Metro", "zoneCode": "SYD1", "basicCharge": 8.09, "perKgRate": 0.25, "minimumCharge": 11.04 }],
   "modelCRates": [{ "originDepot": "Melbourne", "destinationDepot": "Sydney", "basicCharge": 15.00, "perKgRate": 0.45, "minimumCharge": 22.00 }],
   "postcodeMap": [{ "postcode": "2000", "zone": "Sydney Metro", "zoneCode": "SYD1", "suburb": "Sydney", "state": "NSW" }],
   "surcharges": [{ "name": "Tailgate", "amount": "$75.00", "notes": "flat fee per delivery" }],
@@ -98,10 +99,7 @@ Respond ONLY with a JSON object. No markdown, no backticks.
 
     if (rateCard && rateCard.data) {
       if (rateCard.type === 'pdf') {
-        userContent.push({
-          type: 'document',
-          source: { type: 'base64', media_type: 'application/pdf', data: rateCard.data }
-        })
+        userContent.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: rateCard.data } })
         userContent.push({ type: 'text', text: 'Above is the rate card PDF: ' + rateCard.name })
       } else {
         const text = fileToText(rateCard)
@@ -111,10 +109,7 @@ Respond ONLY with a JSON object. No markdown, no backticks.
 
     if (zoneFile && zoneFile.data) {
       if (zoneFile.type === 'pdf') {
-        userContent.push({
-          type: 'document',
-          source: { type: 'base64', media_type: 'application/pdf', data: zoneFile.data }
-        })
+        userContent.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: zoneFile.data } })
         userContent.push({ type: 'text', text: 'Above is the zone file PDF: ' + zoneFile.name })
       } else {
         const text = fileToText(zoneFile)
@@ -124,10 +119,7 @@ Respond ONLY with a JSON object. No markdown, no backticks.
 
     if (surchargeDoc && surchargeDoc.data) {
       if (surchargeDoc.type === 'pdf') {
-        userContent.push({
-          type: 'document',
-          source: { type: 'base64', media_type: 'application/pdf', data: surchargeDoc.data }
-        })
+        userContent.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: surchargeDoc.data } })
         userContent.push({ type: 'text', text: 'Above is the surcharge schedule PDF: ' + surchargeDoc.name })
       } else {
         const text = fileToText(surchargeDoc)
