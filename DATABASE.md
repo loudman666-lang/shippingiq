@@ -41,3 +41,18 @@ Stores the merchant/store data. Created automatically via trigger when a user si
 - Disabled RLS on both tables to resolve 403 errors during development
 - Added RLS policies for profiles (select, insert, update, delete)
 - TODO: Re-enable and properly configure RLS before going to production
+
+### carriers
+Stores carrier rate card data parsed by AI.
+- id (uuid)
+- merchant_id (uuid) — foreign key to merchants
+- name (text) — carrier name entered by merchant
+- status (text) — 'active' or 'inactive'
+- parsed_data (jsonb) — AI parsed zones, rates, weight breaks, service types
+- created_at, updated_at
+
+## RLS Status
+- carriers: DISABLED
+- profiles: DISABLED
+- merchants: DISABLED
+Note: All RLS disabled for development. Must be properly configured before production launch.
