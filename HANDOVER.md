@@ -67,6 +67,16 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
   - Save Quote to Supabase quotes table
 - Settings page: GST toggle (ex GST B2B, inc GST B2C)
 - Rules page: free shipping threshold, freight margin, carrier priority
+- Carrier eligibility limits UI — weight/dim limit fields per carrier on Carriers page, saved to carriers.eligibility_rules
+- WooCommerce plugin at woocommerce-plugin/shippingiq/:
+  - Standard WC shipping method, registers as "ShippingIQ" in WC shipping zones
+  - Calls calculate-freight edge function with postcode + items + merchant_id
+  - Auth via apikey + Authorization: Bearer headers (Supabase anon key) — required for edge function calls without user JWT
+  - Fetches carriers.eligibility_rules from Supabase REST API, excludes carriers where any item exceeds limits
+  - Product tag rules: shippingiq-only-[carrier-slug] and shippingiq-exclude-[carrier-slug]
+  - Display modes: all eligible carriers or cheapest only
+  - error_log() debug logging throughout calculate_shipping — tail wp-content/debug.log to trace
+  - PHP 8.2 compatible — explicit property declarations, no return type on WC method overrides
 
 ## Current file structure
 src/pages/Dashboard.js + Dashboard.css
@@ -81,6 +91,9 @@ src/lib/supabase.js
 src/App.js
 supabase/functions/rapid-api/index.ts
 supabase/functions/calculate-freight/index.ts
+woocommerce-plugin/shippingiq/shippingiq.php
+woocommerce-plugin/shippingiq/includes/class-wc-shipping-shippingiq.php
+woocommerce-plugin/shippingiq/readme.txt
 
 ## Database (Supabase)
 Tables: profiles, merchants, carriers, quotes
@@ -133,7 +146,7 @@ Model C: Depot-to-depot — Mainfreight style
 - Auto surcharge triggers use carrier's own extracted thresholds
 - Free shipping can be exempted per product/item
 
-## WooCommerce Plugin — design decisions (TO BUILD)
+## WooCommerce Plugin — design decisions (BUILT)
 ### Carrier eligibility — how carriers are filtered at checkout
 1. Weight/dimension limits per carrier (set in ShippingIQ, stored in carriers.eligibility_rules)
    - maxWeightKg, maxLengthCm, maxWidthCm, maxHeightCm
@@ -160,8 +173,8 @@ Model C: Depot-to-depot — Mainfreight style
 - Rare edge case given large carriers handle all sizes
 
 ## What to build next
-1. Carrier eligibility rules UI — add weight/dim limit fields to Carriers page in ShippingIQ
-2. WooCommerce plugin — PHP plugin calling calculate-freight, filtering by eligibility rules and product tags
+1. Test WooCommerce plugin end-to-end with real carrier data — verify rates appear at checkout, eligibility filtering works, tag overrides work
+2. Production deployment prep — remove error_log() debug calls from plugin, enable WooCommerce rate caching, review Supabase RLS before go-live
 
 ## Logged for future build
 - Address autocomplete to detect residential vs commercial (triggers residential surcharge)
