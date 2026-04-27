@@ -1,0 +1,346 @@
+<?php
+defined( 'ABSPATH' ) || exit;
+
+class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
+
+	public function __construct( $instance_id = 0 ) {
+		$this->id                 = 'shippingiq';
+		$this->instance_id        = absint( $instance_id );
+		$this->method_title       = __( 'ShippingIQ', 'shippingiq' );
+		$this->method_description = __( 'Real-time freight rates calculated live at checkout based on your carrier rate cards and eligibility rules.', 'shippingiq' );
+		$this->supports           = array(
+			'shipping-zones',
+			'instance-settings',
+		);
+
+		$this->init();
+	}
+
+	public function init(): void {
+		$this->init_form_fields();
+		$this->init_settings();
+
+		$this->title             = $this->get_option( 'title', 'Freight' );
+		$this->api_url           = $this->get_option( 'api_url', 'https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/calculate-freight' );
+		$this->merchant_id       = $this->get_option( 'merchant_id', '' );
+		$this->supabase_url      = $this->get_option( 'supabase_url', 'https://soaxvqkkecqzarwmbeip.supabase.co' );
+		$this->supabase_anon_key = $this->get_option( 'supabase_anon_key', '' );
+		$this->display_mode      = $this->get_option( 'display_mode', 'all' );
+
+		add_action( 'woocommerce_update_options_shipping_' . $this->id, array( $this, 'process_admin_options' ) );
+	}
+
+	public function init_form_fields(): void {
+		$this->instance_form_fields = array(
+			'title'            => array(
+				'title'       => __( 'Method Title', 'shippingiq' ),
+				'type'        => 'text',
+				'description' => __( 'Label shown to customers at checkout (e.g. "Freight").', 'shippingiq' ),
+				'default'     => 'Freight',
+				'desc_tip'    => true,
+			),
+			'merchant_id'      => array(
+				'title'       => __( 'Merchant ID', 'shippingiq' ),
+				'type'        => 'text',
+				'description' => __( 'Your ShippingIQ merchant UUID. Find it in Supabase → Table Editor → merchants.', 'shippingiq' ),
+				'default'     => '',
+				'desc_tip'    => true,
+			),
+			'api_url'          => array(
+				'title'       => __( 'Calculate Freight API URL', 'shippingiq' ),
+				'type'        => 'text',
+				'description' => __( 'The ShippingIQ calculate-freight edge function URL.', 'shippingiq' ),
+				'default'     => 'https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/calculate-freight',
+				'desc_tip'    => true,
+			),
+			'supabase_url'     => array(
+				'title'       => __( 'Supabase URL', 'shippingiq' ),
+				'type'        => 'text',
+				'description' => __( 'Your Supabase project URL, used to fetch carrier eligibility rules.', 'shippingiq' ),
+				'default'     => 'https://soaxvqkkecqzarwmbeip.supabase.co',
+				'desc_tip'    => true,
+			),
+			'supabase_anon_key' => array(
+				'title'       => __( 'Supabase Anon Key', 'shippingiq' ),
+				'type'        => 'password',
+				'description' => __( 'Your Supabase anon key, used to fetch carrier eligibility rules. Found in Supabase → Project Settings → API.', 'shippingiq' ),
+				'default'     => '',
+				'desc_tip'    => true,
+			),
+			'display_mode'     => array(
+				'title'       => __( 'Display Mode', 'shippingiq' ),
+				'type'        => 'select',
+				'description' => __( 'Show all eligible carriers or only the cheapest option at checkout.', 'shippingiq' ),
+				'options'     => array(
+					'all'      => __( 'All eligible carriers', 'shippingiq' ),
+					'cheapest' => __( 'Cheapest carrier only', 'shippingiq' ),
+				),
+				'default'     => 'all',
+				'desc_tip'    => true,
+			),
+		);
+	}
+
+	// ---------------------------------------------------------------------------
+	// Core rate calculation
+	// ---------------------------------------------------------------------------
+
+	public function calculate_shipping( $package = array() ): void {
+		if ( empty( $this->merchant_id ) || empty( $this->api_url ) ) {
+			return;
+		}
+
+		$postcode = sanitize_text_field( $package['destination']['postcode'] ?? '' );
+		if ( empty( $postcode ) ) {
+			return;
+		}
+
+		$items = $this->build_items( $package['contents'] );
+		if ( empty( $items ) ) {
+			return;
+		}
+
+		// Fetch eligibility rules and resolve product tag rules before calling the API.
+		$eligibility_map           = $this->fetch_carrier_eligibility();
+		[ $only_slugs, $exclude_slugs ] = $this->resolve_tag_rules( $package['contents'] );
+
+		// Call calculate-freight.
+		$response = wp_remote_post(
+			esc_url_raw( $this->api_url ),
+			array(
+				'headers' => array( 'Content-Type' => 'application/json' ),
+				'body'    => wp_json_encode( array(
+					'postcode'    => $postcode,
+					'items'       => $items,
+					'merchant_id' => $this->merchant_id,
+				) ),
+				'timeout' => 20,
+			)
+		);
+
+		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			return;
+		}
+
+		$body    = json_decode( wp_remote_retrieve_body( $response ), true );
+		$results = $body['results'] ?? array();
+
+		if ( empty( $results ) ) {
+			return;
+		}
+
+		$eligible = $this->filter_results( $results, $eligibility_map, $only_slugs, $exclude_slugs, $package['contents'] );
+
+		if ( empty( $eligible ) ) {
+			return;
+		}
+
+		if ( 'cheapest' === $this->display_mode ) {
+			usort( $eligible, static function ( $a, $b ) {
+				return ( (float) ( $a['totalCost'] ?? $a['freightCost'] ?? 0 ) )
+					<=> ( (float) ( $b['totalCost'] ?? $b['freightCost'] ?? 0 ) );
+			} );
+			$eligible = array( $eligible[0] );
+		}
+
+		foreach ( $eligible as $result ) {
+			$cost  = (float) ( $result['totalCost'] ?? $result['freightCost'] ?? 0 );
+			$label = $result['carrier'] ?? $this->title;
+			if ( ! empty( $result['service'] ) && 'Free Shipping' !== $result['service'] ) {
+				$label .= ' — ' . $result['service'];
+			}
+
+			$this->add_rate( array(
+				'id'    => $this->get_rate_id( $this->name_to_slug( $result['carrier'] ?? '' ) ),
+				'label' => $label,
+				'cost'  => $cost,
+			) );
+		}
+	}
+
+	// ---------------------------------------------------------------------------
+	// Filtering
+	// ---------------------------------------------------------------------------
+
+	private function filter_results(
+		array $results,
+		array $eligibility_map,
+		array $only_slugs,
+		array $exclude_slugs,
+		array $contents
+	): array {
+		$eligible = array();
+
+		foreach ( $results as $result ) {
+			if ( ! empty( $result['error'] ) ) {
+				continue;
+			}
+
+			$carrier_name = $result['carrier'] ?? '';
+			$carrier_slug = $this->name_to_slug( $carrier_name );
+
+			// Product tag: shippingiq-only-[slug] — if any item demands a specific carrier,
+			// all others are excluded.
+			if ( ! empty( $only_slugs ) && ! in_array( $carrier_slug, $only_slugs, true ) ) {
+				continue;
+			}
+
+			// Product tag: shippingiq-exclude-[slug]
+			if ( in_array( $carrier_slug, $exclude_slugs, true ) ) {
+				continue;
+			}
+
+			// Eligibility rules: exclude carrier if any single item exceeds its limits.
+			if ( isset( $eligibility_map[ $carrier_name ] ) ) {
+				if ( $this->cart_exceeds_limits( $contents, $eligibility_map[ $carrier_name ] ) ) {
+					continue;
+				}
+			}
+
+			$eligible[] = $result;
+		}
+
+		return $eligible;
+	}
+
+	// ---------------------------------------------------------------------------
+	// Helpers
+	// ---------------------------------------------------------------------------
+
+	/**
+	 * Build the items payload from WooCommerce cart contents.
+	 * Items without a weight are skipped — freight can't be quoted without it.
+	 */
+	private function build_items( array $contents ): array {
+		$items = array();
+
+		foreach ( $contents as $item ) {
+			/** @var WC_Product $product */
+			$product = $item['data'];
+			$weight  = (float) $product->get_weight();
+
+			if ( $weight <= 0 ) {
+				continue;
+			}
+
+			$items[] = array(
+				'desc'   => $product->get_name(),
+				'qty'    => (int) $item['quantity'],
+				'weight' => $weight,
+				'length' => (float) $product->get_length(),
+				'width'  => (float) $product->get_width(),
+				'height' => (float) $product->get_height(),
+			);
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Fetch carrier eligibility rules from the Supabase REST API.
+	 * Returns [ 'Carrier Name' => [ 'maxWeightKg' => 500, ... ], ... ]
+	 */
+	private function fetch_carrier_eligibility(): array {
+		if ( empty( $this->supabase_url ) || empty( $this->supabase_anon_key ) || empty( $this->merchant_id ) ) {
+			return array();
+		}
+
+		$url = rtrim( $this->supabase_url, '/' )
+			. '/rest/v1/carriers'
+			. '?merchant_id=eq.' . rawurlencode( $this->merchant_id )
+			. '&status=eq.active'
+			. '&select=name,eligibility_rules';
+
+		$response = wp_remote_get(
+			esc_url_raw( $url ),
+			array(
+				'headers' => array(
+					'apikey'        => $this->supabase_anon_key,
+					'Authorization' => 'Bearer ' . $this->supabase_anon_key,
+				),
+				'timeout' => 10,
+			)
+		);
+
+		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			return array();
+		}
+
+		$rows = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( ! is_array( $rows ) ) {
+			return array();
+		}
+
+		$map = array();
+		foreach ( $rows as $row ) {
+			if ( ! empty( $row['name'] ) && ! empty( $row['eligibility_rules'] ) ) {
+				$map[ $row['name'] ] = $row['eligibility_rules'];
+			}
+		}
+
+		return $map;
+	}
+
+	/**
+	 * Check whether any single cart item exceeds the carrier's limits.
+	 * Only checks dimensions/weights that are actually set (> 0).
+	 */
+	private function cart_exceeds_limits( array $contents, array $rules ): bool {
+		foreach ( $contents as $item ) {
+			/** @var WC_Product $product */
+			$product = $item['data'];
+
+			if ( isset( $rules['maxWeightKg'] ) && (float) $product->get_weight() > (float) $rules['maxWeightKg'] ) {
+				return true;
+			}
+			if ( isset( $rules['maxLengthCm'] ) && (float) $product->get_length() > (float) $rules['maxLengthCm'] ) {
+				return true;
+			}
+			if ( isset( $rules['maxWidthCm'] ) && (float) $product->get_width() > (float) $rules['maxWidthCm'] ) {
+				return true;
+			}
+			if ( isset( $rules['maxHeightCm'] ) && (float) $product->get_height() > (float) $rules['maxHeightCm'] ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Scan all cart items for ShippingIQ product tags and return two lists:
+	 * [ $only_carrier_slugs[], $exclude_carrier_slugs[] ]
+	 *
+	 * Tags:
+	 *   shippingiq-only-[carrier-slug]    — only this carrier may be shown
+	 *   shippingiq-exclude-[carrier-slug] — this carrier must be excluded
+	 */
+	private function resolve_tag_rules( array $contents ): array {
+		$only    = array();
+		$exclude = array();
+
+		foreach ( $contents as $item ) {
+			$terms = wp_get_post_terms( (int) $item['product_id'], 'product_tag', array( 'fields' => 'slugs' ) );
+			if ( is_wp_error( $terms ) ) {
+				continue;
+			}
+			foreach ( $terms as $slug ) {
+				if ( str_starts_with( $slug, 'shippingiq-only-' ) ) {
+					$only[] = substr( $slug, 16 );
+				} elseif ( str_starts_with( $slug, 'shippingiq-exclude-' ) ) {
+					$exclude[] = substr( $slug, 19 );
+				}
+			}
+		}
+
+		return array( array_unique( $only ), array_unique( $exclude ) );
+	}
+
+	/**
+	 * Convert a carrier name to a URL-safe slug for rate IDs and tag matching.
+	 * "Allied Express" → "allied-express"
+	 */
+	private function name_to_slug( string $name ): string {
+		return strtolower( trim( preg_replace( '/[^a-z0-9]+/i', '-', $name ), '-' ) );
+	}
+}
