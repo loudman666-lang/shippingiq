@@ -174,6 +174,62 @@ function getFileType(file) {
 
 const SHEET_CHAR_LIMIT = 50000
 
+// Find the first column index whose header contains any of the given terms.
+function findColIndex(headers, ...terms) {
+  const lower = headers.map(h => String(h ?? '').toLowerCase().trim())
+  return lower.findIndex(h => terms.some(t => h === t || h.includes(t)))
+}
+
+function looksLikePostcode(val) {
+  return /^\d{4}$/.test(String(val ?? '').trim())
+}
+
+// If the sheet looks like a postcode→zone mapping, return a compact CSV of only
+// the essential columns (postcode, zone, suburb, state). Returns null if the
+// sheet doesn't look like a zone file, so the caller falls back to full CSV.
+function extractZoneSheetCompact(XLSX, sheet) {
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' })
+  if (rows.length < 2) return null
+
+  const headers = rows[0]
+  let postcodeCol = findColIndex(headers, 'postcode', 'post code', 'post_code', 'pc', 'zip')
+  const zoneCol    = findColIndex(headers, 'zone')
+  const suburbCol  = findColIndex(headers, 'suburb', 'locality')
+  const stateCol   = findColIndex(headers, 'state')
+
+  // Fallback: scan up to 10 data rows looking for a column of 4-digit values.
+  if (postcodeCol === -1) {
+    for (let c = 0; c < headers.length; c++) {
+      const samples = rows.slice(1, 11).filter(r => String(r[c] ?? '').trim() !== '')
+      if (samples.length >= 3 && samples.filter(r => looksLikePostcode(r[c])).length >= Math.ceil(samples.length * 0.8)) {
+        postcodeCol = c
+        break
+      }
+    }
+  }
+
+  if (postcodeCol === -1) return null // not a zone sheet
+
+  const keep = [
+    { name: 'postcode', idx: postcodeCol },
+    ...(zoneCol   !== -1 ? [{ name: 'zone',   idx: zoneCol   }] : []),
+    ...(suburbCol !== -1 ? [{ name: 'suburb', idx: suburbCol }] : []),
+    ...(stateCol  !== -1 ? [{ name: 'state',  idx: stateCol  }] : []),
+  ]
+
+  const csvLines = [keep.map(c => c.name).join(',')]
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r]
+    if (!looksLikePostcode(row[postcodeCol])) continue
+    csvLines.push(keep.map(({ idx }) => {
+      const v = String(row[idx] ?? '').trim()
+      return v.includes(',') ? `"${v}"` : v
+    }).join(','))
+  }
+
+  return csvLines.length > 1 ? csvLines.join('\n') : null
+}
+
 async function excelFileToText(file) {
   const XLSX = await import('https://esm.sh/xlsx@0.18.5')
   const base64 = await fileToBase64(file)
@@ -185,9 +241,14 @@ async function excelFileToText(file) {
   workbook.SheetNames.forEach((sheetName, index) => {
     try {
       const sheet = workbook.Sheets[sheetName]
+      const label = 'Sheet ' + (index + 1) + ': ' + sheetName
+      const compact = extractZoneSheetCompact(XLSX, sheet)
+      if (compact !== null) {
+        parts.push(label + ' (postcode zone mapping — key columns only)\n' + compact)
+        return
+      }
       const csv = XLSX.utils.sheet_to_csv(sheet).trim()
       if (!csv) return
-      const label = 'Sheet ' + (index + 1) + ': ' + sheetName
       parts.push(label + '\n' + csv.slice(0, SHEET_CHAR_LIMIT))
     } catch (e) {
       parts.push('Sheet ' + (index + 1) + ': ' + sheetName + '\n(could not parse sheet: ' + e.message + ')')
