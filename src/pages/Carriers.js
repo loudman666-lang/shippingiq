@@ -230,6 +230,64 @@ function extractZoneSheetCompact(XLSX, sheet) {
   return csvLines.length > 1 ? csvLines.join('\n') : null
 }
 
+// If the sheet looks like a rate table (has basic/per-kg/minimum columns), return
+// a compact CSV keeping only zone identifier and rate columns. Handles Allied-style
+// multi-depot layouts where depot names sit in a merged header row above the rate
+// type row — those are forward-filled to produce e.g. "sydney_basic", "sydney_per_kg".
+function extractRateSheetCompact(XLSX, sheet) {
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' })
+  if (rows.length < 3) return null
+
+  // Find the first row that contains rate keywords.
+  const RATE_RE = /basic|minimum|min(?:imum)?\.?\s*charge|per[\s.]?kg|kg[\s.]?rate|per[\s.]?kilo/i
+  let headerRowIdx = -1
+  for (let r = 0; r < Math.min(rows.length, 10); r++) {
+    if (rows[r].some(cell => RATE_RE.test(String(cell ?? '')))) { headerRowIdx = r; break }
+  }
+  if (headerRowIdx === -1) return null
+
+  // Forward-fill the row above as depot names (handles merged-cell depot headers).
+  const depotNames = new Array(rows[headerRowIdx].length).fill('')
+  if (headerRowIdx > 0) {
+    let last = ''
+    rows[headerRowIdx - 1].forEach((v, i) => {
+      const s = String(v ?? '').trim()
+      if (s) last = s
+      depotNames[i] = last
+    })
+  }
+
+  // Classify columns: keep zone identifiers and rate columns, drop everything else.
+  const ZONE_RE  = /zone|destination|depot|origin|suburb|state|locality/i
+  const keepCols = []
+  rows[headerRowIdx].forEach((cell, i) => {
+    const h = String(cell ?? '').toLowerCase().trim()
+    const isZone = ZONE_RE.test(h)
+    const isRate = RATE_RE.test(h)
+    if (!isZone && !isRate) return
+    const depotPrefix = depotNames[i] ? depotNames[i].toLowerCase().replace(/\s+/g, '_') + '_' : ''
+    const colName = isZone
+      ? h.replace(/\s+/g, '_')
+      : depotPrefix + h.replace(/[^a-z0-9]+/g, '_').replace(/_+$/, '')
+    keepCols.push({ idx: i, name: colName })
+  })
+
+  // Need at least one rate column to qualify.
+  if (!keepCols.some(c => RATE_RE.test(c.name))) return null
+
+  const csvLines = [keepCols.map(c => c.name).join(',')]
+  for (let r = headerRowIdx + 1; r < rows.length; r++) {
+    const row = rows[r]
+    if (keepCols.every(({ idx }) => String(row[idx] ?? '').trim() === '')) continue
+    csvLines.push(keepCols.map(({ idx }) => {
+      const v = String(row[idx] ?? '').trim()
+      return v.includes(',') ? `"${v}"` : v
+    }).join(','))
+  }
+
+  return csvLines.length > 1 ? csvLines.join('\n') : null
+}
+
 async function excelFileToText(file) {
   const XLSX = await import('https://esm.sh/xlsx@0.18.5')
   const base64 = await fileToBase64(file)
@@ -242,9 +300,14 @@ async function excelFileToText(file) {
     try {
       const sheet = workbook.Sheets[sheetName]
       const label = 'Sheet ' + (index + 1) + ': ' + sheetName
-      const compact = extractZoneSheetCompact(XLSX, sheet)
-      if (compact !== null) {
-        parts.push(label + ' (postcode zone mapping — key columns only)\n' + compact)
+      const zoneCompact = extractZoneSheetCompact(XLSX, sheet)
+      if (zoneCompact !== null) {
+        parts.push(label + ' (postcode zone mapping — key columns only)\n' + zoneCompact)
+        return
+      }
+      const rateCompact = extractRateSheetCompact(XLSX, sheet)
+      if (rateCompact !== null) {
+        parts.push(label + ' (rate table — essential columns only)\n' + rateCompact)
         return
       }
       const csv = XLSX.utils.sheet_to_csv(sheet).trim()
