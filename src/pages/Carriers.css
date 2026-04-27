@@ -162,3 +162,41 @@
   background: #dcfce7;
   color: #15803d;
 }
+
+.rate-table-wrap {
+  overflow-x: auto;
+}
+
+.rate-table-service {
+  font-size: 13px;
+  font-weight: 600;
+  color: #E8521A;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rate-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.rate-table th {
+  background: #f9fafb;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.rate-table td {
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  color: #111827;
+}
+
+.rate-table tr:hover td {
+  background: #f9fafb;
+}
