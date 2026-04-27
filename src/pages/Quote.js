@@ -402,7 +402,12 @@ export default function Quote() {
                     <input className="form-input" type="number" min="1" placeholder="0" value={item.height} onChange={e => updateItem(item.id, 'height', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
                     <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', color: 'var(--ink-muted)', cursor: 'pointer', fontSize: '20px', lineHeight: 1, padding: '4px 0' }}>×</button>
                   </div>
-
+                  {merchantRules.freeShippingEnabled && (
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--ink-muted)', marginTop: '6px', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={!!item.exemptFreeShipping} onChange={e => updateItem(item.id, 'exemptFreeShipping', e.target.checked)} />
+                      Exempt from free shipping
+                    </label>
+                  )}
                 </div>
               ))}
               <button onClick={addItem} style={{ fontSize: '13px', color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', fontWeight: '500' }}>
@@ -510,7 +515,7 @@ export default function Quote() {
                           ))}
                           {result.margin > 0 && (
                             <div style={{ marginTop: '6px' }}>
-                              + Handling margin ({result.marginType === 'percent' ? rules.freightMarginValue + '%' : '$' + result.margin.toFixed(2)}) = <strong style={{ color: 'var(--ink)' }}>${result.margin.toFixed(2)}</strong>
+                              + Handling margin ({result.marginType === 'percent' ? merchantRules.freightMarginValue + '%' : '$' + result.margin.toFixed(2)}) = <strong style={{ color: 'var(--ink)' }}>${result.margin.toFixed(2)}</strong>
                               <span style={{ marginLeft: '12px', color: 'var(--accent)', fontWeight: '700' }}>Subtotal: ${result.totalCost.toFixed(2)}</span>
                             </div>
                           )}
