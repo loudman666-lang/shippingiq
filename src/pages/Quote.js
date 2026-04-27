@@ -210,6 +210,7 @@ export default function Quote() {
   const [loading, setLoading] = useState(true)
   const [postcode, setPostcode] = useState('')
   const [items, setItems] = useState([emptyItem()])
+  const [orderValue, setOrderValue] = useState('')
   const [results, setResults] = useState(null)
   const [savedQuotes, setSavedQuotes] = useState([])
   const [error, setError] = useState(null)
@@ -264,7 +265,25 @@ export default function Quote() {
     if (carriers.length === 0) { setError('No active carriers found. Add a carrier first.'); return }
     const validItems = items.filter(i => i.weight && parseFloat(i.weight) > 0)
     if (validItems.length === 0) { setError('Please enter a weight for at least one item.'); return }
-    setResults(carriers.map(c => calculateRate(c, postcode, validItems, merchantRules)))
+    const orderVal = parseFloat(orderValue) || 0
+    const isFreeShipping = merchantRules.freeShippingEnabled && merchantRules.freeShippingThreshold && orderVal >= parseFloat(merchantRules.freeShippingThreshold)
+    if (isFreeShipping) {
+      setResults(carriers.map(c => ({
+        carrier: c.name,
+        freightCost: 0,
+        totalCost: 0,
+        freeShipping: true,
+        destination: postcode,
+        service: 'Free Shipping',
+        zone: '—',
+        totalActualWeight: validItems.reduce((s, i) => s + (parseFloat(i.weight)||0) * (parseInt(i.qty)||1), 0),
+        totalCubicWeight: 0,
+        chargeableWeight: 0,
+        model: '—'
+      })))
+    } else {
+      setResults(carriers.map(c => calculateRate(c, postcode, validItems, merchantRules)))
+    }
   }
 
   const totalActual = Math.round(items.reduce((s, i) => s + (parseFloat(i.weight)||0) * (parseInt(i.qty)||1), 0) * 100) / 100
@@ -344,9 +363,23 @@ export default function Quote() {
             <div className="card" style={{ marginBottom: '0' }}>
               <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--ink)', marginBottom: '20px' }}>Order Details</div>
 
-              <div className="form-group">
-                <label className="form-label">Customer Postcode</label>
-                <input className="form-input" type="text" placeholder="e.g. 2000" maxLength={4} value={postcode} onChange={e => setPostcode(e.target.value.replace(/\D/g, ''))} style={{ maxWidth: '160px' }} />
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">Customer Postcode</label>
+                  <input className="form-input" type="text" placeholder="e.g. 2000" maxLength={4} value={postcode} onChange={e => setPostcode(e.target.value.replace(/\D/g, ''))} />
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">Order Value <span style={{ color: 'var(--ink-muted)', fontWeight: 400 }}>(optional — for free shipping)</span></label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: 'var(--ink-muted)' }}>$</span>
+                    <input className="form-input" type="number" placeholder="0.00" min="0" step="0.01" value={orderValue} onChange={e => setOrderValue(e.target.value)} style={{ paddingLeft: '24px' }} />
+                  </div>
+                  {merchantRules.freeShippingEnabled && merchantRules.freeShippingThreshold && (
+                    <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '4px' }}>
+                      Free shipping on orders over ${merchantRules.freeShippingThreshold}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '12px', marginTop: '4px' }}>Items</div>
