@@ -43,6 +43,47 @@ function RateTable({ carrier }) {
   )
 }
 
+function SurchargeTable({ surcharges }) {
+  if (!surcharges?.length) return null
+  return (
+    <div style={{ marginTop: '16px' }}>
+      <div className="rate-table-service">Surcharges Detected</div>
+      <table className="rate-table">
+        <thead>
+          <tr><th>Surcharge</th><th>Amount</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          {surcharges.map((s, i) => (
+            <tr key={i}>
+              <td>{s.name}</td>
+              <td>{s.amount}</td>
+              <td style={{ color: '#6b7280', fontSize: '12px' }}>{s.notes || ''}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result.split(',')[1])
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+function getFileType(file) {
+  if (!file) return null
+  const name = file.name.toLowerCase()
+  if (name.endsWith('.csv')) return 'csv'
+  if (name.endsWith('.xlsx') || name.endsWith('.xls')) return 'excel'
+  if (name.endsWith('.pdf')) return 'pdf'
+  return 'unknown'
+}
+
 export default function Carriers() {
   const { merchant, isAdmin } = useAuth()
   const [carriers, setCarriers] = useState([])
@@ -50,7 +91,7 @@ export default function Carriers() {
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving] = useState(false)
   const [parsing, setParsing] = useState(false)
-  const [form, setForm] = useState({ name: '', rateCard: null, zoneFile: null })
+  const [form, setForm] = useState({ name: '', rateCard: null, zoneFile: null, surchargeDoc: null })
   const [parseResult, setParseResult] = useState(null)
   const [error, setError] = useState(null)
   const [viewingCarrier, setViewingCarrier] = useState(null)
@@ -72,23 +113,39 @@ export default function Carriers() {
 
   async function parseFiles() {
     if (!form.name || !form.rateCard || !form.zoneFile) {
-      setError('Please enter a carrier name and upload both files.')
+      setError('Please enter a carrier name and upload both the rate card and zone file.')
       return
     }
     setParsing(true)
     setError(null)
     setParseResult(null)
     try {
-      const rateCardText = await form.rateCard.text()
-      const zoneFileText = await form.zoneFile.text()
-      const { data, error } = await supabase.functions.invoke('rapid-api', {
-        body: { carrierName: form.name, rateCardText, zoneFileText }
-      })
+      const rateCardBase64 = await fileToBase64(form.rateCard)
+      const zoneFileBase64 = await fileToBase64(form.zoneFile)
+      const rateCardType = getFileType(form.rateCard)
+      const zoneFileType = getFileType(form.zoneFile)
+
+      const payload = {
+        carrierName: form.name,
+        rateCard: { data: rateCardBase64, type: rateCardType, name: form.rateCard.name },
+        zoneFile: { data: zoneFileBase64, type: zoneFileType, name: form.zoneFile.name },
+      }
+
+      if (form.surchargeDoc) {
+        const surchargeBase64 = await fileToBase64(form.surchargeDoc)
+        payload.surchargeDoc = {
+          data: surchargeBase64,
+          type: getFileType(form.surchargeDoc),
+          name: form.surchargeDoc.name
+        }
+      }
+
+      const { data, error } = await supabase.functions.invoke('rapid-api', { body: payload })
       if (error) throw error
       setParseResult(data)
     } catch (err) {
       console.error(err)
-      setError('Could not parse files. Please check they are valid CSV files.')
+      setError('Could not parse files. Please check your files and try again.')
     } finally {
       setParsing(false)
     }
@@ -107,7 +164,7 @@ export default function Carriers() {
       })
       if (error) throw error
       setShowAdd(false)
-      setForm({ name: '', rateCard: null, zoneFile: null })
+      setForm({ name: '', rateCard: null, zoneFile: null, surchargeDoc: null })
       setParseResult(null)
       fetchCarriers()
     } catch (err) {
@@ -188,32 +245,51 @@ export default function Carriers() {
             <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>Add New Carrier</h2>
             <div className="form-group">
               <label className="form-label">Carrier Name</label>
-              <input className="form-input" type="text" placeholder="e.g. Australia Post, Sendle, CouriersPlease" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              <input className="form-input" type="text" placeholder="e.g. Allied Express, Mainfreight, StarTrack" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="form-group">
-              <label className="form-label">Rate Card (CSV)</label>
-              <input className="form-input" type="file" accept=".csv" onChange={e => setForm({ ...form, rateCard: e.target.files[0] })} />
+              <label className="form-label">Rate Card <span style={{ color: '#6b7280', fontWeight: 400 }}>(required — CSV, Excel or PDF)</span></label>
+              <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, rateCard: e.target.files[0] })} />
+              {form.rateCard && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.rateCard.name}</div>}
             </div>
             <div className="form-group">
-              <label className="form-label">Zone File (CSV)</label>
-              <input className="form-input" type="file" accept=".csv" onChange={e => setForm({ ...form, zoneFile: e.target.files[0] })} />
+              <label className="form-label">Zone File <span style={{ color: '#6b7280', fontWeight: 400 }}>(required — CSV, Excel or PDF)</span></label>
+              <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, zoneFile: e.target.files[0] })} />
+              {form.zoneFile && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.zoneFile.name}</div>}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Additional Charges Schedule <span style={{ color: '#6b7280', fontWeight: 400 }}>(optional — CSV, Excel or PDF)</span></label>
+              <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, surchargeDoc: e.target.files[0] })} />
+              {form.surchargeDoc && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.surchargeDoc.name}</div>}
             </div>
             {error && <div className="error-msg">{error}</div>}
             {parseResult && (
               <div className="parse-result">
-                <div className="parse-result-title">Files parsed successfully</div>
+                <div className="parse-result-title">✓ Files parsed successfully</div>
                 <p style={{ marginBottom: '8px', color: '#6b7280' }}>{parseResult.summary}</p>
                 <div className="parse-tags">
-                  {parseResult.zones?.slice(0, 5).map(z => <span key={z} className="parse-tag">{z}</span>)}
+                  <span className="parse-tag">Model {parseResult.pricingModel || '?'}</span>
+                  {parseResult.zones?.slice(0, 6).map(z => <span key={z} className="parse-tag">{z}</span>)}
+                  {parseResult.zones?.length > 6 && <span className="parse-tag">+{parseResult.zones.length - 6} more zones</span>}
                   {parseResult.serviceTypes?.map(s => <span key={s} className="parse-tag">{s}</span>)}
                   <span className="parse-tag">{parseResult.rateCount} rates</span>
+                  {parseResult.surcharges?.length > 0 && <span className="parse-tag">{parseResult.surcharges.length} surcharges</span>}
                 </div>
+                {parseResult.warnings?.length > 0 && (
+                  <div style={{ marginTop: '12px', padding: '10px 12px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '6px', fontSize: '13px', color: '#92400e' }}>
+                    <strong>Warnings:</strong>
+                    <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                      {parseResult.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                    </ul>
+                  </div>
+                )}
+                <SurchargeTable surcharges={parseResult.surcharges} />
               </div>
             )}
             <div className="form-actions">
               <button className="btn-secondary" onClick={() => { setShowAdd(false); setParseResult(null); setError(null) }}>Cancel</button>
               {!parseResult ? (
-                <button className="btn-primary" onClick={parseFiles} disabled={parsing}>{parsing ? 'Parsing...' : 'Parse Files'}</button>
+                <button className="btn-primary" onClick={parseFiles} disabled={parsing}>{parsing ? 'Parsing files...' : 'Parse Files'}</button>
               ) : (
                 <button className="btn-primary" onClick={saveCarrier} disabled={saving}>{saving ? 'Saving...' : 'Save Carrier'}</button>
               )}
@@ -224,11 +300,15 @@ export default function Carriers() {
         {viewingCarrier && (
           <div className="card" style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: '600' }}>{viewingCarrier.name} - Rate Card</h2>
+              <h2 style={{ fontSize: '16px', fontWeight: '600' }}>{viewingCarrier.name} — Rate Card</h2>
               <button className="btn-secondary" onClick={() => setViewingCarrier(null)}>Close</button>
             </div>
-            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>{viewingCarrier.parsed_data?.summary}</p>
+            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>{viewingCarrier.parsed_data?.summary}</p>
+            {viewingCarrier.parsed_data?.pricingModel && (
+              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>Pricing model: <strong>Model {viewingCarrier.parsed_data.pricingModel}</strong></p>
+            )}
             <RateTable carrier={viewingCarrier} />
+            <SurchargeTable surcharges={viewingCarrier.parsed_data?.surcharges} />
           </div>
         )}
 
@@ -249,7 +329,11 @@ export default function Carriers() {
               <div key={carrier.id} className="carrier-card">
                 <div className="carrier-info">
                   <div className="carrier-name">{carrier.name}</div>
-                  <div className="carrier-meta">{carrier.parsed_data?.rateCount} rates · {carrier.parsed_data?.zones?.length} zones · {carrier.parsed_data?.serviceTypes?.join(', ')}</div>
+                  <div className="carrier-meta">
+                    {carrier.parsed_data?.rateCount} rates · {carrier.parsed_data?.zones?.length} zones · {carrier.parsed_data?.serviceTypes?.join(', ')}
+                    {carrier.parsed_data?.pricingModel && ` · Model ${carrier.parsed_data.pricingModel}`}
+                    {carrier.parsed_data?.surcharges?.length > 0 && ` · ${carrier.parsed_data.surcharges.length} surcharges`}
+                  </div>
                   <div className="carrier-summary">{carrier.parsed_data?.summary}</div>
                 </div>
                 <div className="carrier-actions">
