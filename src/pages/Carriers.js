@@ -10,13 +10,13 @@ function RateTable({ carrier }) {
 
   if (model === 'B' && data?.modelBRates?.length) {
     const services = [...new Set(data.modelBRates.map(r => r.service))]
-    const rows_all = origin
-      ? data.modelBRates.filter(r => !r.originDepot || r.originDepot === origin)
+    const filteredRates = origin
+      ? data.modelBRates.filter(r => r.originDepot === origin)
       : data.modelBRates
     return (
       <div className="rate-table-wrap">
         {services.map(service => {
-          const rows = rows_all.filter(r => r.service === service)
+          const rows = filteredRates.filter(r => r.service === service)
           if (!rows.length) return null
           return (
             <div key={service} style={{ marginBottom: '24px' }}>
@@ -170,6 +170,7 @@ export default function Carriers() {
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving] = useState(false)
   const [parsing, setParsing] = useState(false)
+  const [parsingStep, setParsingStep] = useState('')
   const [form, setForm] = useState({ name: '', rateCard: null, zoneFile: null, surchargeDoc: null })
   const [parseResult, setParseResult] = useState(null)
   const [selectedOrigin, setSelectedOrigin] = useState('')
@@ -197,10 +198,12 @@ export default function Carriers() {
       return
     }
     setParsing(true)
+    setParsingStep('Reading your files...')
     setError(null)
     setParseResult(null)
     setSelectedOrigin('')
     try {
+      setParsingStep('Uploading files...')
       const rateCardBase64 = await fileToBase64(form.rateCard)
       const zoneFileBase64 = await fileToBase64(form.zoneFile)
       const payload = {
@@ -212,13 +215,16 @@ export default function Carriers() {
         const surchargeBase64 = await fileToBase64(form.surchargeDoc)
         payload.surchargeDoc = { data: surchargeBase64, type: getFileType(form.surchargeDoc), name: form.surchargeDoc.name }
       }
+      setParsingStep('AI is analysing your rate card and zone file — this takes 20–40 seconds, hang tight...')
       const { data, error } = await supabase.functions.invoke('rapid-api', { body: payload })
       if (error) throw error
       setParseResult(data)
       if (data.originDepots?.length === 1) setSelectedOrigin(data.originDepots[0])
+      setParsingStep('')
     } catch (err) {
       console.error(err)
-      setError('Could not parse files. Please check your files and try again.')
+      setError('Could not analyse files. Please check your files and try again.')
+      setParsingStep('')
     } finally {
       setParsing(false)
     }
@@ -346,9 +352,16 @@ export default function Carriers() {
 
             {error && <div className="error-msg">{error}</div>}
 
+            {parsing && (
+              <div style={{ margin: '16px 0', padding: '16px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '20px', height: '20px', border: '3px solid #E8521A', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+                <span style={{ fontSize: '14px', color: '#0369a1' }}>{parsingStep}</span>
+              </div>
+            )}
+
             {parseResult && (
               <div className="parse-result">
-                <div className="parse-result-title">✓ Files parsed successfully</div>
+                <div className="parse-result-title">✓ Analysis complete</div>
                 <p style={{ marginBottom: '8px', color: '#6b7280' }}>{parseResult.summary}</p>
                 <div className="parse-tags">
                   <span className="parse-tag">Model {parseResult.pricingModel || '?'}</span>
@@ -408,9 +421,13 @@ export default function Carriers() {
             <div className="form-actions">
               <button className="btn-secondary" onClick={() => { setShowAdd(false); setParseResult(null); setError(null); setSelectedOrigin('') }}>Cancel</button>
               {!parseResult ? (
-                <button className="btn-primary" onClick={parseFiles} disabled={parsing}>{parsing ? 'Parsing files...' : 'Parse Files'}</button>
+                <button className="btn-primary" onClick={parseFiles} disabled={parsing}>
+                  {parsing ? 'Analysing...' : 'Analyse Files'}
+                </button>
               ) : (
-                <button className="btn-primary" onClick={saveCarrier} disabled={saving}>{saving ? 'Saving...' : 'Save Carrier'}</button>
+                <button className="btn-primary" onClick={saveCarrier} disabled={saving}>
+                  {saving ? 'Saving...' : 'Save Carrier'}
+                </button>
               )}
             </div>
           </div>
