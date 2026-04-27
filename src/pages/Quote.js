@@ -442,6 +442,16 @@ export default function Quote() {
                         <div style={{ fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>{result.carrier || carriers[i]?.name}</div>
                         <div style={{ fontSize: '13px', color: '#ef4444' }}>{result.error}</div>
                       </div>
+                    ) : result.freeShipping ? (
+                      <div className="card" style={{ borderColor: '#86efac', background: '#f0fdf4' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontSize: '17px', fontWeight: '600', color: '#15803d', marginBottom: '4px' }}>{result.carrier}</div>
+                            <div style={{ fontSize: '13px', color: '#16a34a' }}>This order qualifies for free shipping</div>
+                          </div>
+                          <div style={{ fontSize: '48px', fontWeight: '800', color: '#16a34a', lineHeight: 1 }}>FREE</div>
+                        </div>
+                      </div>
                     ) : (
                       <div className="card" style={{ borderColor: 'var(--border-mid)', position: 'relative', overflow: 'hidden' }}>
                         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--accent)' }} />
