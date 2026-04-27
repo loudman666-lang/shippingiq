@@ -6,17 +6,21 @@ import './Carriers.css'
 function RateTable({ carrier }) {
   const data = carrier.parsed_data
   const model = data?.pricingModel
+  const origin = data?.selectedOrigin
 
   if (model === 'B' && data?.modelBRates?.length) {
     const services = [...new Set(data.modelBRates.map(r => r.service))]
-    const origins = data.originDepots?.length ? data.originDepots : ['Default']
+    const rows_all = origin
+      ? data.modelBRates.filter(r => !r.originDepot || r.originDepot === origin)
+      : data.modelBRates
     return (
       <div className="rate-table-wrap">
         {services.map(service => {
-          const rows = data.modelBRates.filter(r => r.service === service)
+          const rows = rows_all.filter(r => r.service === service)
+          if (!rows.length) return null
           return (
             <div key={service} style={{ marginBottom: '24px' }}>
-              <div className="rate-table-service">{service} — Model B (Basic + Per Kg)</div>
+              <div className="rate-table-service">{service} — Model B (Basic + Per Kg){origin ? ` — From ${origin}` : ''}</div>
               <table className="rate-table">
                 <thead>
                   <tr>
@@ -47,37 +51,32 @@ function RateTable({ carrier }) {
   }
 
   if (model === 'C' && data?.modelCRates?.length) {
-    const origins = [...new Set(data.modelCRates.map(r => r.originDepot))]
+    const rows = origin
+      ? data.modelCRates.filter(r => r.originDepot === origin)
+      : data.modelCRates
     return (
       <div className="rate-table-wrap">
-        {origins.map(origin => {
-          const rows = data.modelCRates.filter(r => r.originDepot === origin)
-          return (
-            <div key={origin} style={{ marginBottom: '24px' }}>
-              <div className="rate-table-service">From: {origin} — Model C (Depot to Depot)</div>
-              <table className="rate-table">
-                <thead>
-                  <tr>
-                    <th>Destination Depot</th>
-                    <th>Basic Charge</th>
-                    <th>Per Kg Rate</th>
-                    <th>Minimum</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, i) => (
-                    <tr key={i}>
-                      <td>{row.destinationDepot}</td>
-                      <td>${Number(row.basicCharge || 0).toFixed(2)}</td>
-                      <td>${Number(row.perKgRate || 0).toFixed(3)}</td>
-                      <td>${Number(row.minimumCharge || 0).toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )
-        })}
+        <div className="rate-table-service">Model C (Depot to Depot){origin ? ` — From ${origin}` : ''}</div>
+        <table className="rate-table">
+          <thead>
+            <tr>
+              <th>Destination Depot</th>
+              <th>Basic Charge</th>
+              <th>Per Kg Rate</th>
+              <th>Minimum</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i}>
+                <td>{row.destinationDepot}</td>
+                <td>${Number(row.basicCharge || 0).toFixed(2)}</td>
+                <td>${Number(row.perKgRate || 0).toFixed(3)}</td>
+                <td>${Number(row.minimumCharge || 0).toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     )
   }
@@ -127,7 +126,7 @@ function SurchargeTable({ surcharges }) {
   if (!surcharges?.length) return null
   return (
     <div style={{ marginTop: '16px' }}>
-      <div className="rate-table-service">Surcharges Detected</div>
+      <div className="rate-table-service">Surcharges</div>
       <table className="rate-table">
         <thead>
           <tr><th>Surcharge</th><th>Amount</th><th>Notes</th></tr>
@@ -173,6 +172,7 @@ export default function Carriers() {
   const [parsing, setParsing] = useState(false)
   const [form, setForm] = useState({ name: '', rateCard: null, zoneFile: null, surchargeDoc: null })
   const [parseResult, setParseResult] = useState(null)
+  const [selectedOrigin, setSelectedOrigin] = useState('')
   const [error, setError] = useState(null)
   const [viewingCarrier, setViewingCarrier] = useState(null)
 
@@ -199,28 +199,23 @@ export default function Carriers() {
     setParsing(true)
     setError(null)
     setParseResult(null)
+    setSelectedOrigin('')
     try {
       const rateCardBase64 = await fileToBase64(form.rateCard)
       const zoneFileBase64 = await fileToBase64(form.zoneFile)
-
       const payload = {
         carrierName: form.name,
         rateCard: { data: rateCardBase64, type: getFileType(form.rateCard), name: form.rateCard.name },
         zoneFile: { data: zoneFileBase64, type: getFileType(form.zoneFile), name: form.zoneFile.name },
       }
-
       if (form.surchargeDoc) {
         const surchargeBase64 = await fileToBase64(form.surchargeDoc)
-        payload.surchargeDoc = {
-          data: surchargeBase64,
-          type: getFileType(form.surchargeDoc),
-          name: form.surchargeDoc.name
-        }
+        payload.surchargeDoc = { data: surchargeBase64, type: getFileType(form.surchargeDoc), name: form.surchargeDoc.name }
       }
-
       const { data, error } = await supabase.functions.invoke('rapid-api', { body: payload })
       if (error) throw error
       setParseResult(data)
+      if (data.originDepots?.length === 1) setSelectedOrigin(data.originDepots[0])
     } catch (err) {
       console.error(err)
       setError('Could not parse files. Please check your files and try again.')
@@ -231,19 +226,25 @@ export default function Carriers() {
 
   async function saveCarrier() {
     if (!parseResult) return
+    if (parseResult.originDepots?.length > 1 && !selectedOrigin) {
+      setError('Please select your origin depot before saving.')
+      return
+    }
     setSaving(true)
     setError(null)
     try {
+      const dataToSave = { ...parseResult, selectedOrigin: selectedOrigin || null }
       const { error } = await supabase.from('carriers').insert({
         merchant_id: merchant.id,
         name: form.name,
-        parsed_data: parseResult,
+        parsed_data: dataToSave,
         status: 'active'
       })
       if (error) throw error
       setShowAdd(false)
       setForm({ name: '', rateCard: null, zoneFile: null, surchargeDoc: null })
       setParseResult(null)
+      setSelectedOrigin('')
       fetchCarriers()
     } catch (err) {
       setError('Could not save carrier. Please try again.')
@@ -257,6 +258,8 @@ export default function Carriers() {
     await supabase.from('carriers').delete().eq('id', id)
     fetchCarriers()
   }
+
+  const originDepots = parseResult?.originDepots || []
 
   return (
     <div className="dashboard">
@@ -340,7 +343,9 @@ export default function Carriers() {
               <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, surchargeDoc: e.target.files[0] })} />
               {form.surchargeDoc && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.surchargeDoc.name}</div>}
             </div>
+
             {error && <div className="error-msg">{error}</div>}
+
             {parseResult && (
               <div className="parse-result">
                 <div className="parse-result-title">✓ Files parsed successfully</div>
@@ -353,6 +358,41 @@ export default function Carriers() {
                   <span className="parse-tag">{parseResult.rateCount} rates</span>
                   {parseResult.surcharges?.length > 0 && <span className="parse-tag">{parseResult.surcharges.length} surcharges</span>}
                 </div>
+
+                {originDepots.length > 0 && (
+                  <div style={{ marginTop: '16px', padding: '16px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                    <label className="form-label" style={{ marginBottom: '8px', display: 'block' }}>
+                      Where do you ship from? <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {originDepots.map(depot => (
+                        <button
+                          key={depot}
+                          onClick={() => setSelectedOrigin(depot)}
+                          style={{
+                            padding: '8px 16px',
+                            borderRadius: '6px',
+                            border: '2px solid',
+                            borderColor: selectedOrigin === depot ? '#E8521A' : '#e5e7eb',
+                            background: selectedOrigin === depot ? '#fff5f0' : '#fff',
+                            color: selectedOrigin === depot ? '#E8521A' : '#374151',
+                            fontWeight: selectedOrigin === depot ? '600' : '400',
+                            cursor: 'pointer',
+                            fontSize: '14px'
+                          }}
+                        >
+                          {depot}
+                        </button>
+                      ))}
+                    </div>
+                    {selectedOrigin && (
+                      <p style={{ marginTop: '8px', fontSize: '13px', color: '#6b7280' }}>
+                        Rates will be calculated from <strong>{selectedOrigin}</strong> to your customer's postcode.
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {parseResult.warnings?.length > 0 && (
                   <div style={{ marginTop: '12px', padding: '10px 12px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '6px', fontSize: '13px', color: '#92400e' }}>
                     <strong>Warnings:</strong>
@@ -364,8 +404,9 @@ export default function Carriers() {
                 <SurchargeTable surcharges={parseResult.surcharges} />
               </div>
             )}
+
             <div className="form-actions">
-              <button className="btn-secondary" onClick={() => { setShowAdd(false); setParseResult(null); setError(null) }}>Cancel</button>
+              <button className="btn-secondary" onClick={() => { setShowAdd(false); setParseResult(null); setError(null); setSelectedOrigin('') }}>Cancel</button>
               {!parseResult ? (
                 <button className="btn-primary" onClick={parseFiles} disabled={parsing}>{parsing ? 'Parsing files...' : 'Parse Files'}</button>
               ) : (
@@ -382,8 +423,10 @@ export default function Carriers() {
               <button className="btn-secondary" onClick={() => setViewingCarrier(null)}>Close</button>
             </div>
             <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>{viewingCarrier.parsed_data?.summary}</p>
-            {viewingCarrier.parsed_data?.pricingModel && (
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>Pricing model: <strong>Model {viewingCarrier.parsed_data.pricingModel}</strong></p>
+            {viewingCarrier.parsed_data?.selectedOrigin && (
+              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+                Shipping from: <strong>{viewingCarrier.parsed_data.selectedOrigin}</strong> · Model <strong>{viewingCarrier.parsed_data.pricingModel}</strong>
+              </p>
             )}
             <RateTable carrier={viewingCarrier} />
             <SurchargeTable surcharges={viewingCarrier.parsed_data?.surcharges} />
@@ -410,6 +453,7 @@ export default function Carriers() {
                   <div className="carrier-meta">
                     {carrier.parsed_data?.rateCount} rates · {carrier.parsed_data?.zones?.length} zones · {carrier.parsed_data?.serviceTypes?.join(', ')}
                     {carrier.parsed_data?.pricingModel && ` · Model ${carrier.parsed_data.pricingModel}`}
+                    {carrier.parsed_data?.selectedOrigin && ` · From ${carrier.parsed_data.selectedOrigin}`}
                     {carrier.parsed_data?.surcharges?.length > 0 && ` · ${carrier.parsed_data.surcharges.length} surcharges`}
                   </div>
                   <div className="carrier-summary">{carrier.parsed_data?.summary}</div>
