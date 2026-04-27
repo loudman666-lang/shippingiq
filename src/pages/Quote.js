@@ -386,28 +386,26 @@ export default function Quote() {
               <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '12px', marginTop: '4px' }}>Items</div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr 80px 68px 68px 68px 28px', gap: '6px', marginBottom: '6px' }}>
-                {['Qty', 'Description', 'Wt kg', 'L cm', 'W cm', 'H cm', ''].map((h, i) => (
+                {['Qty', 'Description', 'Wt kg', 'L cm', 'W cm', 'H cm', '', ''].map((h, i) => (
                   <div key={i} style={{ fontSize: '11px', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h}</div>
                 ))}
               </div>
 
               {items.map(item => (
-                <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '44px 1fr 80px 68px 68px 68px 28px', gap: '6px', marginBottom: '8px' }}>
-                  <input className="form-input" type="number" min="1" value={item.qty} onChange={e => updateItem(item.id, 'qty', e.target.value)} style={{ padding: '7px 6px', textAlign: 'center', fontSize: '13px' }} />
-                  <input className="form-input" type="text" placeholder="Item name" value={item.desc} onChange={e => updateItem(item.id, 'desc', e.target.value)} style={{ padding: '7px 8px', fontSize: '13px' }} />
-                  <input className="form-input" type="number" min="0.1" step="0.1" placeholder="0" value={item.weight} onChange={e => updateItem(item.id, 'weight', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
-                  <input className="form-input" type="number" min="1" placeholder="0" value={item.length} onChange={e => updateItem(item.id, 'length', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
-                  <input className="form-input" type="number" min="1" placeholder="0" value={item.width} onChange={e => updateItem(item.id, 'width', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
-                  <input className="form-input" type="number" min="1" placeholder="0" value={item.height} onChange={e => updateItem(item.id, 'height', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
-                  <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', color: 'var(--ink-muted)', cursor: 'pointer', fontSize: '20px', lineHeight: 1, padding: '4px 0' }}>×</button>
-
-                </div>
-              ))}
-
-              {items.map(item => (
-                <div key={'exempt-' + item.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '-4px', marginBottom: '8px', paddingLeft: '50px' }}>
-                  <input type="checkbox" id={'exempt-' + item.id} checked={item.exemptFreeShipping || false} onChange={e => updateItem(item.id, 'exemptFreeShipping', e.target.checked)} style={{ cursor: 'pointer', accentColor: 'var(--accent)' }} />
-                  <label htmlFor={'exempt-' + item.id} style={{ fontSize: '12px', color: 'var(--ink-muted)', cursor: 'pointer' }}>Exempt from free shipping</label>
+                <div key={item.id} style={{ marginBottom: '10px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr 80px 68px 68px 68px 28px', gap: '6px' }}>
+                    <input className="form-input" type="number" min="1" value={item.qty} onChange={e => updateItem(item.id, 'qty', e.target.value)} style={{ padding: '7px 6px', textAlign: 'center', fontSize: '13px' }} />
+                    <input className="form-input" type="text" placeholder="Item name" value={item.desc} onChange={e => updateItem(item.id, 'desc', e.target.value)} style={{ padding: '7px 8px', fontSize: '13px' }} />
+                    <input className="form-input" type="number" min="0.1" step="0.1" placeholder="0" value={item.weight} onChange={e => updateItem(item.id, 'weight', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
+                    <input className="form-input" type="number" min="1" placeholder="0" value={item.length} onChange={e => updateItem(item.id, 'length', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
+                    <input className="form-input" type="number" min="1" placeholder="0" value={item.width} onChange={e => updateItem(item.id, 'width', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
+                    <input className="form-input" type="number" min="1" placeholder="0" value={item.height} onChange={e => updateItem(item.id, 'height', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
+                    <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', color: 'var(--ink-muted)', cursor: 'pointer', fontSize: '20px', lineHeight: 1, padding: '4px 0' }}>×</button>
+                  </div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingLeft: '50px', marginTop: '4px', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={item.exemptFreeShipping || false} onChange={e => updateItem(item.id, 'exemptFreeShipping', e.target.checked)} style={{ accentColor: 'var(--accent)', cursor: 'pointer' }} />
+                    <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Exempt from free shipping</span>
+                  </label>
                 </div>
               ))}
               <button onClick={addItem} style={{ fontSize: '13px', color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', fontWeight: '500' }}>
