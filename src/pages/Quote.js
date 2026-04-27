@@ -309,8 +309,8 @@ export default function Quote() {
                             <div style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>{result.origin ? result.origin + ' → ' : ''}{result.destination}</div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--accent)', lineHeight: 1 }}>${result.freightCost.toFixed(2)}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginTop: '4px' }}>excl. GST & fuel levy</div>
+                            <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--accent)', lineHeight: 1 }}>${(result.totalCost || result.freightCost).toFixed(2)}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginTop: '4px' }}>{result.fuelLevy ? 'incl. fuel levy · excl. GST' : 'excl. GST & fuel levy'}</div>
                           </div>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', borderTop: '1px solid var(--border)', paddingTop: '16px', marginBottom: '14px' }}>
