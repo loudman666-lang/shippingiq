@@ -146,6 +146,17 @@ Model C: Depot-to-depot — Mainfreight style
 - Auto surcharge triggers use carrier's own extracted thresholds
 - Free shipping can be exempted per product/item
 
+## Known merchant education points
+- Postcode zone file is required — without it the carrier cannot calculate any quotes. The app shows
+  a persistent warning on any active carrier card with no postcode data. Merchants must upload a zone
+  file when adding a carrier, not just a rate card.
+- Some carriers (including StarTrack) do not publish postcode zone files publicly. Merchants need to
+  contact their account manager and ask specifically for a postcode-to-zone mapping file (CSV or Excel).
+  This is a common blocker — raise it early when onboarding new merchants.
+- StarTrack Fixed Price Premium service is Model A (weight break flat rate), not Model B. The AI
+  correctly detects this and may flag it as a warning in the parse results. This is expected — both
+  services can coexist in the same carrier. The rate card just has two different pricing structures.
+
 ## WooCommerce Plugin — design decisions (BUILT)
 ### Carrier eligibility — how carriers are filtered at checkout
 1. Weight/dimension limits per carrier (set in ShippingIQ, stored in carriers.eligibility_rules)
