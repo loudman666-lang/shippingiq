@@ -365,7 +365,7 @@ export default function Quote() {
               <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--ink)', marginBottom: '20px' }}>Order Details</div>
 
               <div style={{ display: 'flex', gap: '16px' }}>
-                <div className="form-group" style={{ flex: 1 }}>
+                <div className="form-group" style={{ width: '150px', flexShrink: 0 }}>
                   <label className="form-label">Customer Postcode</label>
                   <input className="form-input" type="text" placeholder="e.g. 2000" maxLength={4} value={postcode} onChange={e => setPostcode(e.target.value.replace(/\D/g, ''))} />
                 </div>
@@ -402,15 +402,17 @@ export default function Quote() {
                     <input className="form-input" type="number" min="1" placeholder="0" value={item.height} onChange={e => updateItem(item.id, 'height', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
                     <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', color: 'var(--ink-muted)', cursor: 'pointer', fontSize: '20px', lineHeight: 1, padding: '4px 0' }}>×</button>
                   </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={item.exemptFreeShipping || false} onChange={e => updateItem(item.id, 'exemptFreeShipping', e.target.checked)} style={{ accentColor: 'var(--accent)', cursor: 'pointer' }} />
-                    <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Exempt from free shipping</span>
-                  </label>
+
                 </div>
               ))}
               <button onClick={addItem} style={{ fontSize: '13px', color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', fontWeight: '500' }}>
                 + Add item
               </button>
+              {items.some(i => i.exemptFreeShipping) && (
+                <div style={{ fontSize: '12px', color: '#d97706', marginTop: '4px' }}>
+                  ⚠ One or more items exempt from free shipping
+                </div>
+              )}
 
               {totalActual > 0 && (
                 <div style={{ marginTop: '16px', padding: '12px 16px', background: 'var(--surface-2)', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '13px' }}>
