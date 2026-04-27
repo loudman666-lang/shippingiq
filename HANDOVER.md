@@ -27,17 +27,22 @@ npx supabase functions deploy rapid-api --project-ref soaxvqkkecqzarwmbeip --wor
 - Carriers page: add carrier, 3 file uploads (rate card + zone file + optional surcharge doc)
 - File formats: CSV, Excel, PDF all working
 - AI parsing via Supabase edge function (rapid-api)
-- Pricing model detection: Model A (weight break), Model B (basic+per kg), Model C (depot-to-depot)
+- Pricing model detection: Model A, B, C
 - Origin depot selection after parsing
-- Rate table display filtered to selected origin — no duplicates
+- Rate table display filtered to selected origin
 - Surcharge extraction and display
+- Fuel levy % editable per carrier (stored in carriers.fuel_levy_pct)
 - Analysis progress message and spinner
-- Get a Quote page: multi-item, qty, dimensions, cubic weight, chargeable weight, full formula display
+- Get a Quote page: multi-item, qty, dimensions per item, cubic weight
+- Full calculation chain: base freight + fuel levy + GST
+- Settings page: GST toggle (ex GST for B2B, inc GST for B2C)
+- Save Quote to Supabase (basic — to be improved with order management)
 
 ## Current file structure
 src/pages/Dashboard.js + Dashboard.css
 src/pages/Carriers.js + Carriers.css
 src/pages/Quote.js
+src/pages/Settings.js
 src/pages/SignIn.js, SignUp.js, ForgotPassword.js, ResetPassword.js
 src/contexts/AuthContext.js
 src/components/auth/ProtectedRoute.js
@@ -46,57 +51,54 @@ src/App.js
 supabase/functions/rapid-api/index.ts
 
 ## Database (Supabase)
-Tables: profiles, merchants, carriers
+Tables: profiles, merchants, carriers, quotes
 RLS: DISABLED on all tables (dev only)
-carriers.parsed_data stores full AI-parsed output including:
+merchants.settings: jsonb — stores { gstEnabled: true/false }
+carriers.fuel_levy_pct: numeric — fuel levy % per carrier
+carriers.parsed_data: full AI-parsed output including:
   pricingModel, zones, weightBreaks, serviceTypes, originDepots,
-  selectedOrigin, cubicFactor, fuelLevyPct,
+  selectedOrigin, cubicFactor, fuelLevyPct (from rate card),
   modelBRates (each row has originDepot field),
   modelCRates, postcodeMap, surcharges, warnings
 
 ## Edge Function
-Name: rapid-api (wrongly named, should have been parse-carrier)
-Receives: carrierName, rateCard {data, type, name}, zoneFile {data, type, name}, surchargeDoc (optional)
-File types handled: csv (text decode), excel (XLSX library), pdf (document block)
-Calls Claude claude-sonnet-4-20250514, max_tokens 8000
-Returns full parsed JSON including all fields above
+Name: rapid-api
+Receives: carrierName, rateCard, zoneFile, surchargeDoc (all with data/type/name)
+File types: csv (text decode), excel (XLSX via esm.sh), pdf (document block)
+Extracts: pricingModel, zones, rates, postcodeMap, surcharges, cubicFactor, fuelLevyPct
+Model: claude-sonnet-4-20250514, max_tokens 8000
 
 ## Freight calculation engine (Quote.js)
-- Multi-item: qty + weight + L/W/H per item
-- Total actual weight = sum of all item weights x qty
-- Total cubic weight = sum of (L x W x H / 4000) x qty per item
-- Chargeable weight = MAX(total actual, total cubic)
-- Model B formula: MAX(basicCharge + chargeableWeight x perKgRate, minimumCharge)
-- Model C formula: same as Model B but depot-to-depot lookup
-- Model A formula: flat rate lookup by weight break and zone
-- cubicFactor default 250 kg/m3 (divisor 4000 in cm)
+Multi-item: qty + weight + L/W/H per item
+Total actual = sum of item weights x qty
+Total cubic = sum of (L x W x H / 4000) x qty
+Chargeable = MAX(actual, cubic)
+Model B: MAX(basicCharge + chargeable x perKgRate, minimumCharge)
+Model C: same formula, depot-to-depot lookup
+Model A: flat rate by weight break and zone
+Fuel levy: freightCost x fuelLevyPct / 100
+GST: (freightCost + fuelLevy) x 1.1 if gstEnabled
 
 ## THREE PRICING MODELS
-Model A: Weight break table — flat rate per zone per weight range
-Model B: Basic + per kg — MAX(basic + weight x rate, minimum) — Allied, StarTrack
-Model C: Depot-to-depot — Mainfreight style
-
-## REAL CARRIER FILE STRUCTURES (examples only — AI handles any format)
-Allied Express: Excel, Model B, origin depots across top, zones down side
-Mainfreight: Excel zone file 15,976 rows, Model C depot-to-depot
-StarTrack: PDF rate card, mix of Model A and Model B services
-Hunter Express: PDF, Model B, single origin
+Model A: Weight break table
+Model B: Basic + per kg — MAX(basic + weight x rate, minimum)
+Model C: Depot-to-depot (Mainfreight style)
 
 ## Key product decisions — DO NOT CHANGE
 - Merchants upload their own files, no pre-loaded carrier data
 - AI handles any format: CSV, Excel, PDF, any carrier
-- No constraints on carrier types or file structures
-- Single origin warehouse to start (multi-warehouse is future enhancement)
-- Fuel levy is separate and configurable (not baked into rates)
+- Single origin warehouse to start
+- Fuel levy is separate, editable per carrier, not baked into rates
+- GST configurable: ex GST (B2B) or inc GST (B2C)
 
 ## What to build next — in order
-1. Fuel levy — editable % per carrier, applied on top of base freight rate
-2. Edit carrier without deleting (re-upload files or update fuel levy)
-3. Rules page: free shipping threshold, freight margin, carrier priority
-4. WooCommerce plugin
+1. Rules page: free shipping threshold, freight margin, carrier priority
+2. WooCommerce plugin
+3. Edit carrier without deleting (re-upload files)
 
 ## Logged for future build
-- Multi-warehouse / multi-origin support (Scenario 2: separate rate card per depot)
+- Saved quotes: rebuild properly as part of order management with full customer details, all items, ability to reload and recalculate, print/export to PDF
+- Multi-warehouse / multi-origin support
 - Carrier rate editing without full delete and re-upload
 
 ## Credentials
