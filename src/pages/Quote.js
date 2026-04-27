@@ -3,6 +3,79 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import './Carriers.css'
 
+function parseSurchargeAmount(amount, freightCost) {
+  if (!amount) return 0
+  const str = String(amount).trim()
+  if (str === 'POA') return null // needs manual quote
+  if (str.endsWith('%')) {
+    const pct = parseFloat(str)
+    return Math.round(freightCost * pct / 100 * 100) / 100
+  }
+  const num = parseFloat(str.replace(/[^0-9.]/g, ''))
+  return isNaN(num) ? 0 : num
+}
+
+function applySurcharges(carrier, items, freightCost) {
+  const surcharges = carrier.parsed_data?.surcharges || []
+  const rules = carrier.surcharge_rules || {}
+  const applied = []
+  const warnings = []
+
+  // Find longest single item dimension across all items
+  let maxItemLength = 0
+  let maxItemWeight = 0
+  items.forEach(item => {
+    const qty = parseInt(item.qty) || 1
+    const w = parseFloat(item.weight) || 0
+    if (w > maxItemWeight) maxItemWeight = w
+    const dims = [parseFloat(item.length)||0, parseFloat(item.width)||0, parseFloat(item.height)||0]
+    const longest = Math.max(...dims)
+    if (longest > maxItemLength) maxItemLength = longest
+  })
+
+  // Total consignment weight
+  const totalWeight = items.reduce((s, i) => s + (parseFloat(i.weight)||0) * (parseInt(i.qty)||1), 0)
+
+  surcharges.forEach(s => {
+    const key = s.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+    const rule = rules[key] || { trigger: 'manual' }
+    if (rule.trigger === 'manual' || rule.trigger === 'never') return
+
+    let triggered = false
+    let reason = ''
+
+    if (rule.trigger === 'always') {
+      triggered = true
+      reason = 'Always applied'
+    } else if (rule.trigger === 'weight') {
+      const threshold = parseFloat(rule.weightKg) || 0
+      if (totalWeight > threshold) { triggered = true; reason = 'Consignment ' + totalWeight + 'kg > ' + threshold + 'kg threshold' }
+    } else if (rule.trigger === 'dimension') {
+      const threshold = parseFloat(rule.lengthCm) || 0
+      if (maxItemLength > threshold) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm > ' + threshold + 'cm threshold' }
+    } else if (rule.trigger === 'weight_or_dimension') {
+      const wThreshold = parseFloat(rule.weightKg) || 0
+      const dThreshold = parseFloat(rule.lengthCm) || 0
+      if (totalWeight > wThreshold) { triggered = true; reason = 'Consignment ' + totalWeight + 'kg > ' + wThreshold + 'kg' }
+      else if (maxItemLength > dThreshold) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm > ' + dThreshold + 'cm' }
+    } else if (rule.trigger === 'auto_dimension') {
+      const threshold = parseFloat(rule.lengthCm) || 0
+      if (maxItemLength > threshold) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm > ' + threshold + 'cm' }
+    }
+
+    if (triggered) {
+      const amount = parseSurchargeAmount(s.amount, freightCost)
+      if (amount === null) {
+        warnings.push(s.name + ' applies but requires manual quote (POA)')
+      } else {
+        applied.push({ name: s.name, amount, reason, originalAmount: s.amount })
+      }
+    }
+  })
+
+  return { applied, warnings }
+}
+
 function applyMargin(subtotal, rules) {
   if (!rules || rules.freightMarginType === 'none' || !rules.freightMarginValue) return 0
   const val = parseFloat(rules.freightMarginValue) || 0
@@ -45,7 +118,9 @@ function calculateRate(carrier, postcode, items, rules = {}) {
     if (!rate) return { error: 'No rate found for zone ' + zoneName + ' from ' + origin }
     const freight = Math.max(rate.basicCharge + chargeableWeight * rate.perKgRate, rate.minimumCharge)
     const fuelLevy = fuelLevyPct ? Math.round(freight * fuelLevyPct / 100 * 100) / 100 : null
-    const subtotal = fuelLevy ? Math.round((freight + fuelLevy) * 100) / 100 : Math.round(freight * 100) / 100
+    const { applied: surchargesApplied, warnings: surchargeWarnings } = applySurcharges(carrier, items, freight)
+    const surchargeTotal = surchargesApplied.reduce((s, x) => s + x.amount, 0)
+    const subtotal = Math.round(((fuelLevy || 0) + freight + surchargeTotal) * 100) / 100
     const margin = applyMargin(subtotal, rules)
     const totalCost = Math.round((subtotal + margin) * 100) / 100
     return {
@@ -54,7 +129,7 @@ function calculateRate(carrier, postcode, items, rules = {}) {
       totalActualWeight, totalCubicWeight, chargeableWeight, cubicFactor,
       basicCharge: rate.basicCharge, perKgRate: rate.perKgRate, minimumCharge: rate.minimumCharge,
       freightCost: Math.round(freight * 100) / 100,
-      fuelLevyPct, fuelLevy, margin, marginType: rules.freightMarginType, totalCost,
+      fuelLevyPct, fuelLevy, surchargesApplied, surchargeWarnings, surchargeTotal, margin, marginType: rules.freightMarginType, totalCost,
       formula: 'MAX($' + rate.basicCharge.toFixed(2) + ' + ' + chargeableWeight + 'kg x $' + rate.perKgRate.toFixed(3) + ', $' + rate.minimumCharge.toFixed(2) + ')',
       model: 'B'
     }
@@ -66,7 +141,9 @@ function calculateRate(carrier, postcode, items, rules = {}) {
     if (!rate) return { error: 'No depot-to-depot rate found from ' + origin + ' to ' + zoneName }
     const freight = Math.max(rate.basicCharge + chargeableWeight * rate.perKgRate, rate.minimumCharge)
     const fuelLevy = fuelLevyPct ? Math.round(freight * fuelLevyPct / 100 * 100) / 100 : null
-    const subtotal = fuelLevy ? Math.round((freight + fuelLevy) * 100) / 100 : Math.round(freight * 100) / 100
+    const { applied: surchargesApplied, warnings: surchargeWarnings } = applySurcharges(carrier, items, freight)
+    const surchargeTotal = surchargesApplied.reduce((s, x) => s + x.amount, 0)
+    const subtotal = Math.round(((fuelLevy || 0) + freight + surchargeTotal) * 100) / 100
     const margin = applyMargin(subtotal, rules)
     const totalCost = Math.round((subtotal + margin) * 100) / 100
     return {
@@ -75,7 +152,7 @@ function calculateRate(carrier, postcode, items, rules = {}) {
       totalActualWeight, totalCubicWeight, chargeableWeight, cubicFactor,
       basicCharge: rate.basicCharge, perKgRate: rate.perKgRate, minimumCharge: rate.minimumCharge,
       freightCost: Math.round(freight * 100) / 100,
-      fuelLevyPct, fuelLevy, margin, marginType: rules.freightMarginType, totalCost,
+      fuelLevyPct, fuelLevy, surchargesApplied, surchargeWarnings, surchargeTotal, margin, marginType: rules.freightMarginType, totalCost,
       formula: 'MAX($' + rate.basicCharge.toFixed(2) + ' + ' + chargeableWeight + 'kg x $' + rate.perKgRate.toFixed(3) + ', $' + rate.minimumCharge.toFixed(2) + ')',
       model: 'C'
     }
@@ -97,7 +174,9 @@ function calculateRate(carrier, postcode, items, rules = {}) {
     const freight = row[zoneName] || row[zoneCode]
     if (!freight) return { error: 'No rate for zone ' + zoneName }
     const fuelLevy = fuelLevyPct ? Math.round(freight * fuelLevyPct / 100 * 100) / 100 : null
-    const subtotal = fuelLevy ? Math.round((freight + fuelLevy) * 100) / 100 : Math.round(freight * 100) / 100
+    const { applied: surchargesApplied, warnings: surchargeWarnings } = applySurcharges(carrier, items, freight)
+    const surchargeTotal = surchargesApplied.reduce((s, x) => s + x.amount, 0)
+    const subtotal = Math.round(((fuelLevy || 0) + freight + surchargeTotal) * 100) / 100
     const margin = applyMargin(subtotal, rules)
     const totalCost = Math.round((subtotal + margin) * 100) / 100
     return {
@@ -105,7 +184,7 @@ function calculateRate(carrier, postcode, items, rules = {}) {
       zone: zoneName, zoneCode, service, weightBreak: matchedBreak,
       totalActualWeight, totalCubicWeight, chargeableWeight, cubicFactor,
       freightCost: Math.round(freight * 100) / 100,
-      fuelLevyPct, fuelLevy, margin, marginType: rules.freightMarginType, totalCost,
+      fuelLevyPct, fuelLevy, surchargesApplied, surchargeWarnings, surchargeTotal, margin, marginType: rules.freightMarginType, totalCost,
       formula: 'Flat rate for ' + matchedBreak + ' to ' + zoneName, model: 'A'
     }
   }
@@ -357,6 +436,17 @@ export default function Quote() {
                               <span style={{ marginLeft: '12px', color: 'var(--accent)', fontWeight: '700' }}>Subtotal: ${result.totalCost.toFixed(2)}</span>
                             </div>
                           )}
+                          {result.surchargesApplied?.map((s, i) => (
+                            <div key={i} style={{ marginTop: '6px' }}>
+                              + {s.name} = <strong style={{ color: 'var(--ink)' }}>${s.amount.toFixed(2)}</strong>
+                              <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--ink-muted)' }}>({s.reason})</span>
+                            </div>
+                          ))}
+                          {result.surchargeWarnings?.map((w, i) => (
+                            <div key={i} style={{ marginTop: '6px', color: '#d97706' }}>
+                              ⚠ {w}
+                            </div>
+                          ))}
                           {result.margin > 0 && (
                             <div style={{ marginTop: '6px' }}>
                               + Handling margin ({result.marginType === 'percent' ? rules.freightMarginValue + '%' : '$' + result.margin.toFixed(2)}) = <strong style={{ color: 'var(--ink)' }}>${result.margin.toFixed(2)}</strong>
