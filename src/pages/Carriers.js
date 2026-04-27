@@ -172,8 +172,7 @@ function getFileType(file) {
   return 'unknown'
 }
 
-const SHEET_ROW_LIMIT = 500
-const SHEET_CHAR_LIMIT = 2000
+const SHEET_CHAR_LIMIT = 50000
 
 async function excelFileToText(file) {
   const XLSX = await import('https://esm.sh/xlsx@0.18.5')
@@ -181,14 +180,14 @@ async function excelFileToText(file) {
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  const workbook = XLSX.read(bytes, { type: 'array', sheetRows: SHEET_ROW_LIMIT })
+  const workbook = XLSX.read(bytes, { type: 'array' })
   const parts = []
   workbook.SheetNames.forEach((sheetName, index) => {
     try {
       const sheet = workbook.Sheets[sheetName]
       const csv = XLSX.utils.sheet_to_csv(sheet).trim()
       if (!csv) return
-      const label = 'Sheet ' + (index + 1) + ': ' + sheetName + ' (truncated to first ' + SHEET_ROW_LIMIT + ' rows)'
+      const label = 'Sheet ' + (index + 1) + ': ' + sheetName
       parts.push(label + '\n' + csv.slice(0, SHEET_CHAR_LIMIT))
     } catch (e) {
       parts.push('Sheet ' + (index + 1) + ': ' + sheetName + '\n(could not parse sheet: ' + e.message + ')')
