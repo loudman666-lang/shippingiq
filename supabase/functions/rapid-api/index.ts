@@ -41,7 +41,7 @@ function excelToText(base64) {
       if (!csv) return // skip empty sheets
       const label = 'Sheet ' + (index + 1) + ': ' + sheetName
       const note = '(truncated to first ' + EXCEL_ROW_LIMIT + ' rows)'
-      parts.push(label + ' ' + note + '\n' + csv.slice(0, 5000))
+      parts.push(label + ' ' + note + '\n' + csv.slice(0, 2000))
     } catch (e) {
       parts.push('Sheet ' + (index + 1) + ': ' + sheetName + '\n(could not parse sheet: ' + e.message + ')')
     }
@@ -133,7 +133,7 @@ Respond ONLY with a JSON object. No markdown, no backticks.
         userContent.push({ type: 'text', text: 'Above is the rate card PDF: ' + rateCard.name })
       } else {
         const text = fileToText(rateCard)
-        userContent.push({ type: 'text', text: 'Rate card (' + rateCard.name + '):\n' + text.slice(0, 20000) })
+        userContent.push({ type: 'text', text: 'Rate card (' + rateCard.name + '):\n' + text.slice(0, 8000) })
       }
     }
 
@@ -143,7 +143,7 @@ Respond ONLY with a JSON object. No markdown, no backticks.
         userContent.push({ type: 'text', text: 'Above is the zone file PDF: ' + zoneFile.name })
       } else {
         const text = fileToText(zoneFile)
-        userContent.push({ type: 'text', text: 'Zone file (' + zoneFile.name + '):\n' + text.slice(0, 20000) })
+        userContent.push({ type: 'text', text: 'Zone file (' + zoneFile.name + '):\n' + text.slice(0, 8000) })
       }
     }
 
