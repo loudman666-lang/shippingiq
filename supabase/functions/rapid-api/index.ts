@@ -1,4 +1,4 @@
-// v7
+// v8
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
 
@@ -72,8 +72,16 @@ PRICING MODELS - detect which applies:
 CRITICAL FOR MODEL B WITH MULTIPLE ORIGIN DEPOTS:
 If the rate card has multiple origin depots (e.g. columns for Sydney, Melbourne, Brisbane), you MUST create a separate modelBRates entry for EVERY combination of originDepot + zone. Every single row in modelBRates MUST include the "originDepot" field. Example:
 { "originDepot": "Sydney", "service": "Road Express", "zone": "Melbourne Metro", "zoneCode": "MEL1", "basicCharge": 8.09, "perKgRate": 0.25, "minimumCharge": 11.04 }
-{ "originDepot": "Melbourne", "service": "Road Express", "zone": "Sydney Metro", "zoneCode": "SYD1", "basicCharge": 8.09, "perKgRate": 0.25, "minimumCharge": 11.04 }
 Never omit originDepot from any modelBRates row.
+
+CUBIC FACTOR:
+Extract the cubic conversion factor if stated in any file. This is used to calculate cubic weight from dimensions.
+Common formats: "250kg/m3", "4000 cubic factor", "1 cubic metre = 250kg", "cubic divisor 4000".
+The cubic divisor (cm based) and kg/m3 are related: 250kg/m3 = divisor of 4000 (L x W x H in cm / 4000).
+Store as cubicFactor in kg/m3 (e.g. 250). If not stated, use 250 as the default for road freight.
+
+FUEL LEVY:
+Extract the fuel levy percentage if stated. Store as fuelLevyPct (e.g. 17.5 for 17.5%). If not found, set to null.
 
 Extract all zones, rates, postcode mappings, and surcharges.
 
@@ -85,7 +93,9 @@ Respond ONLY with a JSON object. No markdown, no backticks.
   "zones": ["list of destination zone names"],
   "weightBreaks": ["list of weight breaks if applicable"],
   "serviceTypes": ["list of service types"],
-  "originDepots": ["list of origin depot names e.g. Sydney, Melbourne, Brisbane"],
+  "originDepots": ["list of origin depot names"],
+  "cubicFactor": 250,
+  "fuelLevyPct": null,
   "rateCount": 0,
   "summary": "one sentence summary",
   "rates": [{ "service": "Road Express", "weight": "0-1kg", "ZoneName": 8.50 }],

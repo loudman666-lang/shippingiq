@@ -3,29 +3,41 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import './Carriers.css'
 
-function calculateRate(carrier, postcode, weight) {
+function calculateRate(carrier, postcode, weight, length, width, height) {
   const data = carrier.parsed_data
   const model = data?.pricingModel
   const origin = data?.selectedOrigin
+  const cubicFactor = data?.cubicFactor || 250
   const postcodeMap = data?.postcodeMap || []
   const postcodeEntry = postcodeMap.find(p => String(p.postcode) === String(postcode))
   if (!postcodeEntry) return { error: 'Postcode ' + postcode + ' not found in zone file for ' + carrier.name }
+
   const zoneCode = postcodeEntry.zoneCode
   const zoneName = postcodeEntry.zone
   const suburb = postcodeEntry.suburb
   const state = postcodeEntry.state
 
+  // Calculate cubic weight if dimensions provided
+  let chargeableWeight = weight
+  let cubicWeight = null
+  if (length && width && height) {
+    cubicWeight = Math.round((length * width * height / 4000) * 100) / 100
+    chargeableWeight = Math.max(weight, cubicWeight)
+  }
+
   if (model === 'B') {
     const rates = data.modelBRates || []
     const rate = rates.find(r => (!origin || r.originDepot === origin) && (r.zoneCode === zoneCode || r.zone === zoneName))
     if (!rate) return { error: 'No rate found for zone ' + zoneName + ' from ' + origin }
-    const freight = Math.max(rate.basicCharge + weight * rate.perKgRate, rate.minimumCharge)
+    const freight = Math.max(rate.basicCharge + chargeableWeight * rate.perKgRate, rate.minimumCharge)
     return {
       carrier: carrier.name, origin, destination: suburb + ', ' + state + ' ' + postcode,
-      zone: zoneName, zoneCode, service: rate.service, weight: weight + 'kg',
+      zone: zoneName, zoneCode, service: rate.service,
+      actualWeight: weight, cubicWeight, chargeableWeight,
+      cubicFactor,
       basicCharge: rate.basicCharge, perKgRate: rate.perKgRate, minimumCharge: rate.minimumCharge,
       freightCost: Math.round(freight * 100) / 100,
-      formula: 'MAX($' + rate.basicCharge.toFixed(2) + ' + ' + weight + 'kg x $' + rate.perKgRate.toFixed(3) + ', $' + rate.minimumCharge.toFixed(2) + ')',
+      formula: 'MAX($' + rate.basicCharge.toFixed(2) + ' + ' + chargeableWeight + 'kg x $' + rate.perKgRate.toFixed(3) + ', $' + rate.minimumCharge.toFixed(2) + ')',
       model: 'B'
     }
   }
@@ -34,13 +46,14 @@ function calculateRate(carrier, postcode, weight) {
     const rates = data.modelCRates || []
     const rate = rates.find(r => (!origin || r.originDepot === origin) && r.destinationDepot === zoneName)
     if (!rate) return { error: 'No depot-to-depot rate found from ' + origin + ' to ' + zoneName }
-    const freight = Math.max(rate.basicCharge + weight * rate.perKgRate, rate.minimumCharge)
+    const freight = Math.max(rate.basicCharge + chargeableWeight * rate.perKgRate, rate.minimumCharge)
     return {
       carrier: carrier.name, origin, destination: suburb + ', ' + state + ' ' + postcode,
-      zone: zoneName, service: 'Depot to Depot', weight: weight + 'kg',
+      zone: zoneName, service: 'Depot to Depot',
+      actualWeight: weight, cubicWeight, chargeableWeight, cubicFactor,
       basicCharge: rate.basicCharge, perKgRate: rate.perKgRate, minimumCharge: rate.minimumCharge,
       freightCost: Math.round(freight * 100) / 100,
-      formula: 'MAX($' + rate.basicCharge.toFixed(2) + ' + ' + weight + 'kg x $' + rate.perKgRate.toFixed(3) + ', $' + rate.minimumCharge.toFixed(2) + ')',
+      formula: 'MAX($' + rate.basicCharge.toFixed(2) + ' + ' + chargeableWeight + 'kg x $' + rate.perKgRate.toFixed(3) + ', $' + rate.minimumCharge.toFixed(2) + ')',
       model: 'C'
     }
   }
@@ -53,16 +66,17 @@ function calculateRate(carrier, postcode, weight) {
     let matchedBreak = null
     for (const wb of weightBreaks) {
       const parts = wb.replace('kg','').split('-')
-      if (parts.length === 2 && weight >= parseFloat(parts[0]) && weight <= parseFloat(parts[1])) { matchedBreak = wb; break }
+      if (parts.length === 2 && chargeableWeight >= parseFloat(parts[0]) && chargeableWeight <= parseFloat(parts[1])) { matchedBreak = wb; break }
     }
-    if (!matchedBreak) return { error: 'No weight break found for ' + weight + 'kg' }
+    if (!matchedBreak) return { error: 'No weight break found for ' + chargeableWeight + 'kg' }
     const row = rates.find(r => r.service === service && r.weight === matchedBreak)
     if (!row) return { error: 'No rate found for ' + matchedBreak + ' to ' + zoneName }
     const freight = row[zoneName] || row[zoneCode]
     if (!freight) return { error: 'No rate for zone ' + zoneName }
     return {
       carrier: carrier.name, destination: suburb + ', ' + state + ' ' + postcode,
-      zone: zoneName, zoneCode, service, weight: weight + 'kg', weightBreak: matchedBreak,
+      zone: zoneName, zoneCode, service, weightBreak: matchedBreak,
+      actualWeight: weight, cubicWeight, chargeableWeight, cubicFactor,
       freightCost: Math.round(freight * 100) / 100,
       formula: 'Flat rate for ' + matchedBreak + ' to ' + zoneName, model: 'A'
     }
@@ -77,6 +91,10 @@ export default function Quote() {
   const [loading, setLoading] = useState(true)
   const [postcode, setPostcode] = useState('')
   const [weight, setWeight] = useState('')
+  const [length, setLength] = useState('')
+  const [width, setWidth] = useState('')
+  const [height, setHeight] = useState('')
+  const [showDimensions, setShowDimensions] = useState(false)
   const [results, setResults] = useState(null)
   const [error, setError] = useState(null)
 
@@ -95,7 +113,10 @@ export default function Quote() {
     if (!postcode || postcode.length < 4) { setError('Please enter a valid Australian postcode.'); return }
     if (!weight || isNaN(weight) || parseFloat(weight) <= 0) { setError('Please enter a valid weight in kg.'); return }
     if (carriers.length === 0) { setError('No active carriers found. Add a carrier first.'); return }
-    setResults(carriers.map(c => calculateRate(c, postcode, parseFloat(weight))))
+    const l = length ? parseFloat(length) : null
+    const w = width ? parseFloat(width) : null
+    const h = height ? parseFloat(height) : null
+    setResults(carriers.map(c => calculateRate(c, postcode, parseFloat(weight), l, w, h)))
   }
 
   return (
@@ -150,23 +171,60 @@ export default function Quote() {
           </div>
         </div>
 
-        <div className="card" style={{ marginBottom: '24px', maxWidth: '480px' }}>
+        <div className="card" style={{ marginBottom: '24px', maxWidth: '560px' }}>
           <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
             <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
               <label className="form-label">Customer Postcode</label>
               <input className="form-input" type="text" placeholder="e.g. 2000" maxLength={4} value={postcode} onChange={e => setPostcode(e.target.value.replace(/\D/g, ''))} onKeyDown={e => e.key === 'Enter' && getQuote()} />
             </div>
             <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-              <label className="form-label">Weight (kg)</label>
+              <label className="form-label">Actual Weight (kg)</label>
               <input className="form-input" type="number" placeholder="e.g. 10" min="0.1" step="0.1" value={weight} onChange={e => setWeight(e.target.value)} onKeyDown={e => e.key === 'Enter' && getQuote()} />
             </div>
           </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <button
+              onClick={() => setShowDimensions(!showDimensions)}
+              style={{ fontSize: '13px', color: '#E8521A', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: '500' }}>
+              {showDimensions ? '− Hide dimensions' : '+ Add dimensions (for cubic weight)'}
+            </button>
+          </div>
+
+          {showDimensions && (
+            <div style={{ marginBottom: '16px', padding: '16px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+              <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>
+                Enter dimensions in centimetres. Cubic weight = L × W × H ÷ 4000. Chargeable weight = whichever is greater.
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                  <label className="form-label">Length (cm)</label>
+                  <input className="form-input" type="number" placeholder="0" min="1" value={length} onChange={e => setLength(e.target.value)} />
+                </div>
+                <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                  <label className="form-label">Width (cm)</label>
+                  <input className="form-input" type="number" placeholder="0" min="1" value={width} onChange={e => setWidth(e.target.value)} />
+                </div>
+                <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                  <label className="form-label">Height (cm)</label>
+                  <input className="form-input" type="number" placeholder="0" min="1" value={height} onChange={e => setHeight(e.target.value)} />
+                </div>
+              </div>
+              {length && width && height && (
+                <div style={{ marginTop: '10px', fontSize: '13px', color: '#374151' }}>
+                  Cubic weight: <strong>{Math.round(parseFloat(length) * parseFloat(width) * parseFloat(height) / 4000 * 100) / 100}kg</strong>
+                  {weight && <span> · Chargeable: <strong>{Math.max(parseFloat(weight), Math.round(parseFloat(length) * parseFloat(width) * parseFloat(height) / 4000 * 100) / 100)}kg</strong></span>}
+                </div>
+              )}
+            </div>
+          )}
+
           {error && <div className="error-msg" style={{ marginBottom: '12px' }}>{error}</div>}
           <button className="btn-primary" style={{ width: '100%' }} onClick={getQuote} disabled={loading}>Calculate Freight</button>
         </div>
 
         {results && results.map((result, i) => (
-          <div key={i} className="card" style={{ marginBottom: '16px' }}>
+          <div key={i} className="card" style={{ marginBottom: '16px', maxWidth: '560px' }}>
             {result.error ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ fontSize: '20px' }}>⚠️</span>
@@ -187,22 +245,32 @@ export default function Quote() {
                     <div style={{ fontSize: '11px', color: '#9ca3af' }}>excl. GST & fuel levy</div>
                   </div>
                 </div>
-                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                   <div>
                     <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Zone</div>
                     <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginTop: '2px' }}>{result.zone}{result.zoneCode ? ' (' + result.zoneCode + ')' : ''}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Weight</div>
-                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginTop: '2px' }}>{result.weight}</div>
+                    <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actual Weight</div>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginTop: '2px' }}>{result.actualWeight}kg</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Model</div>
-                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginTop: '2px' }}>Model {result.model}</div>
+                    <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {result.cubicWeight ? 'Chargeable Weight' : 'Model'}
+                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginTop: '2px' }}>
+                      {result.cubicWeight ? result.chargeableWeight + 'kg' : 'Model ' + result.model}
+                    </div>
                   </div>
                 </div>
+                {result.cubicWeight && (
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+                    Cubic weight: {result.cubicWeight}kg (factor: {result.cubicFactor}kg/m³) · Chargeable: <strong>{result.chargeableWeight}kg</strong>
+                    {result.cubicWeight > result.actualWeight ? ' — cubic applies' : ' — actual weight applies'}
+                  </div>
+                )}
                 {result.formula && (
-                  <div style={{ marginTop: '10px', padding: '8px 12px', background: '#f9fafb', borderRadius: '6px', fontSize: '12px', color: '#6b7280', fontFamily: 'monospace' }}>
+                  <div style={{ padding: '8px 12px', background: '#f9fafb', borderRadius: '6px', fontSize: '12px', color: '#6b7280', fontFamily: 'monospace' }}>
                     {result.formula} = <strong>${result.freightCost.toFixed(2)}</strong>
                   </div>
                 )}
