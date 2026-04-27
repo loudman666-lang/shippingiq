@@ -3,6 +3,46 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import './Carriers.css'
 
+function RateTable({ carrier }) {
+  const data = carrier.parsed_data
+  if (!data?.rates?.length) return (
+    <div style={{ padding: '16px', color: '#6b7280', fontSize: '13px' }}>
+      No rate detail available. Delete this carrier and re-upload to see the full rate table.
+    </div>
+  )
+  const zones = data.zones || []
+  const serviceTypes = data.serviceTypes || []
+  return (
+    <div className="rate-table-wrap">
+      {serviceTypes.map(service => {
+        const rows = data.rates.filter(r => r.service === service)
+        if (!rows.length) return null
+        return (
+          <div key={service} style={{ marginBottom: '24px' }}>
+            <div className="rate-table-service">{service}</div>
+            <table className="rate-table">
+              <thead>
+                <tr>
+                  <th>Weight</th>
+                  {zones.map(z => <th key={z}>{z}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(row => (
+                  <tr key={row.weight}>
+                    <td>{row.weight}</td>
+                    {zones.map(z => <td key={z}>${Number(row[z] || 0).toFixed(2)}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function Carriers() {
   const { merchant, isAdmin } = useAuth()
   const [carriers, setCarriers] = useState([])
@@ -13,6 +53,7 @@ export default function Carriers() {
   const [form, setForm] = useState({ name: '', rateCard: null, zoneFile: null })
   const [parseResult, setParseResult] = useState(null)
   const [error, setError] = useState(null)
+  const [viewingCarrier, setViewingCarrier] = useState(null)
 
   useEffect(() => {
     if (merchant?.id) fetchCarriers()
@@ -20,12 +61,12 @@ export default function Carriers() {
 
   async function fetchCarriers() {
     setLoading(true)
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('carriers')
       .select('*')
       .eq('merchant_id', merchant.id)
       .order('created_at', { ascending: false })
-    if (!error) setCarriers(data || [])
+    setCarriers(data || [])
     setLoading(false)
   }
 
@@ -37,19 +78,12 @@ export default function Carriers() {
     setParsing(true)
     setError(null)
     setParseResult(null)
-
     try {
       const rateCardText = await form.rateCard.text()
       const zoneFileText = await form.zoneFile.text()
-
       const { data, error } = await supabase.functions.invoke('rapid-api', {
-        body: {
-          carrierName: form.name,
-          rateCardText,
-          zoneFileText
-        }
+        body: { carrierName: form.name, rateCardText, zoneFileText }
       })
-
       if (error) throw error
       setParseResult(data)
     } catch (err) {
@@ -64,7 +98,6 @@ export default function Carriers() {
     if (!parseResult) return
     setSaving(true)
     setError(null)
-
     try {
       const { error } = await supabase.from('carriers').insert({
         merchant_id: merchant.id,
@@ -145,7 +178,7 @@ export default function Carriers() {
             <h1 className="main-title">Carriers</h1>
             <p className="main-subtitle">Manage your freight carriers and rate cards</p>
           </div>
-          <button className="btn-primary" onClick={() => { setShowAdd(true); setParseResult(null); setError(null); }}>
+          <button className="btn-primary" onClick={() => { setShowAdd(true); setParseResult(null); setError(null); setViewingCarrier(null) }}>
             + Add Carrier
           </button>
         </div>
@@ -153,44 +186,23 @@ export default function Carriers() {
         {showAdd && (
           <div className="card" style={{ marginBottom: '24px' }}>
             <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>Add New Carrier</h2>
-
             <div className="form-group">
               <label className="form-label">Carrier Name</label>
-              <input
-                className="form-input"
-                type="text"
-                placeholder="e.g. Australia Post, Sendle, CouriersPlease"
-                value={form.name}
-                onChange={e => setForm({ ...form, name: e.target.value })}
-              />
+              <input className="form-input" type="text" placeholder="e.g. Australia Post, Sendle, CouriersPlease" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
             </div>
-
             <div className="form-group">
               <label className="form-label">Rate Card (CSV)</label>
-              <input
-                className="form-input"
-                type="file"
-                accept=".csv"
-                onChange={e => setForm({ ...form, rateCard: e.target.files[0] })}
-              />
+              <input className="form-input" type="file" accept=".csv" onChange={e => setForm({ ...form, rateCard: e.target.files[0] })} />
             </div>
-
             <div className="form-group">
               <label className="form-label">Zone File (CSV)</label>
-              <input
-                className="form-input"
-                type="file"
-                accept=".csv"
-                onChange={e => setForm({ ...form, zoneFile: e.target.files[0] })}
-              />
+              <input className="form-input" type="file" accept=".csv" onChange={e => setForm({ ...form, zoneFile: e.target.files[0] })} />
             </div>
-
             {error && <div className="error-msg">{error}</div>}
-
             {parseResult && (
               <div className="parse-result">
-                <div className="parse-result-title">✓ Files parsed successfully</div>
-                <p style={{ marginBottom: '8px', color: 'var(--text-secondary)' }}>{parseResult.summary}</p>
+                <div className="parse-result-title">Files parsed successfully</div>
+                <p style={{ marginBottom: '8px', color: '#6b7280' }}>{parseResult.summary}</p>
                 <div className="parse-tags">
                   {parseResult.zones?.slice(0, 5).map(z => <span key={z} className="parse-tag">{z}</span>)}
                   {parseResult.serviceTypes?.map(s => <span key={s} className="parse-tag">{s}</span>)}
@@ -198,21 +210,25 @@ export default function Carriers() {
                 </div>
               </div>
             )}
-
             <div className="form-actions">
-              <button className="btn-secondary" onClick={() => { setShowAdd(false); setParseResult(null); setError(null); }}>
-                Cancel
-              </button>
+              <button className="btn-secondary" onClick={() => { setShowAdd(false); setParseResult(null); setError(null) }}>Cancel</button>
               {!parseResult ? (
-                <button className="btn-primary" onClick={parseFiles} disabled={parsing}>
-                  {parsing ? 'Parsing...' : 'Parse Files'}
-                </button>
+                <button className="btn-primary" onClick={parseFiles} disabled={parsing}>{parsing ? 'Parsing...' : 'Parse Files'}</button>
               ) : (
-                <button className="btn-primary" onClick={saveCarrier} disabled={saving}>
-                  {saving ? 'Saving...' : 'Save Carrier'}
-                </button>
+                <button className="btn-primary" onClick={saveCarrier} disabled={saving}>{saving ? 'Saving...' : 'Save Carrier'}</button>
               )}
             </div>
+          </div>
+        )}
+
+        {viewingCarrier && (
+          <div className="card" style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: '600' }}>{viewingCarrier.name} - Rate Card</h2>
+              <button className="btn-secondary" onClick={() => setViewingCarrier(null)}>Close</button>
+            </div>
+            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>{viewingCarrier.parsed_data?.summary}</p>
+            <RateTable carrier={viewingCarrier} />
           </div>
         )}
 
@@ -233,13 +249,14 @@ export default function Carriers() {
               <div key={carrier.id} className="carrier-card">
                 <div className="carrier-info">
                   <div className="carrier-name">{carrier.name}</div>
-                  <div className="carrier-meta">
-                    {carrier.parsed_data?.rateCount} rates · {carrier.parsed_data?.zones?.length} zones · {carrier.parsed_data?.serviceTypes?.join(', ')}
-                  </div>
+                  <div className="carrier-meta">{carrier.parsed_data?.rateCount} rates · {carrier.parsed_data?.zones?.length} zones · {carrier.parsed_data?.serviceTypes?.join(', ')}</div>
                   <div className="carrier-summary">{carrier.parsed_data?.summary}</div>
                 </div>
                 <div className="carrier-actions">
-                  <span className={`carrier-status ${carrier.status}`}>{carrier.status}</span>
+                  <span className={"carrier-status " + carrier.status}>{carrier.status}</span>
+                  <button className="btn-secondary" onClick={() => setViewingCarrier(viewingCarrier?.id === carrier.id ? null : carrier)}>
+                    {viewingCarrier?.id === carrier.id ? 'Hide Rates' : 'View Rates'}
+                  </button>
                   <button className="btn-danger" onClick={() => deleteCarrier(carrier.id)}>Delete</button>
                 </div>
               </div>
