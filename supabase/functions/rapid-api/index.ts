@@ -21,22 +21,35 @@ function base64ToUint8Array(base64) {
   return bytes
 }
 
+const EXCEL_ROW_LIMIT = 500
+
 function excelToText(base64) {
+  let workbook
   try {
     const bytes = base64ToUint8Array(base64)
-    const workbook = XLSX.read(bytes, { type: 'array' })
-    const parts: string[] = []
-    workbook.SheetNames.forEach((sheetName, index) => {
+    // sheetRows stops XLSX parsing at this row — prevents CPU timeout on large zone files
+    workbook = XLSX.read(bytes, { type: 'array', sheetRows: EXCEL_ROW_LIMIT })
+  } catch (e) {
+    return 'Could not read Excel file: ' + e.message
+  }
+
+  const parts: string[] = []
+  workbook.SheetNames.forEach((sheetName, index) => {
+    try {
       const sheet = workbook.Sheets[sheetName]
       const csv = XLSX.utils.sheet_to_csv(sheet).trim()
       if (!csv) return // skip empty sheets
-      // Cap each sheet independently so a large sheet can't crowd out others
-      parts.push('Sheet ' + (index + 1) + ': ' + sheetName + '\n' + csv.slice(0, 5000))
-    })
-    return parts.join('\n\n---\n\n')
-  } catch (e) {
-    return 'Could not parse Excel file: ' + e.message
-  }
+      const label = 'Sheet ' + (index + 1) + ': ' + sheetName
+      const note = '(truncated to first ' + EXCEL_ROW_LIMIT + ' rows)'
+      parts.push(label + ' ' + note + '\n' + csv.slice(0, 5000))
+    } catch (e) {
+      parts.push('Sheet ' + (index + 1) + ': ' + sheetName + '\n(could not parse sheet: ' + e.message + ')')
+    }
+  })
+
+  return parts.length > 0
+    ? parts.join('\n\n---\n\n')
+    : 'Could not extract any sheet content from Excel file'
 }
 
 function fileToText(file) {
