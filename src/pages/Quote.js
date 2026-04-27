@@ -202,7 +202,7 @@ function calculateRate(carrier, postcode, items, rules = {}) {
   return { error: 'Unknown pricing model: ' + model }
 }
 
-const emptyItem = () => ({ id: Date.now() + Math.random(), qty: 1, desc: '', weight: '', length: '', width: '', height: '' })
+const emptyItem = () => ({ id: Date.now() + Math.random(), qty: 1, desc: '', weight: '', length: '', width: '', height: '', exemptFreeShipping: false })
 
 export default function Quote() {
   const { merchant, isAdmin } = useAuth()
@@ -266,7 +266,8 @@ export default function Quote() {
     const validItems = items.filter(i => i.weight && parseFloat(i.weight) > 0)
     if (validItems.length === 0) { setError('Please enter a weight for at least one item.'); return }
     const orderVal = parseFloat(orderValue) || 0
-    const isFreeShipping = merchantRules.freeShippingEnabled && merchantRules.freeShippingThreshold && orderVal >= parseFloat(merchantRules.freeShippingThreshold)
+    const hasExemptItem = validItems.some(i => i.exemptFreeShipping)
+    const isFreeShipping = !hasExemptItem && merchantRules.freeShippingEnabled && merchantRules.freeShippingThreshold && orderVal >= parseFloat(merchantRules.freeShippingThreshold)
     if (isFreeShipping) {
       setResults(carriers.map(c => ({
         carrier: c.name,
@@ -391,7 +392,7 @@ export default function Quote() {
               </div>
 
               {items.map(item => (
-                <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '44px 1fr 80px 68px 68px 68px 28px', gap: '6px', marginBottom: '6px' }}>
+                <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '44px 1fr 80px 68px 68px 68px 28px', gap: '6px', marginBottom: '8px' }}>
                   <input className="form-input" type="number" min="1" value={item.qty} onChange={e => updateItem(item.id, 'qty', e.target.value)} style={{ padding: '7px 6px', textAlign: 'center', fontSize: '13px' }} />
                   <input className="form-input" type="text" placeholder="Item name" value={item.desc} onChange={e => updateItem(item.id, 'desc', e.target.value)} style={{ padding: '7px 8px', fontSize: '13px' }} />
                   <input className="form-input" type="number" min="0.1" step="0.1" placeholder="0" value={item.weight} onChange={e => updateItem(item.id, 'weight', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
@@ -399,6 +400,12 @@ export default function Quote() {
                   <input className="form-input" type="number" min="1" placeholder="0" value={item.width} onChange={e => updateItem(item.id, 'width', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
                   <input className="form-input" type="number" min="1" placeholder="0" value={item.height} onChange={e => updateItem(item.id, 'height', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
                   <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', color: 'var(--ink-muted)', cursor: 'pointer', fontSize: '20px', lineHeight: 1, padding: '4px 0' }}>×</button>
+                  {item.exemptFreeShipping !== undefined && (
+                    <div style={{ gridColumn: '2 / -1', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '-2px', marginBottom: '4px' }}>
+                      <input type="checkbox" id={'exempt-' + item.id} checked={item.exemptFreeShipping} onChange={e => updateItem(item.id, 'exemptFreeShipping', e.target.checked)} style={{ cursor: 'pointer' }} />
+                      <label htmlFor={'exempt-' + item.id} style={{ fontSize: '12px', color: 'var(--ink-muted)', cursor: 'pointer' }}>Exempt from free shipping</label>
+                    </div>
+                  )}
                 </div>
               ))}
 
