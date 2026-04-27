@@ -3,6 +3,21 @@ defined( 'ABSPATH' ) || exit;
 
 class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 
+	/** @var string */
+	public $api_url = '';
+
+	/** @var string */
+	public $merchant_id = '';
+
+	/** @var string */
+	public $supabase_url = '';
+
+	/** @var string */
+	public $supabase_anon_key = '';
+
+	/** @var string */
+	public $display_mode = 'all';
+
 	public function __construct( $instance_id = 0 ) {
 		$this->id                 = 'shippingiq';
 		$this->instance_id        = absint( $instance_id );
@@ -16,7 +31,7 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 		$this->init();
 	}
 
-	public function init(): void {
+	public function init() {
 		$this->init_form_fields();
 		$this->init_settings();
 
@@ -30,7 +45,7 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 		add_action( 'woocommerce_update_options_shipping_' . $this->id, array( $this, 'process_admin_options' ) );
 	}
 
-	public function init_form_fields(): void {
+	public function init_form_fields() {
 		$this->instance_form_fields = array(
 			'title'            => array(
 				'title'       => __( 'Method Title', 'shippingiq' ),
@@ -85,30 +100,44 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 	// Core rate calculation
 	// ---------------------------------------------------------------------------
 
-	public function calculate_shipping( $package = array() ): void {
+	public function calculate_shipping( $package = array() ) {
+		error_log( 'ShippingIQ: calculate_shipping called' );
+
 		if ( empty( $this->merchant_id ) || empty( $this->api_url ) ) {
+			error_log( 'ShippingIQ: aborting — merchant_id or api_url not configured' );
 			return;
 		}
 
 		$postcode = sanitize_text_field( $package['destination']['postcode'] ?? '' );
 		if ( empty( $postcode ) ) {
+			error_log( 'ShippingIQ: aborting — postcode is empty' );
 			return;
 		}
 
 		$items = $this->build_items( $package['contents'] );
 		if ( empty( $items ) ) {
+			error_log( 'ShippingIQ: aborting — no items with weight found in cart' );
 			return;
 		}
 
+		error_log( 'ShippingIQ: sending request — postcode=' . $postcode . ' items=' . wp_json_encode( $items ) );
+
 		// Fetch eligibility rules and resolve product tag rules before calling the API.
-		$eligibility_map           = $this->fetch_carrier_eligibility();
+		$eligibility_map                = $this->fetch_carrier_eligibility();
 		[ $only_slugs, $exclude_slugs ] = $this->resolve_tag_rules( $package['contents'] );
+
+		error_log( 'ShippingIQ: eligibility_map=' . wp_json_encode( $eligibility_map ) );
+		error_log( 'ShippingIQ: tag rules — only=' . wp_json_encode( $only_slugs ) . ' exclude=' . wp_json_encode( $exclude_slugs ) );
 
 		// Call calculate-freight.
 		$response = wp_remote_post(
 			esc_url_raw( $this->api_url ),
 			array(
-				'headers' => array( 'Content-Type' => 'application/json' ),
+				'headers' => array(
+					'Content-Type'  => 'application/json',
+					'apikey'        => $this->supabase_anon_key,
+					'Authorization' => 'Bearer ' . $this->supabase_anon_key,
+				),
 				'body'    => wp_json_encode( array(
 					'postcode'    => $postcode,
 					'items'       => $items,
@@ -118,20 +147,35 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 			)
 		);
 
-		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+		if ( is_wp_error( $response ) ) {
+			error_log( 'ShippingIQ: wp_remote_post error — ' . $response->get_error_message() );
 			return;
 		}
 
-		$body    = json_decode( wp_remote_retrieve_body( $response ), true );
+		$http_code = (int) wp_remote_retrieve_response_code( $response );
+		$raw_body  = wp_remote_retrieve_body( $response );
+
+		error_log( 'ShippingIQ: API response — http_code=' . $http_code . ' body=' . $raw_body );
+
+		if ( 200 !== $http_code ) {
+			error_log( 'ShippingIQ: aborting — non-200 response' );
+			return;
+		}
+
+		$body    = json_decode( $raw_body, true );
 		$results = $body['results'] ?? array();
 
 		if ( empty( $results ) ) {
+			error_log( 'ShippingIQ: aborting — results array is empty' );
 			return;
 		}
 
 		$eligible = $this->filter_results( $results, $eligibility_map, $only_slugs, $exclude_slugs, $package['contents'] );
 
+		error_log( 'ShippingIQ: after filtering — ' . count( $eligible ) . ' of ' . count( $results ) . ' carriers eligible' );
+
 		if ( empty( $eligible ) ) {
+			error_log( 'ShippingIQ: aborting — no eligible carriers after filtering' );
 			return;
 		}
 
