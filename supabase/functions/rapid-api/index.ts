@@ -25,13 +25,15 @@ function excelToText(base64) {
   try {
     const bytes = base64ToUint8Array(base64)
     const workbook = XLSX.read(bytes, { type: 'array' })
-    let result = ''
-    for (const sheetName of workbook.SheetNames) {
+    const parts: string[] = []
+    workbook.SheetNames.forEach((sheetName, index) => {
       const sheet = workbook.Sheets[sheetName]
-      const csv = XLSX.utils.sheet_to_csv(sheet)
-      result += 'Sheet: ' + sheetName + '\n' + csv + '\n\n'
-    }
-    return result
+      const csv = XLSX.utils.sheet_to_csv(sheet).trim()
+      if (!csv) return // skip empty sheets
+      // Cap each sheet independently so a large sheet can't crowd out others
+      parts.push('Sheet ' + (index + 1) + ': ' + sheetName + '\n' + csv.slice(0, 5000))
+    })
+    return parts.join('\n\n---\n\n')
   } catch (e) {
     return 'Could not parse Excel file: ' + e.message
   }
@@ -63,6 +65,11 @@ serve(async (req) => {
 Carrier: ${carrierName}
 
 Parse whatever files you receive regardless of format or structure.
+
+MULTI-TAB EXCEL FILES:
+Excel files are provided with each sheet labeled "Sheet 1: [name]", "Sheet 2: [name]", etc., separated by ---
+A single Excel file may contain rates on one sheet, postcode zones on another, and surcharges on another.
+Extract from ALL sheets — do not ignore any sheet. Identify what each sheet contains and extract accordingly.
 
 PRICING MODELS - detect which applies:
 - Model A: Weight break table. Flat rate per zone per weight range.
@@ -113,7 +120,7 @@ Respond ONLY with a JSON object. No markdown, no backticks.
         userContent.push({ type: 'text', text: 'Above is the rate card PDF: ' + rateCard.name })
       } else {
         const text = fileToText(rateCard)
-        userContent.push({ type: 'text', text: 'Rate card (' + rateCard.name + '):\n' + text.slice(0, 8000) })
+        userContent.push({ type: 'text', text: 'Rate card (' + rateCard.name + '):\n' + text.slice(0, 20000) })
       }
     }
 
@@ -123,7 +130,7 @@ Respond ONLY with a JSON object. No markdown, no backticks.
         userContent.push({ type: 'text', text: 'Above is the zone file PDF: ' + zoneFile.name })
       } else {
         const text = fileToText(zoneFile)
-        userContent.push({ type: 'text', text: 'Zone file (' + zoneFile.name + '):\n' + text.slice(0, 8000) })
+        userContent.push({ type: 'text', text: 'Zone file (' + zoneFile.name + '):\n' + text.slice(0, 20000) })
       }
     }
 
@@ -133,7 +140,7 @@ Respond ONLY with a JSON object. No markdown, no backticks.
         userContent.push({ type: 'text', text: 'Above is the surcharge schedule PDF: ' + surchargeDoc.name })
       } else {
         const text = fileToText(surchargeDoc)
-        userContent.push({ type: 'text', text: 'Surcharge schedule (' + surchargeDoc.name + '):\n' + text.slice(0, 4000) })
+        userContent.push({ type: 'text', text: 'Surcharge schedule (' + surchargeDoc.name + '):\n' + text.slice(0, 8000) })
       }
     }
 
