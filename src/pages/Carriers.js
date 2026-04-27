@@ -571,6 +571,11 @@ export default function Carriers() {
           <div className="carriers-list">
             {carriers.map(carrier => (
               <div key={carrier.id} className="carrier-card">
+                {carrier.status === 'active' && !carrier.parsed_data?.postcodeMap?.length && (
+                  <div style={{ padding: '8px 12px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '6px', fontSize: '13px', color: '#92400e' }}>
+                    ⚠ No postcode data — freight quotes will fail for this carrier. Contact your carrier account manager for a postcode zone file.
+                  </div>
+                )}
                 <div className="carrier-info">
                   <div className="carrier-name">{carrier.name}</div>
                   <div className="carrier-meta">
