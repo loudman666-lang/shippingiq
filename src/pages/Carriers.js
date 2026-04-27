@@ -503,10 +503,10 @@ export default function Carriers() {
                           onChange={e => setSurchargeRules({ ...surchargeRules, [key]: { ...rule, trigger: e.target.value } })}
                           style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer' }}>
                           <option value="manual">Manual only</option>
-                          {!isOverlength && <option value="weight">Auto — if consignment over X kg</option>}
-                          {!isOverlength && <option value="dimension">Auto — if longest side over X cm</option>}
-                          {!isOverlength && <option value="weight_or_dimension">Auto — if weight OR dimension exceeded</option>}
-                          {isOverlength && <option value="dimension">Auto — by longest side (cm)</option>}
+                          {!isOverlength && !key.includes('residential') && <option value="weight">Auto — if consignment over X kg</option>}
+                          {!isOverlength && !key.includes('residential') && <option value="dimension">Auto — if longest side over X cm</option>}
+                          {!isOverlength && !key.includes('residential') && <option value="weight_or_dimension">Auto — weight OR longest side exceeded</option>}
+                          {isOverlength && <option value="auto_dimension">Auto — apply by longest side threshold</option>}
                           {key.includes('residential') && <option value="always">Always apply</option>}
                           {key.includes('residential') && <option value="never">Never apply</option>}
                         </select>
@@ -518,7 +518,7 @@ export default function Carriers() {
                             <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>kg</span>
                           </div>
                         )}
-                        {(rule.trigger === 'dimension' || rule.trigger === 'weight_or_dimension') && (
+                        {(rule.trigger === 'dimension' || rule.trigger === 'weight_or_dimension' || rule.trigger === 'auto_dimension') && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <input type="number" placeholder="cm" value={rule.lengthCm || ''} onChange={e => setSurchargeRules({ ...surchargeRules, [key]: { ...rule, lengthCm: e.target.value } })} style={{ width: '70px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px' }} />
                             <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>cm</span>
