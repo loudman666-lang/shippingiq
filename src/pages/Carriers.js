@@ -5,40 +5,120 @@ import './Carriers.css'
 
 function RateTable({ carrier }) {
   const data = carrier.parsed_data
-  if (!data?.rates?.length) return (
+  const model = data?.pricingModel
+
+  if (model === 'B' && data?.modelBRates?.length) {
+    const services = [...new Set(data.modelBRates.map(r => r.service))]
+    const origins = data.originDepots?.length ? data.originDepots : ['Default']
+    return (
+      <div className="rate-table-wrap">
+        {services.map(service => {
+          const rows = data.modelBRates.filter(r => r.service === service)
+          return (
+            <div key={service} style={{ marginBottom: '24px' }}>
+              <div className="rate-table-service">{service} — Model B (Basic + Per Kg)</div>
+              <table className="rate-table">
+                <thead>
+                  <tr>
+                    <th>Zone</th>
+                    <th>Code</th>
+                    <th>Basic Charge</th>
+                    <th>Per Kg Rate</th>
+                    <th>Minimum</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, i) => (
+                    <tr key={i}>
+                      <td>{row.zone}</td>
+                      <td>{row.zoneCode || '—'}</td>
+                      <td>${Number(row.basicCharge || 0).toFixed(2)}</td>
+                      <td>${Number(row.perKgRate || 0).toFixed(3)}</td>
+                      <td>${Number(row.minimumCharge || 0).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  if (model === 'C' && data?.modelCRates?.length) {
+    const origins = [...new Set(data.modelCRates.map(r => r.originDepot))]
+    return (
+      <div className="rate-table-wrap">
+        {origins.map(origin => {
+          const rows = data.modelCRates.filter(r => r.originDepot === origin)
+          return (
+            <div key={origin} style={{ marginBottom: '24px' }}>
+              <div className="rate-table-service">From: {origin} — Model C (Depot to Depot)</div>
+              <table className="rate-table">
+                <thead>
+                  <tr>
+                    <th>Destination Depot</th>
+                    <th>Basic Charge</th>
+                    <th>Per Kg Rate</th>
+                    <th>Minimum</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, i) => (
+                    <tr key={i}>
+                      <td>{row.destinationDepot}</td>
+                      <td>${Number(row.basicCharge || 0).toFixed(2)}</td>
+                      <td>${Number(row.perKgRate || 0).toFixed(3)}</td>
+                      <td>${Number(row.minimumCharge || 0).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  if (data?.rates?.length) {
+    const zones = data.zones || []
+    const serviceTypes = data.serviceTypes || []
+    return (
+      <div className="rate-table-wrap">
+        {serviceTypes.map(service => {
+          const rows = data.rates.filter(r => r.service === service)
+          if (!rows.length) return null
+          return (
+            <div key={service} style={{ marginBottom: '24px' }}>
+              <div className="rate-table-service">{service} — Model A (Weight Break)</div>
+              <table className="rate-table">
+                <thead>
+                  <tr>
+                    <th>Weight</th>
+                    {zones.map(z => <th key={z}>{z}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(row => (
+                    <tr key={row.weight}>
+                      <td>{row.weight}</td>
+                      {zones.map(z => <td key={z}>${Number(row[z] || 0).toFixed(2)}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  return (
     <div style={{ padding: '16px', color: '#6b7280', fontSize: '13px' }}>
       No rate detail available. Delete this carrier and re-upload to see the full rate table.
-    </div>
-  )
-  const zones = data.zones || []
-  const serviceTypes = data.serviceTypes || []
-  return (
-    <div className="rate-table-wrap">
-      {serviceTypes.map(service => {
-        const rows = data.rates.filter(r => r.service === service)
-        if (!rows.length) return null
-        return (
-          <div key={service} style={{ marginBottom: '24px' }}>
-            <div className="rate-table-service">{service}</div>
-            <table className="rate-table">
-              <thead>
-                <tr>
-                  <th>Weight</th>
-                  {zones.map(z => <th key={z}>{z}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(row => (
-                  <tr key={row.weight}>
-                    <td>{row.weight}</td>
-                    {zones.map(z => <td key={z}>${Number(row[z] || 0).toFixed(2)}</td>)}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )
-      })}
     </div>
   )
 }
@@ -122,13 +202,11 @@ export default function Carriers() {
     try {
       const rateCardBase64 = await fileToBase64(form.rateCard)
       const zoneFileBase64 = await fileToBase64(form.zoneFile)
-      const rateCardType = getFileType(form.rateCard)
-      const zoneFileType = getFileType(form.zoneFile)
 
       const payload = {
         carrierName: form.name,
-        rateCard: { data: rateCardBase64, type: rateCardType, name: form.rateCard.name },
-        zoneFile: { data: zoneFileBase64, type: zoneFileType, name: form.zoneFile.name },
+        rateCard: { data: rateCardBase64, type: getFileType(form.rateCard), name: form.rateCard.name },
+        zoneFile: { data: zoneFileBase64, type: getFileType(form.zoneFile), name: form.zoneFile.name },
       }
 
       if (form.surchargeDoc) {
