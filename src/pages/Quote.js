@@ -400,15 +400,16 @@ export default function Quote() {
                   <input className="form-input" type="number" min="1" placeholder="0" value={item.width} onChange={e => updateItem(item.id, 'width', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
                   <input className="form-input" type="number" min="1" placeholder="0" value={item.height} onChange={e => updateItem(item.id, 'height', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
                   <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', color: 'var(--ink-muted)', cursor: 'pointer', fontSize: '20px', lineHeight: 1, padding: '4px 0' }}>×</button>
-                  {item.exemptFreeShipping !== undefined && (
-                    <div style={{ gridColumn: '2 / -1', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '-2px', marginBottom: '4px' }}>
-                      <input type="checkbox" id={'exempt-' + item.id} checked={item.exemptFreeShipping} onChange={e => updateItem(item.id, 'exemptFreeShipping', e.target.checked)} style={{ cursor: 'pointer' }} />
-                      <label htmlFor={'exempt-' + item.id} style={{ fontSize: '12px', color: 'var(--ink-muted)', cursor: 'pointer' }}>Exempt from free shipping</label>
-                    </div>
-                  )}
+
                 </div>
               ))}
 
+              {items.map(item => (
+                <div key={'exempt-' + item.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '-4px', marginBottom: '8px', paddingLeft: '50px' }}>
+                  <input type="checkbox" id={'exempt-' + item.id} checked={item.exemptFreeShipping || false} onChange={e => updateItem(item.id, 'exemptFreeShipping', e.target.checked)} style={{ cursor: 'pointer', accentColor: 'var(--accent)' }} />
+                  <label htmlFor={'exempt-' + item.id} style={{ fontSize: '12px', color: 'var(--ink-muted)', cursor: 'pointer' }}>Exempt from free shipping</label>
+                </div>
+              ))}
               <button onClick={addItem} style={{ fontSize: '13px', color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', fontWeight: '500' }}>
                 + Add item
               </button>
