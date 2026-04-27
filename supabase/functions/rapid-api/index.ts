@@ -1,8 +1,49 @@
+// v6
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+function base64ToText(base64) {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return new TextDecoder().decode(bytes)
+}
+
+function base64ToUint8Array(base64) {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes
+}
+
+function excelToText(base64) {
+  try {
+    const bytes = base64ToUint8Array(base64)
+    const workbook = XLSX.read(bytes, { type: 'array' })
+    let result = ''
+    for (const sheetName of workbook.SheetNames) {
+      const sheet = workbook.Sheets[sheetName]
+      const csv = XLSX.utils.sheet_to_csv(sheet)
+      result += 'Sheet: ' + sheetName + '\n' + csv + '\n\n'
+    }
+    return result
+  } catch (e) {
+    return 'Could not parse Excel file: ' + e.message
+  }
+}
+
+function fileToText(file) {
+  if (file.type === 'excel') return excelToText(file.data)
+  return base64ToText(file.data)
 }
 
 serve(async (req) => {
@@ -11,9 +52,13 @@ serve(async (req) => {
   }
 
   try {
-    const { carrierName, rateCard, zoneFile, surchargeDoc } = await req.json()
+    const body = await req.json()
+    const carrierName = body.carrierName
+    const rateCard = body.rateCard
+    const zoneFile = body.zoneFile
+    const surchargeDoc = body.surchargeDoc
 
-    const userContent: any[] = []
+    const userContent = []
 
     userContent.push({
       type: 'text',
@@ -22,61 +67,72 @@ serve(async (req) => {
 Carrier: ${carrierName}
 
 You will receive up to three files: a rate card, a zone file, and optionally an additional charges schedule.
-These files may be CSV, Excel, or PDF format. Parse whatever you receive — do not refuse based on format.
+Parse whatever you receive regardless of format or structure.
 
-PRICING MODELS — detect which applies:
+PRICING MODELS - detect which applies:
 - Model A: Weight break table. Flat rate per zone per weight range.
-- Model B: Basic charge + per kg rate, with minimum charge. Formula: MAX(basicCharge + weight x perKgRate, minimumCharge). Each zone has three values: basic, perKg, minimum.
-- Model C: Depot-to-depot. Origin depot + destination depot determines rate. Zone file maps postcodes to depot names.
+- Model B: Basic charge + per kg rate, with minimum charge. Formula: MAX(basicCharge + weight x perKgRate, minimumCharge).
+- Model C: Depot-to-depot. Origin depot + destination depot determines rate.
 
-ZONE FILE — extract postcode-to-zone/depot mappings. There may be tens of thousands of rows — summarise what you find but store the full mapping in postcodeMap.
+Extract all zones, rates, postcode mappings, and surcharges.
 
-SURCHARGES — extract all surcharges found in any of the files including tailgate, hand load, residential delivery, dangerous goods, overlength, and any other named fees.
-
-WARNINGS — flag anything unusual such as zone codes in rate card not in zone file, multiple zones for same postcode, missing weight breaks, or anything that might cause incorrect quotes.
-
-Respond ONLY with a JSON object. No markdown, no explanation, no backticks.
+Respond ONLY with a JSON object. No markdown, no backticks.
 
 {
   "carrier": "${carrierName}",
   "pricingModel": "A or B or C",
-  "zones": ["list of all zone names or depot names"],
+  "zones": ["list of zone names"],
   "weightBreaks": ["list of weight breaks"],
   "serviceTypes": ["list of service types"],
   "originDepots": ["list of origin depots if applicable"],
   "rateCount": 0,
-  "summary": "one sentence describing what was found and pricing model detected",
+  "summary": "one sentence summary",
   "rates": [{ "service": "Road Express", "weight": "0-1kg", "ZoneName": 8.50 }],
-  "modelBRates": [{ "service": "Road Express", "zone": "Sydney Metro", "zoneCode": "N01", "basicCharge": 7.27, "perKgRate": 0.16, "minimumCharge": 9.97 }],
+  "modelBRates": [{ "service": "Road Express", "zone": "Sydney Metro", "zoneCode": "SYD1", "basicCharge": 7.27, "perKgRate": 0.16, "minimumCharge": 9.97 }],
   "modelCRates": [{ "originDepot": "Melbourne", "destinationDepot": "Sydney", "basicCharge": 15.00, "perKgRate": 0.45, "minimumCharge": 22.00 }],
-  "postcodeMap": [{ "postcode": "2000", "zone": "Sydney Metro", "zoneCode": "N01", "suburb": "Sydney", "state": "NSW" }],
+  "postcodeMap": [{ "postcode": "2000", "zone": "Sydney Metro", "zoneCode": "SYD1", "suburb": "Sydney", "state": "NSW" }],
   "surcharges": [{ "name": "Tailgate", "amount": "$75.00", "notes": "flat fee per delivery" }],
-  "warnings": ["list of any issues found"]
+  "warnings": ["any issues found"]
 }`
     })
 
-    if (rateCard?.data) {
-      userContent.push({
-        type: 'document',
-        source: { type: 'base64', media_type: rateCard.type === 'pdf' ? 'application/pdf' : 'application/octet-stream', data: rateCard.data }
-      })
-      userContent.push({ type: 'text', text: `Above is the rate card: ${rateCard.name} (${rateCard.type})` })
+    if (rateCard && rateCard.data) {
+      if (rateCard.type === 'pdf') {
+        userContent.push({
+          type: 'document',
+          source: { type: 'base64', media_type: 'application/pdf', data: rateCard.data }
+        })
+        userContent.push({ type: 'text', text: 'Above is the rate card PDF: ' + rateCard.name })
+      } else {
+        const text = fileToText(rateCard)
+        userContent.push({ type: 'text', text: 'Rate card (' + rateCard.name + '):\n' + text.slice(0, 8000) })
+      }
     }
 
-    if (zoneFile?.data) {
-      userContent.push({
-        type: 'document',
-        source: { type: 'base64', media_type: zoneFile.type === 'pdf' ? 'application/pdf' : 'application/octet-stream', data: zoneFile.data }
-      })
-      userContent.push({ type: 'text', text: `Above is the zone file: ${zoneFile.name} (${zoneFile.type})` })
+    if (zoneFile && zoneFile.data) {
+      if (zoneFile.type === 'pdf') {
+        userContent.push({
+          type: 'document',
+          source: { type: 'base64', media_type: 'application/pdf', data: zoneFile.data }
+        })
+        userContent.push({ type: 'text', text: 'Above is the zone file PDF: ' + zoneFile.name })
+      } else {
+        const text = fileToText(zoneFile)
+        userContent.push({ type: 'text', text: 'Zone file (' + zoneFile.name + '):\n' + text.slice(0, 8000) })
+      }
     }
 
-    if (surchargeDoc?.data) {
-      userContent.push({
-        type: 'document',
-        source: { type: 'base64', media_type: surchargeDoc.type === 'pdf' ? 'application/pdf' : 'application/octet-stream', data: surchargeDoc.data }
-      })
-      userContent.push({ type: 'text', text: `Above is the additional charges schedule: ${surchargeDoc.name} (${surchargeDoc.type})` })
+    if (surchargeDoc && surchargeDoc.data) {
+      if (surchargeDoc.type === 'pdf') {
+        userContent.push({
+          type: 'document',
+          source: { type: 'base64', media_type: 'application/pdf', data: surchargeDoc.data }
+        })
+        userContent.push({ type: 'text', text: 'Above is the surcharge schedule PDF: ' + surchargeDoc.name })
+      } else {
+        const text = fileToText(surchargeDoc)
+        userContent.push({ type: 'text', text: 'Surcharge schedule (' + surchargeDoc.name + '):\n' + text.slice(0, 4000) })
+      }
     }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
