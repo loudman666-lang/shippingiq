@@ -112,13 +112,18 @@ export default function Quote() {
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
+  const [gstEnabled, setGstEnabled] = useState(false)
 
   useEffect(() => { if (merchant?.id) { fetchCarriers(); fetchSavedQuotes() } }, [merchant])
 
   async function fetchCarriers() {
     setLoading(true)
-    const { data } = await supabase.from('carriers').select('*').eq('merchant_id', merchant.id).eq('status', 'active')
-    setCarriers(data || [])
+    const [carriersRes, merchantRes] = await Promise.all([
+      supabase.from('carriers').select('*').eq('merchant_id', merchant.id).eq('status', 'active'),
+      supabase.from('merchants').select('settings').eq('id', merchant.id).single()
+    ])
+    setCarriers(carriersRes.data || [])
+    if (merchantRes.data?.settings?.gstEnabled !== undefined) setGstEnabled(merchantRes.data.settings.gstEnabled)
     setLoading(false)
   }
 
@@ -309,8 +314,8 @@ export default function Quote() {
                             <div style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>{result.origin ? result.origin + ' → ' : ''}{result.destination}</div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--accent)', lineHeight: 1 }}>${(result.totalCost || result.freightCost).toFixed(2)}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginTop: '4px' }}>{result.fuelLevy ? 'incl. fuel levy · excl. GST' : 'excl. GST & fuel levy'}</div>
+                            <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--accent)', lineHeight: 1 }}>${gstEnabled ? (((result.totalCost || result.freightCost) * 1.1).toFixed(2)) : (result.totalCost || result.freightCost).toFixed(2)}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginTop: '4px' }}>{gstEnabled ? 'incl. GST & fuel levy' : result.fuelLevy ? 'incl. fuel levy · excl. GST' : 'excl. GST & fuel levy'}</div>
                           </div>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', borderTop: '1px solid var(--border)', paddingTop: '16px', marginBottom: '14px' }}>
@@ -333,7 +338,13 @@ export default function Quote() {
                           {result.fuelLevy && (
                             <div style={{ marginTop: '6px' }}>
                               + Fuel levy ({result.fuelLevyPct}%) = <strong style={{ color: 'var(--ink)' }}>${result.fuelLevy.toFixed(2)}</strong>
-                              <span style={{ marginLeft: '12px', color: 'var(--accent)', fontWeight: '700' }}>Total: ${result.totalCost.toFixed(2)}</span>
+                              <span style={{ marginLeft: '12px', color: 'var(--accent)', fontWeight: '700' }}>Subtotal: ${result.totalCost.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {gstEnabled && (
+                            <div style={{ marginTop: '6px' }}>
+                              + GST (10%) = <strong style={{ color: 'var(--ink)' }}>${((result.totalCost || result.freightCost) * 0.1).toFixed(2)}</strong>
+                              <span style={{ marginLeft: '12px', color: 'var(--accent)', fontWeight: '700' }}>Total inc GST: ${((result.totalCost || result.freightCost) * 1.1).toFixed(2)}</span>
                             </div>
                           )}
                         </div>
