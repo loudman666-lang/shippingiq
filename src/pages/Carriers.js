@@ -503,25 +503,32 @@ export default function Carriers() {
                           onChange={e => setSurchargeRules({ ...surchargeRules, [key]: { ...rule, trigger: e.target.value } })}
                           style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer' }}>
                           <option value="manual">Manual only</option>
-                          {!isOverlength && !key.includes('residential') && <option value="weight">Auto — if consignment over X kg</option>}
-                          {!isOverlength && !key.includes('residential') && <option value="dimension">Auto — if longest side over X cm</option>}
-                          {!isOverlength && !key.includes('residential') && <option value="weight_or_dimension">Auto — weight OR longest side exceeded</option>}
-                          {isOverlength && <option value="auto_dimension">Auto — apply by longest side threshold</option>}
+                          <option value="auto">Auto — use carrier thresholds</option>
+                          <option value="auto_override">Auto with override — use my thresholds</option>
                           {key.includes('residential') && <option value="always">Always apply</option>}
                           {key.includes('residential') && <option value="never">Never apply</option>}
                         </select>
                       </div>
                       <div>
-                        {(rule.trigger === 'weight' || rule.trigger === 'weight_or_dimension') && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                            <input type="number" placeholder="kg" value={rule.weightKg || ''} onChange={e => setSurchargeRules({ ...surchargeRules, [key]: { ...rule, weightKg: e.target.value } })} style={{ width: '70px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px' }} />
-                            <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>kg</span>
+                        {rule.trigger === 'auto' && (
+                          <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
+                            {s.autoWeightKg ? 'Over ' + s.autoWeightKg + 'kg' : ''}
+                            {s.autoLengthMinCm ? (s.autoWeightKg ? ' · ' : '') + 'Over ' + s.autoLengthMinCm + 'cm' : ''}
+                            {!s.autoWeightKg && !s.autoLengthMinCm && 'Using carrier conditions'}
                           </div>
                         )}
-                        {(rule.trigger === 'dimension' || rule.trigger === 'weight_or_dimension' || rule.trigger === 'auto_dimension') && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <input type="number" placeholder="cm" value={rule.lengthCm || ''} onChange={e => setSurchargeRules({ ...surchargeRules, [key]: { ...rule, lengthCm: e.target.value } })} style={{ width: '70px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px' }} />
-                            <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>cm</span>
+                        {rule.trigger === 'auto_override' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {!isOverlength && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <input type="number" placeholder="kg" value={rule.weightKg || ''} onChange={e => setSurchargeRules({ ...surchargeRules, [key]: { ...rule, weightKg: e.target.value } })} style={{ width: '65px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '12px' }} />
+                                <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>kg</span>
+                              </div>
+                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <input type="number" placeholder="cm" value={rule.lengthCm || ''} onChange={e => setSurchargeRules({ ...surchargeRules, [key]: { ...rule, lengthCm: e.target.value } })} style={{ width: '65px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '12px' }} />
+                              <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>cm</span>
+                            </div>
                           </div>
                         )}
                         {rule.trigger === 'manual' && <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Added manually</span>}

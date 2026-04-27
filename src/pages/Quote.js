@@ -47,32 +47,29 @@ function applySurcharges(carrier, items, freightCost) {
     if (rule.trigger === 'always') {
       triggered = true
       reason = 'Always applied'
-    } else if (rule.trigger === 'weight') {
-      const threshold = parseFloat(rule.weightKg) || 0
-      if (threshold === 0) return
-      if (totalWeight > threshold) { triggered = true; reason = 'Consignment ' + totalWeight + 'kg > ' + threshold + 'kg threshold' }
-    } else if (rule.trigger === 'dimension') {
-      const threshold = parseFloat(rule.lengthCm) || 0
-      if (threshold === 0) return
-      if (maxItemLength > threshold) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm > ' + threshold + 'cm threshold' }
-    } else if (rule.trigger === 'weight_or_dimension') {
+    } else if (rule.trigger === 'auto') {
+      // Use thresholds extracted from carrier documents
+      const wThreshold = parseFloat(s.autoWeightKg) || 0
+      const dMinCm = parseFloat(s.autoLengthMinCm) || 0
+      const dMaxCm = parseFloat(s.autoLengthMaxCm) || 0
+      if (wThreshold > 0 && totalWeight > wThreshold) { triggered = true; reason = 'Consignment ' + totalWeight + 'kg > carrier threshold ' + wThreshold + 'kg' }
+      else if (dMinCm > 0 && dMaxCm > 0 && maxItemLength > dMinCm && maxItemLength <= dMaxCm) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm in ' + dMinCm + '-' + dMaxCm + 'cm range' }
+      else if (dMinCm > 0 && dMaxCm === 0 && maxItemLength > dMinCm) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm > ' + dMinCm + 'cm' }
+      else if (s.autoTrigger === 'residential') { triggered = true; reason = 'Residential delivery' }
+    } else if (rule.trigger === 'auto_override') {
+      // Use merchant override thresholds
       const wThreshold = parseFloat(rule.weightKg) || 0
       const dThreshold = parseFloat(rule.lengthCm) || 0
-      if (wThreshold === 0 && dThreshold === 0) return
-      if (wThreshold > 0 && totalWeight > wThreshold) { triggered = true; reason = 'Consignment ' + totalWeight + 'kg > ' + wThreshold + 'kg' }
-      else if (dThreshold > 0 && maxItemLength > dThreshold) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm > ' + dThreshold + 'cm' }
-    } else if (rule.trigger === 'auto_dimension') {
-      const threshold = parseFloat(rule.lengthCm) || 0
-      if (threshold === 0) return // not configured, skip
-      // Special handling for overlength ranges
-      if (key.includes('48m') || key.includes('4_8m') || key === 'overlength_48m') {
-        // 4-8m: longest side between threshold and 800cm
-        if (maxItemLength > threshold && maxItemLength <= 800) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm (4-8m range)' }
-      } else if (key.includes('over_8m') || key === 'overlength_over_8m') {
-        // over 8m: longest side over 800cm
+      const isOverlength48 = key === 'overlength_48m'
+      const isOverlength8 = key === 'overlength_over_8m'
+      if (isOverlength48) {
+        const min = dThreshold || 400
+        if (maxItemLength > min && maxItemLength <= 800) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm (4-8m range)' }
+      } else if (isOverlength8) {
         if (maxItemLength > 800) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm > 800cm' }
       } else {
-        if (maxItemLength > threshold) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm > ' + threshold + 'cm' }
+        if (wThreshold > 0 && totalWeight > wThreshold) { triggered = true; reason = 'Consignment ' + totalWeight + 'kg > ' + wThreshold + 'kg' }
+        else if (dThreshold > 0 && maxItemLength > dThreshold) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm > ' + dThreshold + 'cm' }
       }
     }
 
