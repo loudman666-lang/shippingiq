@@ -178,6 +178,8 @@ export default function Carriers() {
   const [viewingCarrier, setViewingCarrier] = useState(null)
   const [surchargeRulesCarrier, setSurchargeRulesCarrier] = useState(null)
   const [surchargeRules, setSurchargeRules] = useState({})
+  const [eligibilityCarrierId, setEligibilityCarrierId] = useState(null)
+  const [eligibilityForm, setEligibilityForm] = useState({})
 
   useEffect(() => {
     if (merchant?.id) fetchCarriers()
@@ -278,9 +280,15 @@ export default function Carriers() {
     fetchCarriers()
   }
 
-  async function saveSurchargeRules(carrierId, rules) {
-    await supabase.from('carriers').update({ surcharge_rules: rules }).eq('id', carrierId)
-    fetchCarriers()
+  async function saveEligibilityRules(carrierId) {
+    const rules = {}
+    if (eligibilityForm.maxWeightKg !== '' && eligibilityForm.maxWeightKg != null) rules.maxWeightKg = parseFloat(eligibilityForm.maxWeightKg)
+    if (eligibilityForm.maxLengthCm !== '' && eligibilityForm.maxLengthCm != null) rules.maxLengthCm = parseFloat(eligibilityForm.maxLengthCm)
+    if (eligibilityForm.maxWidthCm !== '' && eligibilityForm.maxWidthCm != null) rules.maxWidthCm = parseFloat(eligibilityForm.maxWidthCm)
+    if (eligibilityForm.maxHeightCm !== '' && eligibilityForm.maxHeightCm != null) rules.maxHeightCm = parseFloat(eligibilityForm.maxHeightCm)
+    await supabase.from('carriers').update({ eligibility_rules: Object.keys(rules).length ? rules : null }).eq('id', carrierId)
+    await fetchCarriers()
+    setEligibilityCarrierId(null)
   }
 
   const originDepots = parseResult?.originDepots || []
@@ -562,7 +570,7 @@ export default function Carriers() {
         ) : (
           <div className="carriers-list">
             {carriers.map(carrier => (
-              <div key={carrier.id} className="carrier-card" style={{ flexWrap: 'wrap', gap: '16px' }}>
+              <div key={carrier.id} className="carrier-card">
                 <div className="carrier-info">
                   <div className="carrier-name">{carrier.name}</div>
                   <div className="carrier-meta">
@@ -599,8 +607,61 @@ export default function Carriers() {
                       {surchargeRulesCarrier?.id === carrier.id ? 'Hide Rules' : 'Surcharge Rules'}
                     </button>
                   )}
+                  {carrier.status === 'active' && (
+                    <button className="btn-secondary" onClick={() => {
+                      if (eligibilityCarrierId === carrier.id) {
+                        setEligibilityCarrierId(null)
+                      } else {
+                        const fresh = carriers.find(c => c.id === carrier.id)
+                        const existing = fresh?.eligibility_rules || {}
+                        setEligibilityCarrierId(carrier.id)
+                        setEligibilityForm({
+                          maxWeightKg: existing.maxWeightKg ?? '',
+                          maxLengthCm: existing.maxLengthCm ?? '',
+                          maxWidthCm: existing.maxWidthCm ?? '',
+                          maxHeightCm: existing.maxHeightCm ?? '',
+                        })
+                      }
+                    }}>
+                      {eligibilityCarrierId === carrier.id ? 'Hide Limits' : 'Carrier Limits'}
+                    </button>
+                  )}
                   <button className="btn-danger" onClick={() => deleteCarrier(carrier.id)}>Delete</button>
                 </div>
+              {carrier.status === 'active' && eligibilityCarrierId === carrier.id && (
+                <div style={{ paddingTop: '4px', borderTop: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>
+                    Carrier Limits <span style={{ fontWeight: 400, color: 'var(--ink-muted)' }}>(optional)</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginBottom: '12px' }}>
+                    Set limits if this carrier can't handle all sizes. Leave blank for no limit.
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+                    {[
+                      { key: 'maxWeightKg', label: 'Max Weight', unit: 'kg' },
+                      { key: 'maxLengthCm', label: 'Max Length', unit: 'cm' },
+                      { key: 'maxWidthCm', label: 'Max Width', unit: 'cm' },
+                      { key: 'maxHeightCm', label: 'Max Height', unit: 'cm' },
+                    ].map(({ key, label, unit }) => (
+                      <div key={key}>
+                        <label style={{ fontSize: '11px', color: 'var(--ink-muted)', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label} ({unit})</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          placeholder="No limit"
+                          value={eligibilityForm[key] ?? ''}
+                          onChange={e => setEligibilityForm({ ...eligibilityForm, [key]: e.target.value })}
+                          style={{ width: '100px', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px' }}
+                        />
+                      </div>
+                    ))}
+                    <button className="btn-primary" style={{ fontSize: '13px' }} onClick={() => saveEligibilityRules(carrier.id)}>
+                      Save Limits
+                    </button>
+                  </div>
+                </div>
+              )}
               </div>
             ))}
           </div>

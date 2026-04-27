@@ -14,6 +14,12 @@ cd ~/Downloads/shippingiq && git add -A && git commit -m "description" && git pu
 
 ## Supabase edge function deploy — run when edge function changes
 npx supabase functions deploy rapid-api --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
+npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
+
+## Tool preference — ALWAYS USE CLAUDE CODE
+- Use Claude Code (claude command in terminal) for all file changes
+- Use this chat for planning, architecture, and decisions only
+- Claude Code reads/writes files directly — no copy/paste needed
 
 ## App access
 - Local: http://localhost:3000
@@ -23,11 +29,9 @@ npx supabase functions deploy rapid-api --project-ref soaxvqkkecqzarwmbeip --wor
 ## Dave's working preferences — NEVER CHANGE
 - Dave is time-poor. Keep explanations short.
 - Always provide exact terminal commands. Never assume Dave will remember git commands.
-- Claude CANNOT push to GitHub directly (network blocked).
+- Always use Claude Code for file changes — never manual copy/paste
 - Always remind Dave to run git commit after every build.
 - Never question the core product plan. Never suggest rethinking agreed decisions.
-- When making file changes use Python scripts via terminal — NOT heredoc for large files.
-- Always test changes compile before committing.
 - When a layout fix fails twice, stop and diagnose properly before trying again.
 
 ## Credentials
@@ -59,7 +63,7 @@ npx supabase functions deploy rapid-api --project-ref soaxvqkkecqzarwmbeip --wor
   - POA surcharges flagged as warnings
   - Free shipping threshold applied (green FREE card shown)
   - Order value field for free shipping check
-  - Exempt from free shipping per item (PARTIALLY BUILT — see outstanding below)
+  - Exempt from free shipping per item — checkbox inside item row, conditional on freeShippingEnabled
   - Save Quote to Supabase quotes table
 - Settings page: GST toggle (ex GST B2B, inc GST B2C)
 - Rules page: free shipping threshold, freight margin, carrier priority
@@ -76,6 +80,7 @@ src/components/auth/ProtectedRoute.js
 src/lib/supabase.js
 src/App.js
 supabase/functions/rapid-api/index.ts
+supabase/functions/calculate-freight/index.ts
 
 ## Database (Supabase)
 Tables: profiles, merchants, carriers, quotes
@@ -85,13 +90,24 @@ merchants.rules: jsonb — { freeShippingEnabled, freeShippingThreshold, freight
 carriers.fuel_levy_pct: numeric
 carriers.surcharge_rules: jsonb — { surcharge_key: { trigger, weightKg, lengthCm } }
 carriers.parsed_data: full AI output including surcharges with autoWeightKg, autoLengthMinCm, autoLengthMaxCm, autoTrigger
+carriers.eligibility_rules: jsonb — { maxWeightKg, maxLengthCm, maxWidthCm, maxHeightCm } (NEW — for WooCommerce carrier filtering)
 
-## Edge Function (rapid-api)
+## Edge Functions
+### rapid-api
 Extracts: pricingModel, zones, rates, postcodeMap, surcharges with auto thresholds, cubicFactor, fuelLevyPct
 Model: claude-sonnet-4-20250514, max_tokens 8000
 File types: csv (text decode), excel (XLSX via esm.sh), pdf (document block)
 
-## Freight calculation engine (Quote.js)
+### calculate-freight
+POST { postcode, items, merchant_id }
+Fetches active carriers + merchant rules from Supabase
+Runs calculateRate across all carriers
+Returns { results: [...] }
+Used by WooCommerce plugin — do not break this interface
+
+## Freight calculation engine
+Lives in both Quote.js (client-side) and calculate-freight/index.ts (server-side)
+IMPORTANT: Keep both in sync — if engine logic changes, update both files
 Multi-item: qty + weight + L/W/H per item
 Chargeable = MAX(actual, cubic)
 Model B: MAX(basicCharge + chargeable x perKgRate, minimumCharge)
@@ -117,27 +133,35 @@ Model C: Depot-to-depot — Mainfreight style
 - Auto surcharge triggers use carrier's own extracted thresholds
 - Free shipping can be exempted per product/item
 
-## OUTSTANDING — fix first next session
-1. EXEMPT FROM FREE SHIPPING UI BUG
-   - The exempt checkbox per item in the quote form is overflowing outside the card boundary
-   - Logic works correctly (exempt flag bypasses free shipping)
-   - The UI rendering is broken — checkbox and text appear outside the card
-   - Last state: exempt checkbox was removed from display to stop overflow
-   - Need to find a clean way to show it inside the card
-   - Suggestion: put it as a small toggle/link INSIDE the item grid using gridColumn span, or show it as a compact badge on the item row
-   - Do NOT use paddingLeft or position it outside the grid
+## WooCommerce Plugin — design decisions (TO BUILD)
+### Carrier eligibility — how carriers are filtered at checkout
+1. Weight/dimension limits per carrier (set in ShippingIQ, stored in carriers.eligibility_rules)
+   - maxWeightKg, maxLengthCm, maxWidthCm, maxHeightCm
+   - If any cart item exceeds a carrier's limit, that carrier is excluded
+   - No limits set = carrier handles everything (default)
+2. Product tags as override (set in WooCommerce on the product)
+   - Tag format: shippingiq-only-[carrier-slug] e.g. shippingiq-only-startrack
+   - Tag format: shippingiq-exclude-[carrier-slug] e.g. shippingiq-exclude-allied
+   - Tags override weight/dim rules
+3. Logic: carrier passes dim/weight check AND no exclusion tag overrides it
 
-2. FREIGHT MARGIN — verify it shows in quote breakdown
-   - Margin is calculated but the display line may not be rendering
-   - Test: set a 10% margin in Rules, run a quote, check if margin line appears in formula
+### Plugin settings (in WooCommerce admin)
+- ShippingIQ API URL (calculate-freight endpoint)
+- Merchant ID
+- Display mode: All eligible carriers | Cheapest only | Selected carriers
 
-## What to build next after fixes
-1. WooCommerce plugin
-   - Connects to ShippingIQ API
-   - Receives postcode + cart items (weight, dimensions, order value, exempt flags)
-   - Returns calculated freight cost
-   - Applies free shipping, surcharges, GST based on merchant settings
-   - Shows as shipping option at checkout
+### Philosophy
+- Simple by default: add carrier, upload files, done — no rules required
+- Rules only for exceptions: set limits only when a carrier can't handle something
+- Merchant mental model: "My carriers handle everything unless I say otherwise"
+
+### Split shipment
+- Parked for future — not in v1
+- Rare edge case given large carriers handle all sizes
+
+## What to build next
+1. Carrier eligibility rules UI — add weight/dim limit fields to Carriers page in ShippingIQ
+2. WooCommerce plugin — PHP plugin calling calculate-freight, filtering by eligibility rules and product tags
 
 ## Logged for future build
 - Address autocomplete to detect residential vs commercial (triggers residential surcharge)
@@ -146,9 +170,11 @@ Model C: Depot-to-depot — Mainfreight style
 - Multi-warehouse / multi-origin support
 - Delivery requirement flags for customers (e.g. tailgate notice at checkout)
 - Carrier rate editing without full delete and re-upload
+- Split shipment across carriers when no single carrier can handle full cart
+- Carrier-per-product mapping (v2 of eligibility rules)
+- Shared engine module in supabase/functions/_shared/ so Quote.js and calculate-freight stay in sync automatically
 
 ## Test files available
-In Claude outputs from this session:
 - test_rate_card.csv / .xlsx / .pdf
 - test_zone_file.csv / .xlsx
 - test_surcharges.csv / .pdf
