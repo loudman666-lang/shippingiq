@@ -402,7 +402,7 @@ export default function Quote() {
                     <input className="form-input" type="number" min="1" placeholder="0" value={item.height} onChange={e => updateItem(item.id, 'height', e.target.value)} style={{ padding: '7px 6px', fontSize: '13px' }} />
                     <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', color: 'var(--ink-muted)', cursor: 'pointer', fontSize: '20px', lineHeight: 1, padding: '4px 0' }}>×</button>
                   </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingLeft: '50px', marginTop: '4px', cursor: 'pointer' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', cursor: 'pointer' }}>
                     <input type="checkbox" checked={item.exemptFreeShipping || false} onChange={e => updateItem(item.id, 'exemptFreeShipping', e.target.checked)} style={{ accentColor: 'var(--accent)', cursor: 'pointer' }} />
                     <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Exempt from free shipping</span>
                   </label>
