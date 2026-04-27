@@ -359,7 +359,7 @@ export default function Quote() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '32px', alignItems: 'start' }}>
           <div>
             <div className="card" style={{ marginBottom: '0' }}>
               <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--ink)', marginBottom: '20px' }}>Order Details</div>
