@@ -3,7 +3,15 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import './Carriers.css'
 
-function calculateRate(carrier, postcode, items) {
+function applyMargin(subtotal, rules) {
+  if (!rules || rules.freightMarginType === 'none' || !rules.freightMarginValue) return 0
+  const val = parseFloat(rules.freightMarginValue) || 0
+  if (rules.freightMarginType === 'percent') return Math.round(subtotal * val / 100 * 100) / 100
+  if (rules.freightMarginType === 'flat') return Math.round(val * 100) / 100
+  return 0
+}
+
+function calculateRate(carrier, postcode, items, rules = {}) {
   const data = carrier.parsed_data
   const model = data?.pricingModel
   const origin = data?.selectedOrigin
@@ -37,14 +45,16 @@ function calculateRate(carrier, postcode, items) {
     if (!rate) return { error: 'No rate found for zone ' + zoneName + ' from ' + origin }
     const freight = Math.max(rate.basicCharge + chargeableWeight * rate.perKgRate, rate.minimumCharge)
     const fuelLevy = fuelLevyPct ? Math.round(freight * fuelLevyPct / 100 * 100) / 100 : null
-    const totalCost = fuelLevy ? Math.round((freight + fuelLevy) * 100) / 100 : Math.round(freight * 100) / 100
+    const subtotal = fuelLevy ? Math.round((freight + fuelLevy) * 100) / 100 : Math.round(freight * 100) / 100
+    const margin = applyMargin(subtotal, rules)
+    const totalCost = Math.round((subtotal + margin) * 100) / 100
     return {
       carrier: carrier.name, origin, destination: suburb + ', ' + state + ' ' + postcode,
       zone: zoneName, zoneCode, service: rate.service,
       totalActualWeight, totalCubicWeight, chargeableWeight, cubicFactor,
       basicCharge: rate.basicCharge, perKgRate: rate.perKgRate, minimumCharge: rate.minimumCharge,
       freightCost: Math.round(freight * 100) / 100,
-      fuelLevyPct, fuelLevy, totalCost,
+      fuelLevyPct, fuelLevy, margin, marginType: rules.freightMarginType, totalCost,
       formula: 'MAX($' + rate.basicCharge.toFixed(2) + ' + ' + chargeableWeight + 'kg x $' + rate.perKgRate.toFixed(3) + ', $' + rate.minimumCharge.toFixed(2) + ')',
       model: 'B'
     }
@@ -56,14 +66,16 @@ function calculateRate(carrier, postcode, items) {
     if (!rate) return { error: 'No depot-to-depot rate found from ' + origin + ' to ' + zoneName }
     const freight = Math.max(rate.basicCharge + chargeableWeight * rate.perKgRate, rate.minimumCharge)
     const fuelLevy = fuelLevyPct ? Math.round(freight * fuelLevyPct / 100 * 100) / 100 : null
-    const totalCost = fuelLevy ? Math.round((freight + fuelLevy) * 100) / 100 : Math.round(freight * 100) / 100
+    const subtotal = fuelLevy ? Math.round((freight + fuelLevy) * 100) / 100 : Math.round(freight * 100) / 100
+    const margin = applyMargin(subtotal, rules)
+    const totalCost = Math.round((subtotal + margin) * 100) / 100
     return {
       carrier: carrier.name, origin, destination: suburb + ', ' + state + ' ' + postcode,
       zone: zoneName, service: 'Depot to Depot',
       totalActualWeight, totalCubicWeight, chargeableWeight, cubicFactor,
       basicCharge: rate.basicCharge, perKgRate: rate.perKgRate, minimumCharge: rate.minimumCharge,
       freightCost: Math.round(freight * 100) / 100,
-      fuelLevyPct, fuelLevy, totalCost,
+      fuelLevyPct, fuelLevy, margin, marginType: rules.freightMarginType, totalCost,
       formula: 'MAX($' + rate.basicCharge.toFixed(2) + ' + ' + chargeableWeight + 'kg x $' + rate.perKgRate.toFixed(3) + ', $' + rate.minimumCharge.toFixed(2) + ')',
       model: 'C'
     }
@@ -85,13 +97,15 @@ function calculateRate(carrier, postcode, items) {
     const freight = row[zoneName] || row[zoneCode]
     if (!freight) return { error: 'No rate for zone ' + zoneName }
     const fuelLevy = fuelLevyPct ? Math.round(freight * fuelLevyPct / 100 * 100) / 100 : null
-    const totalCost = fuelLevy ? Math.round((freight + fuelLevy) * 100) / 100 : Math.round(freight * 100) / 100
+    const subtotal = fuelLevy ? Math.round((freight + fuelLevy) * 100) / 100 : Math.round(freight * 100) / 100
+    const margin = applyMargin(subtotal, rules)
+    const totalCost = Math.round((subtotal + margin) * 100) / 100
     return {
       carrier: carrier.name, destination: suburb + ', ' + state + ' ' + postcode,
       zone: zoneName, zoneCode, service, weightBreak: matchedBreak,
       totalActualWeight, totalCubicWeight, chargeableWeight, cubicFactor,
       freightCost: Math.round(freight * 100) / 100,
-      fuelLevyPct, fuelLevy, totalCost,
+      fuelLevyPct, fuelLevy, margin, marginType: rules.freightMarginType, totalCost,
       formula: 'Flat rate for ' + matchedBreak + ' to ' + zoneName, model: 'A'
     }
   }
@@ -113,6 +127,7 @@ export default function Quote() {
   const [saving, setSaving] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
   const [gstEnabled, setGstEnabled] = useState(false)
+  const [merchantRules, setMerchantRules] = useState({})
 
   useEffect(() => { if (merchant?.id) { fetchCarriers(); fetchSavedQuotes() } }, [merchant])
 
@@ -120,10 +135,11 @@ export default function Quote() {
     setLoading(true)
     const [carriersRes, merchantRes] = await Promise.all([
       supabase.from('carriers').select('*').eq('merchant_id', merchant.id).eq('status', 'active'),
-      supabase.from('merchants').select('settings').eq('id', merchant.id).single()
+      supabase.from('merchants').select('settings, rules').eq('id', merchant.id).single()
     ])
     setCarriers(carriersRes.data || [])
     if (merchantRes.data?.settings?.gstEnabled !== undefined) setGstEnabled(merchantRes.data.settings.gstEnabled)
+    if (merchantRes.data?.rules) setMerchantRules(merchantRes.data.rules)
     setLoading(false)
   }
 
@@ -159,7 +175,7 @@ export default function Quote() {
     if (carriers.length === 0) { setError('No active carriers found. Add a carrier first.'); return }
     const validItems = items.filter(i => i.weight && parseFloat(i.weight) > 0)
     if (validItems.length === 0) { setError('Please enter a weight for at least one item.'); return }
-    setResults(carriers.map(c => calculateRate(c, postcode, validItems)))
+    setResults(carriers.map(c => calculateRate(c, postcode, validItems, merchantRules)))
   }
 
   const totalActual = Math.round(items.reduce((s, i) => s + (parseFloat(i.weight)||0) * (parseInt(i.qty)||1), 0) * 100) / 100
@@ -338,6 +354,12 @@ export default function Quote() {
                           {result.fuelLevy && (
                             <div style={{ marginTop: '6px' }}>
                               + Fuel levy ({result.fuelLevyPct}%) = <strong style={{ color: 'var(--ink)' }}>${result.fuelLevy.toFixed(2)}</strong>
+                              <span style={{ marginLeft: '12px', color: 'var(--accent)', fontWeight: '700' }}>Subtotal: ${result.totalCost.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {result.margin > 0 && (
+                            <div style={{ marginTop: '6px' }}>
+                              + Handling margin ({result.marginType === 'percent' ? rules.freightMarginValue + '%' : '$' + result.margin.toFixed(2)}) = <strong style={{ color: 'var(--ink)' }}>${result.margin.toFixed(2)}</strong>
                               <span style={{ marginLeft: '12px', color: 'var(--accent)', fontWeight: '700' }}>Subtotal: ${result.totalCost.toFixed(2)}</span>
                             </div>
                           )}
