@@ -163,3 +163,32 @@ Options: 1) Merchant uploads custom postcode-zone mapping, 2) We build a standar
 
 ## Session workflow
 Every time something works: cd ~/Downloads/shippingiq && git add -A && git commit -m "description" && git push
+
+### Hunter Express - Rate Card (via i-Trans intermediary)
+File: MY_FURNITURE_-_HUNTER_RATE_CARD.pdf
+Format: PDF, single page, two-column layout
+Service: National Residential Delivery
+Pricing model: Basic Charge + Per Kg rate, with Minimum Charge (Model B)
+Formula: MAX(Basic + weight x rate, Minimum)
+Origin: Single origin (Melbourne based for My Furniture)
+NOTE: Managed via i-Trans intermediary but same pricing structure as Hunter direct
+
+Zone structure - named cities plus regional zones:
+Major cities: MELBOURNE MEL $21.75 + $0.26/kg min $42.05
+SYDNEY SYD $26.10 + $0.38/kg min $46.40
+BRISBANE BNE $26.10 + $0.64/kg min $46.40
+ADELAIDE ADL $43.50 + $0.61/kg min $46.40
+PERTH PER $26.10 + $1.13/kg min $46.40
+DARWIN DRW $30.45 + $2.48/kg min $55.10
+HOBART HBA $30.45 + $1.57/kg min $55.10
+
+Regional zones follow same Model B structure:
+QLD ZONE 1-6 (QLD1-QLD6), NSW ZONE 1-6 (NSW1-NSW6)
+SA ZONE 1-5 (SA1-SA5), WA ZONE 1-4 (WA1-WA4)
+VIC ZONE 1-3 (VIC1-VIC3), TAS ZONE 1-2 (TAS1-TAS2)
+NT ZONE 1-2 (NT1-NT2) - note NT zones have unusual structure ($47.00 + $43.50 + per kg)
+
+Key surcharge: Tailgate $75.00 flat fee per delivery
+All rates exclude fuel levy and GST
+No zone file provided - Hunter uses postcode-to-zone mapping (not uploaded)
+Zone file format likely similar to Allied - postcode maps to zone code (QLD1, NSW2 etc)
