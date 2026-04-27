@@ -42,7 +42,7 @@ export default function Carriers() {
       const rateCardText = await form.rateCard.text()
       const zoneFileText = await form.zoneFile.text()
 
-      const { data, error } = await supabase.functions.invoke('parse-carrier', {
+      const { data, error } = await supabase.functions.invoke('rapid-api', {
         body: {
           carrierName: form.name,
           rateCardText,
