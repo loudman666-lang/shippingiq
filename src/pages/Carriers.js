@@ -265,6 +265,12 @@ export default function Carriers() {
     fetchCarriers()
   }
 
+  async function updateFuelLevy(id, pct) {
+    const val = pct === '' ? null : parseFloat(pct)
+    await supabase.from('carriers').update({ fuel_levy_pct: val }).eq('id', id)
+    fetchCarriers()
+  }
+
   const originDepots = parseResult?.originDepots || []
 
   return (
@@ -464,7 +470,7 @@ export default function Carriers() {
         ) : (
           <div className="carriers-list">
             {carriers.map(carrier => (
-              <div key={carrier.id} className="carrier-card">
+              <div key={carrier.id} className="carrier-card" style={{ flexWrap: 'wrap', gap: '16px' }}>
                 <div className="carrier-info">
                   <div className="carrier-name">{carrier.name}</div>
                   <div className="carrier-meta">
@@ -476,6 +482,19 @@ export default function Carriers() {
                   <div className="carrier-summary">{carrier.parsed_data?.summary}</div>
                 </div>
                 <div className="carrier-actions">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <label style={{ fontSize: '12px', color: '#6b7280', whiteSpace: 'nowrap' }}>Fuel levy %</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      placeholder="e.g. 17.5"
+                      defaultValue={carrier.fuel_levy_pct ?? ''}
+                      onBlur={e => updateFuelLevy(carrier.id, e.target.value)}
+                      style={{ width: '80px', padding: '5px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }}
+                    />
+                  </div>
                   <span className={"carrier-status " + carrier.status}>{carrier.status}</span>
                   <button className="btn-secondary" onClick={() => setViewingCarrier(viewingCarrier?.id === carrier.id ? null : carrier)}>
                     {viewingCarrier?.id === carrier.id ? 'Hide Rates' : 'View Rates'}

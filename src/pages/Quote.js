@@ -8,6 +8,7 @@ function calculateRate(carrier, postcode, items) {
   const model = data?.pricingModel
   const origin = data?.selectedOrigin
   const cubicFactor = data?.cubicFactor || 250
+  const fuelLevyPct = carrier.fuel_levy_pct || null
   const postcodeMap = data?.postcodeMap || []
   const postcodeEntry = postcodeMap.find(p => String(p.postcode) === String(postcode))
   if (!postcodeEntry) return { error: 'Postcode ' + postcode + ' not found in zone file for ' + carrier.name }
@@ -35,12 +36,15 @@ function calculateRate(carrier, postcode, items) {
     const rate = rates.find(r => (!origin || r.originDepot === origin) && (r.zoneCode === zoneCode || r.zone === zoneName))
     if (!rate) return { error: 'No rate found for zone ' + zoneName + ' from ' + origin }
     const freight = Math.max(rate.basicCharge + chargeableWeight * rate.perKgRate, rate.minimumCharge)
+    const fuelLevy = fuelLevyPct ? Math.round(freight * fuelLevyPct / 100 * 100) / 100 : null
+    const totalCost = fuelLevy ? Math.round((freight + fuelLevy) * 100) / 100 : Math.round(freight * 100) / 100
     return {
       carrier: carrier.name, origin, destination: suburb + ', ' + state + ' ' + postcode,
       zone: zoneName, zoneCode, service: rate.service,
       totalActualWeight, totalCubicWeight, chargeableWeight, cubicFactor,
       basicCharge: rate.basicCharge, perKgRate: rate.perKgRate, minimumCharge: rate.minimumCharge,
       freightCost: Math.round(freight * 100) / 100,
+      fuelLevyPct, fuelLevy, totalCost,
       formula: 'MAX($' + rate.basicCharge.toFixed(2) + ' + ' + chargeableWeight + 'kg x $' + rate.perKgRate.toFixed(3) + ', $' + rate.minimumCharge.toFixed(2) + ')',
       model: 'B'
     }
@@ -51,12 +55,15 @@ function calculateRate(carrier, postcode, items) {
     const rate = rates.find(r => (!origin || r.originDepot === origin) && r.destinationDepot === zoneName)
     if (!rate) return { error: 'No depot-to-depot rate found from ' + origin + ' to ' + zoneName }
     const freight = Math.max(rate.basicCharge + chargeableWeight * rate.perKgRate, rate.minimumCharge)
+    const fuelLevy = fuelLevyPct ? Math.round(freight * fuelLevyPct / 100 * 100) / 100 : null
+    const totalCost = fuelLevy ? Math.round((freight + fuelLevy) * 100) / 100 : Math.round(freight * 100) / 100
     return {
       carrier: carrier.name, origin, destination: suburb + ', ' + state + ' ' + postcode,
       zone: zoneName, service: 'Depot to Depot',
       totalActualWeight, totalCubicWeight, chargeableWeight, cubicFactor,
       basicCharge: rate.basicCharge, perKgRate: rate.perKgRate, minimumCharge: rate.minimumCharge,
       freightCost: Math.round(freight * 100) / 100,
+      fuelLevyPct, fuelLevy, totalCost,
       formula: 'MAX($' + rate.basicCharge.toFixed(2) + ' + ' + chargeableWeight + 'kg x $' + rate.perKgRate.toFixed(3) + ', $' + rate.minimumCharge.toFixed(2) + ')',
       model: 'C'
     }
@@ -77,11 +84,14 @@ function calculateRate(carrier, postcode, items) {
     if (!row) return { error: 'No rate found for ' + matchedBreak + ' to ' + zoneName }
     const freight = row[zoneName] || row[zoneCode]
     if (!freight) return { error: 'No rate for zone ' + zoneName }
+    const fuelLevy = fuelLevyPct ? Math.round(freight * fuelLevyPct / 100 * 100) / 100 : null
+    const totalCost = fuelLevy ? Math.round((freight + fuelLevy) * 100) / 100 : Math.round(freight * 100) / 100
     return {
       carrier: carrier.name, destination: suburb + ', ' + state + ' ' + postcode,
       zone: zoneName, zoneCode, service, weightBreak: matchedBreak,
       totalActualWeight, totalCubicWeight, chargeableWeight, cubicFactor,
       freightCost: Math.round(freight * 100) / 100,
+      fuelLevyPct, fuelLevy, totalCost,
       formula: 'Flat rate for ' + matchedBreak + ' to ' + zoneName, model: 'A'
     }
   }
@@ -320,6 +330,12 @@ export default function Quote() {
                         </div>
                         <div style={{ padding: '10px 12px', background: 'var(--surface-2)', borderRadius: '6px', fontSize: '12px', color: 'var(--ink-muted)', fontFamily: 'monospace' }}>
                           {result.formula} = <strong style={{ color: 'var(--ink)' }}>${result.freightCost.toFixed(2)}</strong>
+                          {result.fuelLevy && (
+                            <div style={{ marginTop: '6px' }}>
+                              + Fuel levy ({result.fuelLevyPct}%) = <strong style={{ color: 'var(--ink)' }}>${result.fuelLevy.toFixed(2)}</strong>
+                              <span style={{ marginLeft: '12px', color: 'var(--accent)', fontWeight: '700' }}>Total: ${result.totalCost.toFixed(2)}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
