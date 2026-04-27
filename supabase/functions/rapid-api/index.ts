@@ -1,60 +1,9 @@
-// v8
+// v9 — file parsing moved to browser; edge function receives pre-extracted text or PDF base64
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-function base64ToText(base64) {
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return new TextDecoder().decode(bytes)
-}
-
-function base64ToUint8Array(base64) {
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return bytes
-}
-
-const EXCEL_ROW_LIMIT = 500
-
-function excelToText(base64) {
-  let workbook
-  try {
-    const bytes = base64ToUint8Array(base64)
-    // sheetRows stops XLSX parsing at this row — prevents CPU timeout on large zone files
-    workbook = XLSX.read(bytes, { type: 'array', sheetRows: EXCEL_ROW_LIMIT })
-  } catch (e) {
-    return 'Could not read Excel file: ' + e.message
-  }
-
-  const parts: string[] = []
-  workbook.SheetNames.forEach((sheetName, index) => {
-    try {
-      const sheet = workbook.Sheets[sheetName]
-      const csv = XLSX.utils.sheet_to_csv(sheet).trim()
-      if (!csv) return // skip empty sheets
-      const label = 'Sheet ' + (index + 1) + ': ' + sheetName
-      const note = '(truncated to first ' + EXCEL_ROW_LIMIT + ' rows)'
-      parts.push(label + ' ' + note + '\n' + csv.slice(0, 2000))
-    } catch (e) {
-      parts.push('Sheet ' + (index + 1) + ': ' + sheetName + '\n(could not parse sheet: ' + e.message + ')')
-    }
-  })
-
-  return parts.length > 0
-    ? parts.join('\n\n---\n\n')
-    : 'Could not extract any sheet content from Excel file'
-}
-
-function fileToText(file) {
-  if (file.type === 'excel') return excelToText(file.data)
-  return base64ToText(file.data)
 }
 
 serve(async (req) => {
@@ -127,35 +76,19 @@ Respond ONLY with a JSON object. No markdown, no backticks.
 }`
     })
 
-    if (rateCard && rateCard.data) {
-      if (rateCard.type === 'pdf') {
-        userContent.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: rateCard.data } })
-        userContent.push({ type: 'text', text: 'Above is the rate card PDF: ' + rateCard.name })
+    function addFileContent(file, label) {
+      if (!file) return
+      if (file.type === 'pdf') {
+        userContent.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: file.data } })
+        userContent.push({ type: 'text', text: 'Above is the ' + label + ' PDF: ' + file.name })
       } else {
-        const text = fileToText(rateCard)
-        userContent.push({ type: 'text', text: 'Rate card (' + rateCard.name + '):\n' + text.slice(0, 8000) })
+        userContent.push({ type: 'text', text: label + ' (' + file.name + '):\n' + (file.content ?? '').slice(0, 8000) })
       }
     }
 
-    if (zoneFile && zoneFile.data) {
-      if (zoneFile.type === 'pdf') {
-        userContent.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: zoneFile.data } })
-        userContent.push({ type: 'text', text: 'Above is the zone file PDF: ' + zoneFile.name })
-      } else {
-        const text = fileToText(zoneFile)
-        userContent.push({ type: 'text', text: 'Zone file (' + zoneFile.name + '):\n' + text.slice(0, 8000) })
-      }
-    }
-
-    if (surchargeDoc && surchargeDoc.data) {
-      if (surchargeDoc.type === 'pdf') {
-        userContent.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: surchargeDoc.data } })
-        userContent.push({ type: 'text', text: 'Above is the surcharge schedule PDF: ' + surchargeDoc.name })
-      } else {
-        const text = fileToText(surchargeDoc)
-        userContent.push({ type: 'text', text: 'Surcharge schedule (' + surchargeDoc.name + '):\n' + text.slice(0, 8000) })
-      }
-    }
+    addFileContent(rateCard, 'rate card')
+    addFileContent(zoneFile, 'zone file')
+    addFileContent(surchargeDoc, 'surcharge schedule')
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

@@ -154,6 +154,15 @@ function fileToBase64(file) {
   })
 }
 
+function fileReadAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsText(file)
+  })
+}
+
 function getFileType(file) {
   if (!file) return null
   const name = file.name.toLowerCase()
@@ -161,6 +170,47 @@ function getFileType(file) {
   if (name.endsWith('.xlsx') || name.endsWith('.xls')) return 'excel'
   if (name.endsWith('.pdf')) return 'pdf'
   return 'unknown'
+}
+
+const SHEET_ROW_LIMIT = 500
+const SHEET_CHAR_LIMIT = 2000
+
+async function excelFileToText(file) {
+  const XLSX = await import('https://esm.sh/xlsx@0.18.5')
+  const base64 = await fileToBase64(file)
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  const workbook = XLSX.read(bytes, { type: 'array', sheetRows: SHEET_ROW_LIMIT })
+  const parts = []
+  workbook.SheetNames.forEach((sheetName, index) => {
+    try {
+      const sheet = workbook.Sheets[sheetName]
+      const csv = XLSX.utils.sheet_to_csv(sheet).trim()
+      if (!csv) return
+      const label = 'Sheet ' + (index + 1) + ': ' + sheetName + ' (truncated to first ' + SHEET_ROW_LIMIT + ' rows)'
+      parts.push(label + '\n' + csv.slice(0, SHEET_CHAR_LIMIT))
+    } catch (e) {
+      parts.push('Sheet ' + (index + 1) + ': ' + sheetName + '\n(could not parse sheet: ' + e.message + ')')
+    }
+  })
+  return parts.length > 0 ? parts.join('\n\n---\n\n') : 'Could not extract any sheet content from Excel file'
+}
+
+async function buildFilePayload(file) {
+  if (!file) return null
+  const type = getFileType(file)
+  if (type === 'pdf') {
+    const data = await fileToBase64(file)
+    return { type: 'pdf', data, name: file.name }
+  }
+  if (type === 'excel') {
+    const content = await excelFileToText(file)
+    return { type: 'text', content, name: file.name }
+  }
+  // csv or unknown — read as plain text
+  const content = await fileReadAsText(file)
+  return { type: 'text', content: content.slice(0, 8000), name: file.name }
 }
 
 export default function Carriers() {
@@ -207,18 +257,18 @@ export default function Carriers() {
     setParseResult(null)
     setSelectedOrigin('')
     try {
-      setParsingStep('Uploading files...')
-      const rateCardBase64 = await fileToBase64(form.rateCard)
-      const zoneFileBase64 = await fileToBase64(form.zoneFile)
+      setParsingStep('Reading your files...')
+      const [rateCardPayload, zoneFilePayload, surchargePayload] = await Promise.all([
+        buildFilePayload(form.rateCard),
+        buildFilePayload(form.zoneFile),
+        form.surchargeDoc ? buildFilePayload(form.surchargeDoc) : Promise.resolve(null),
+      ])
       const payload = {
         carrierName: form.name,
-        rateCard: { data: rateCardBase64, type: getFileType(form.rateCard), name: form.rateCard.name },
-        zoneFile: { data: zoneFileBase64, type: getFileType(form.zoneFile), name: form.zoneFile.name },
+        rateCard: rateCardPayload,
+        zoneFile: zoneFilePayload,
       }
-      if (form.surchargeDoc) {
-        const surchargeBase64 = await fileToBase64(form.surchargeDoc)
-        payload.surchargeDoc = { data: surchargeBase64, type: getFileType(form.surchargeDoc), name: form.surchargeDoc.name }
-      }
+      if (surchargePayload) payload.surchargeDoc = surchargePayload
       setParsingStep('AI is analysing your rate card and zone file — this takes 20–40 seconds, hang tight...')
       const { data, error } = await supabase.functions.invoke('rapid-api', { body: payload })
       if (error) throw error
