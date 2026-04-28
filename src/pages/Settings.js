@@ -5,10 +5,18 @@ import './Carriers.css'
 
 export default function Settings() {
   const { profile, merchant, isAdmin } = useAuth()
+  const [storeName, setStoreName] = useState('')
+  const [savingName, setSavingName] = useState(false)
+  const [nameSaved, setNameSaved] = useState(false)
+  const [nameError, setNameError] = useState(false)
   const [gstEnabled, setGstEnabled] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (merchant?.name) setStoreName(merchant.name)
+  }, [merchant])
 
   useEffect(() => {
     if (merchant?.id) loadSettings()
@@ -19,6 +27,17 @@ export default function Settings() {
     const { data } = await supabase.from('merchants').select('settings').eq('id', merchant.id).single()
     if (data?.settings?.gstEnabled !== undefined) setGstEnabled(data.settings.gstEnabled)
     setLoading(false)
+  }
+
+  async function saveStoreName() {
+    if (!storeName.trim()) { setNameError(true); return }
+    setNameError(false)
+    setSavingName(true)
+    setNameSaved(false)
+    await supabase.from('merchants').update({ name: storeName.trim() }).eq('id', merchant.id)
+    setSavingName(false)
+    setNameSaved(true)
+    setTimeout(() => setNameSaved(false), 3000)
   }
 
   async function saveSettings() {
@@ -78,6 +97,32 @@ export default function Settings() {
             <h1 className="main-title">Settings</h1>
             <p className="main-subtitle">Configure how ShippingIQ works for your store</p>
           </div>
+        </div>
+
+        <div className="card" style={{ maxWidth: '520px', marginBottom: '24px' }}>
+          <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Store Details</div>
+          <div style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '20px' }}>
+            The store name appears on your Dashboard and in quotes.
+          </div>
+          <div className="form-group">
+            <label className="form-label">Store Name</label>
+            <input
+              className="form-input"
+              type="text"
+              value={storeName}
+              onChange={e => { setStoreName(e.target.value); setNameError(false) }}
+              style={{ maxWidth: '320px' }}
+            />
+            {nameError && <div style={{ marginTop: '6px', fontSize: '13px', color: '#dc2626' }}>Store name cannot be empty.</div>}
+          </div>
+          {nameSaved && (
+            <div style={{ marginBottom: '16px', padding: '10px 14px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '13px', color: '#16a34a', fontWeight: '500' }}>
+              ✓ Store name updated
+            </div>
+          )}
+          <button className="btn-primary" onClick={saveStoreName} disabled={savingName} style={{ padding: '10px 24px' }}>
+            {savingName ? 'Saving...' : 'Save'}
+          </button>
         </div>
 
         {loading ? <div className="empty-state"><p>Loading settings...</p></div> : (
