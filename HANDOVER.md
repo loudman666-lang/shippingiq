@@ -53,7 +53,8 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
   - Rate table display filtered to selected origin
   - Surcharge extraction with auto thresholds from carrier documents
   - Fuel levy % editable per carrier (stored in carriers.fuel_levy_pct)
-  - Surcharge Rules per carrier: Manual / Auto / Auto with override
+  - Surcharge Rules per carrier: Off / On-auto (carrier triggers) / On-auto (my triggers) / Always / Never
+  - Surcharge rules UI: plain English labels, one-line explanations per option, overlength inputs labelled correctly
   - Analysis progress message and spinner
   - Progress steps: 'Reading files...' → 'Building postcode map...' → 'Analysing rates — this takes 20–40 seconds...' → 'Extracting surcharges...' → 'Done.'
 - Get a Quote page:
@@ -68,16 +69,24 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
   - Save Quote to Supabase quotes table
 - Settings page: GST toggle (ex GST B2B, inc GST B2C)
 - Rules page: free shipping threshold, freight margin, carrier priority
+  - Carrier priority: arrows reorder correctly (stale closure bug fixed), all active carriers shown (new carriers appended at bottom)
+  - Free shipping: shippingiq-exempt tag documented inline with tip about bulky items
 - Carrier eligibility limits UI — weight/dim limit fields per carrier on Carriers page, saved to carriers.eligibility_rules
+  - Zero values correctly treated as no limit (bug fixed — was incorrectly excluding all carriers when any limit was set to 0)
 - WooCommerce plugin at woocommerce-plugin/shippingiq/:
   - Standard WC shipping method, registers as "ShippingIQ" in WC shipping zones
   - Calls calculate-freight edge function with postcode + items + merchant_id
   - Auth via apikey + Authorization: Bearer headers (Supabase anon key) — required for edge function calls without user JWT
-  - Fetches carriers.eligibility_rules from Supabase REST API, excludes carriers where any item exceeds limits
+  - Fetches carriers.eligibility_rules from Supabase REST API, excludes carriers where any item exceeds limits (limit > 0 only)
   - Product tag rules: shippingiq-only-[carrier-slug] and shippingiq-exclude-[carrier-slug]
-  - Display modes: all eligible carriers or cheapest only
+  - Three display modes (tested and working with Allied Express):
+    - all: all eligible carriers sorted by ShippingIQ priority order
+    - cheapest: lowest cost carrier only
+    - priority: top-ranked carrier that services the postcode
+  - calculate-freight returns carrierId per result + carrierPriority array — plugin sorts without extra query
   - error_log() debug logging throughout calculate_shipping — tail wp-content/debug.log to trace
   - PHP 8.2 compatible — explicit property declarations, no return type on WC method overrides
+  - Allied Express tested end-to-end at WooCommerce checkout — correct rates confirmed
 
 ## Current file structure
 src/pages/Dashboard.js + Dashboard.css
@@ -220,8 +229,8 @@ Model C: Depot-to-depot — Mainfreight style
 - Rare edge case given large carriers handle all sizes
 
 ## What to build next
-1. Template downloads for merchants without carrier files — downloadable sample CSV templates showing the expected format for rate cards and zone files. Helps merchants who don't have files in the right shape yet, or whose carriers don't provide machine-readable files
-2. Test WooCommerce plugin end-to-end with real carrier data — verify rates appear at checkout, eligibility filtering works, tag overrides work
+1. Weight/dimension triggers for service-level surcharges — Tail Lift, 2 Person Delivery, Hand Unload currently have no threshold trigger option beyond Always/Never. Need weight and/or dimension thresholds so these can fire automatically like overlength surcharges do
+2. Template downloads for merchants without carrier files — downloadable sample CSV templates showing the expected format for rate cards and zone files. Helps merchants who don't have files in the right shape yet, or whose carriers don't provide machine-readable files
 3. Production deployment prep — remove error_log() debug calls from plugin, enable WooCommerce rate caching, review Supabase RLS before go-live
 
 ## Logged for future build
