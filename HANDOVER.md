@@ -122,7 +122,7 @@ carriers.eligibility_rules: jsonb — { maxWeightKg, maxLengthCm, maxWidthCm, ma
 - Allied Express zone file = 16,000+ rows — too large to send to any AI
 - Allied Express rate card = 84 zones × 5 depots × 2 charges = 420+ combinations — AI hits token limit trying to return all rows
 - Browser parsing has no timeout or token constraints
-- Tested with Allied Express: 880 rates, 23 surcharges, 17,150 postcode entries, all 5 depots — all correct
+- Tested with Allied Express: 880 rates, 23 surcharges, 2,688 postcode entries, all 5 depots — all correct
 
 ### Key browser parsing functions (Carriers.js)
 - `scanExcelBytes(XLSX, bytes)` — scans all sheets, returns {postcodeRows, rateTexts, surchargeTexts}
