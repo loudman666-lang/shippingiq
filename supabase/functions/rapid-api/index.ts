@@ -93,7 +93,9 @@ Respond ONLY with a JSON object. No markdown, no backticks.
   })
 
   if (rateText?.trim()) {
-    userContent.push({ type: 'text', text: `Rate card data:\n${rateText}` })
+    const capped = rateText.slice(0, 8000)
+    console.log('[handleRates] rateText length:', rateText.length, '→ capped to:', capped.length)
+    userContent.push({ type: 'text', text: `Rate card data:\n${capped}` })
   }
   addPdfs(userContent, pdfs as { data: string; name: string; slot: string }[])
 
