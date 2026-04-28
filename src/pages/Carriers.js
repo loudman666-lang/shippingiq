@@ -183,6 +183,10 @@ function looksLikePostcode(val) {
   return /^\d{3,4}$/.test(String(val ?? '').trim())
 }
 
+function computeFileHash(files) {
+  return files.filter(Boolean).map(f => `${f.name}:${f.size}:${f.lastModified}`).join('|')
+}
+
 // If the sheet looks like a rate table (has basic/per-kg/minimum columns), return
 // a compact CSV keeping only zone identifier and rate columns. Handles Allied-style
 // multi-depot layouts where depot names sit in a merged header row above the rate
@@ -540,6 +544,8 @@ export default function Carriers() {
   const [surchargeRules, setSurchargeRules] = useState({})
   const [eligibilityCarrierId, setEligibilityCarrierId] = useState(null)
   const [eligibilityForm, setEligibilityForm] = useState({})
+  const [showReUploadConfirm, setShowReUploadConfirm] = useState(null)
+  const [fromCache, setFromCache] = useState(false)
 
   useEffect(() => {
     if (merchant?.id) fetchCarriers()
@@ -556,11 +562,48 @@ export default function Carriers() {
     setLoading(false)
   }
 
-  async function parseFiles() {
+  async function parseFiles(skipConfirm = false) {
     if (!form.name || !form.rateCard || !form.zoneFile) {
       setError('Please enter a carrier name and upload both the rate card and zone file.')
       return
     }
+
+    setFromCache(false)
+    const hash = computeFileHash([form.rateCard, form.zoneFile, form.surchargeDoc])
+
+    // 1. File hash check — if these exact files are already parsed, skip AI entirely
+    const hashMatch = carriers.find(c => c.status === 'active' && c.parsed_data?.fileHash === hash)
+    if (hashMatch) {
+      setParseResult(hashMatch.parsed_data)
+      setSelectedOrigin(hashMatch.parsed_data?.selectedOrigin || (hashMatch.parsed_data?.originDepots?.length === 1 ? hashMatch.parsed_data.originDepots[0] : ''))
+      setFromCache(true)
+      setError(null)
+      return
+    }
+
+    // 2. Re-upload confirmation — existing active carrier with same name
+    if (!skipConfirm) {
+      const existing = carriers.find(c => c.name.toLowerCase() === form.name.trim().toLowerCase() && c.status === 'active')
+      if (existing) {
+        setShowReUploadConfirm(existing)
+        return
+      }
+    }
+
+    // 3. Rate limit check — skip if merchant is exempt
+    const { data: merchantMeta } = await supabase
+      .from('merchants').select('upload_limit_exempt').eq('id', merchant.id).single()
+    if (!merchantMeta?.upload_limit_exempt) {
+      const cutoff = new Date(Date.now() - 86400000).toISOString()
+      const { count } = await supabase
+        .from('upload_logs').select('*', { count: 'exact', head: true })
+        .eq('merchant_id', merchant.id).gte('created_at', cutoff)
+      if (count >= 10) {
+        setError('Daily upload limit reached (10/day). Please try again tomorrow or contact support.')
+        return
+      }
+    }
+
     setParsing(true)
     setError(null)
     setParseResult(null)
@@ -643,9 +686,13 @@ export default function Carriers() {
         surchargeData = sd
       }
 
+      // Log this successful upload
+      await supabase.from('upload_logs').insert({ merchant_id: merchant.id })
+
       setParsingStep('Done.')
       const parsed = {
         ...rateData,
+        fileHash: hash,
         modelBRates: modelBRates.length > 0 ? modelBRates : (rateData?.modelBRates ?? []),
         zones: modelBRates.length > 0
           ? [...new Set(modelBRates.map(r => r.zone).filter(Boolean))]
@@ -780,7 +827,7 @@ export default function Carriers() {
             <h1 className="main-title">Carriers</h1>
             <p className="main-subtitle">Manage your freight carriers and rate cards</p>
           </div>
-          <button className="btn-primary" onClick={() => { setShowAdd(true); setParseResult(null); setError(null); setViewingCarrier(null) }}>
+          <button className="btn-primary" onClick={() => { setShowAdd(true); setParseResult(null); setError(null); setViewingCarrier(null); setFromCache(false) }}>
             + Add Carrier
           </button>
         </div>
@@ -790,21 +837,21 @@ export default function Carriers() {
             <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>Add New Carrier</h2>
             <div className="form-group">
               <label className="form-label">Carrier Name</label>
-              <input className="form-input" type="text" placeholder="e.g. Allied Express, Mainfreight, StarTrack" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              <input className="form-input" type="text" placeholder="e.g. Allied Express, Mainfreight, StarTrack" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} disabled={!!parseResult || parsing} />
             </div>
             <div className="form-group">
               <label className="form-label">Rate Card <span style={{ color: '#6b7280', fontWeight: 400 }}>(required — CSV, Excel or PDF)</span></label>
-              <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, rateCard: e.target.files[0] })} />
+              <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, rateCard: e.target.files[0] })} disabled={!!parseResult || parsing} />
               {form.rateCard && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.rateCard.name}</div>}
             </div>
             <div className="form-group">
               <label className="form-label">Zone File <span style={{ color: '#6b7280', fontWeight: 400 }}>(required — CSV, Excel or PDF)</span></label>
-              <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, zoneFile: e.target.files[0] })} />
+              <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, zoneFile: e.target.files[0] })} disabled={!!parseResult || parsing} />
               {form.zoneFile && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.zoneFile.name}</div>}
             </div>
             <div className="form-group">
               <label className="form-label">Additional Charges Schedule <span style={{ color: '#6b7280', fontWeight: 400 }}>(optional — CSV, Excel or PDF)</span></label>
-              <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, surchargeDoc: e.target.files[0] })} />
+              <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, surchargeDoc: e.target.files[0] })} disabled={!!parseResult || parsing} />
               {form.surchargeDoc && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.surchargeDoc.name}</div>}
             </div>
 
@@ -819,6 +866,11 @@ export default function Carriers() {
 
             {parseResult && (
               <div className="parse-result">
+                {fromCache && (
+                  <div style={{ padding: '10px 12px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '6px', fontSize: '13px', color: '#166534', marginBottom: '12px' }}>
+                    Files unchanged — using existing analysis.
+                  </div>
+                )}
                 <div className="parse-result-title">✓ Analysis complete</div>
                 <p style={{ marginBottom: '8px', color: '#6b7280' }}>{parseResult.summary}</p>
                 <div className="parse-tags">
@@ -877,7 +929,7 @@ export default function Carriers() {
             )}
 
             <div className="form-actions">
-              <button className="btn-secondary" onClick={() => { setShowAdd(false); setParseResult(null); setError(null); setSelectedOrigin('') }}>Cancel</button>
+              <button className="btn-secondary" onClick={() => { setShowAdd(false); setParseResult(null); setError(null); setSelectedOrigin(''); setFromCache(false) }}>Cancel</button>
               {!parseResult ? (
                 <button className="btn-primary" onClick={parseFiles} disabled={parsing}>
                   {parsing ? 'Analysing...' : 'Analyse Files'}
@@ -1104,6 +1156,21 @@ export default function Carriers() {
           </div>
         )}
       </main>
+
+      {showReUploadConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '32px', maxWidth: '440px', width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>Replace existing rates?</h3>
+            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px' }}>
+              This will replace existing rates for <strong>{showReUploadConfirm.name}</strong>. Are you sure?
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button className="btn-secondary" onClick={() => setShowReUploadConfirm(null)}>Cancel</button>
+              <button className="btn-primary" onClick={() => { setShowReUploadConfirm(null); parseFiles(true) }}>Continue</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
