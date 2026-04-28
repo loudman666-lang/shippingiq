@@ -77,7 +77,8 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
   - Off — never apply
   - Each option has a one-line plain English explanation below the dropdown
   - Overlength 4–8m and over 8m handled correctly; lower/upper bound inputs labelled correctly
-- Carrier Limits section: eligibility weight/dim fields with two-paragraph explanation and StarTrack example
+- Carrier Limits section: eligibility weight/dim fields with two-paragraph explanation and generic example (no carrier names)
+- Cubic Weight Factor displayed on carrier card and during upload. Editable inline. Help text explains standard is 250 (L × W × H ÷ 4,000) — only change if carrier contract specifies otherwise.
 - Upload guardrails:
   - Hash check: same files → "Files unchanged — using existing analysis." (no AI call)
   - Re-upload confirmation modal when carrier name matches existing active carrier
@@ -294,8 +295,7 @@ Model C: Depot-to-depot — Mainfreight style
 
 ## What to build next
 1. Landing page refresh — add visuals showing how ShippingIQ works (upload → configure → live rates), make the value proposition immediately clear to potential users
-2. Cubic Weight Factor field on carrier card — display what AI parsed, allow merchant to manually override. Important for air freight carriers (factor 333) and some regional carriers (factor 200).
-3. Team page — multi-user setup for merchant account (invite team members, role management)
+2. Team page — multi-user setup for merchant account (invite team members, role management)
 4. Production deployment prep — remove error_log() calls from WooCommerce plugin, enable WC rate caching, enable Supabase RLS, review security before go-live
 5. Settings page — add merchant name edit field (current merchant name "My Store" is set at signup and cannot be changed from within the app)
 
