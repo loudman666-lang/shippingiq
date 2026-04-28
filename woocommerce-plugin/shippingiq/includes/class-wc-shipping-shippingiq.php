@@ -146,8 +146,6 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 				break;
 			}
 		}
-		error_log( 'ShippingIQ orderValue: ' . $order_value . ' hasExemptItem: ' . ( $has_exempt_item ? 'true' : 'false' ) );
-
 		// Call calculate-freight.
 		$response = wp_remote_post(
 			esc_url_raw( $this->api_url ),
