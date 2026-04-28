@@ -84,6 +84,7 @@ export default function Settings() {
             <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>GST Display</div>
             <div style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '24px' }}>
               Controls how freight prices are shown to your customers at checkout and in quotes.
+              Note: This setting applies to the Get a Quote page only. When using WooCommerce, GST is handled by WooCommerce's own tax settings.
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
