@@ -1,4 +1,4 @@
-// v9 — file parsing moved to browser; edge function receives pre-extracted text or PDF base64
+// v10 — postcodeMap pre-built in browser for CSV/Excel zone files; AI only sees rate card
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const corsHeaders = {
@@ -15,10 +15,15 @@ serve(async (req) => {
     const body = await req.json()
     const carrierName = body.carrierName
     const rateCard = body.rateCard
-    const zoneFile = body.zoneFile
+    const zoneFile = body.zoneFile           // only present for PDF zone files
     const surchargeDoc = body.surchargeDoc
+    const postcodeMap = body.postcodeMap     // pre-built array from browser, or undefined
 
     const userContent = []
+
+    const postcodeNote = postcodeMap
+      ? '\n\nPOSTCODE MAP: Already extracted from the zone file in the browser. Set "postcodeMap" to [] in your response — do not extract or guess postcode data, it will be merged in separately.'
+      : '\n\nExtract all zones, rates, postcode mappings, and surcharges.'
 
     userContent.push({
       type: 'text',
@@ -51,8 +56,7 @@ Store as cubicFactor in kg/m3 (e.g. 250). If not stated, use 250 as the default 
 
 FUEL LEVY:
 Extract the fuel levy percentage if stated. Store as fuelLevyPct (e.g. 17.5 for 17.5%). If not found, set to null.
-
-Extract all zones, rates, postcode mappings, and surcharges.
+${postcodeNote}
 
 Respond ONLY with a JSON object. No markdown, no backticks.
 
@@ -70,7 +74,7 @@ Respond ONLY with a JSON object. No markdown, no backticks.
   "rates": [{ "service": "Road Express", "weight": "0-1kg", "ZoneName": 8.50 }],
   "modelBRates": [{ "originDepot": "Melbourne", "service": "Road Express", "zone": "Sydney Metro", "zoneCode": "SYD1", "basicCharge": 8.09, "perKgRate": 0.25, "minimumCharge": 11.04 }],
   "modelCRates": [{ "originDepot": "Melbourne", "destinationDepot": "Sydney", "basicCharge": 15.00, "perKgRate": 0.45, "minimumCharge": 22.00 }],
-  "postcodeMap": [{ "postcode": "2000", "zone": "Sydney Metro", "zoneCode": "SYD1", "suburb": "Sydney", "state": "NSW" }],
+  "postcodeMap": [],
   "surcharges": [{ "name": "Tailgate", "amount": "$75.00", "notes": "flat fee per delivery", "autoWeightKg": 750, "autoLengthCm": null, "autoLengthMinCm": null, "autoLengthMaxCm": null, "autoTrigger": null }],
   "warnings": ["any issues found"]
 }`
@@ -87,7 +91,8 @@ Respond ONLY with a JSON object. No markdown, no backticks.
     }
 
     addFileContent(rateCard, 'rate card')
-    addFileContent(zoneFile, 'zone file')
+    // Zone file only included when postcodeMap wasn't pre-built (PDF fallback)
+    if (!postcodeMap) addFileContent(zoneFile, 'zone file')
     addFileContent(surchargeDoc, 'surcharge schedule')
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -108,6 +113,11 @@ Respond ONLY with a JSON object. No markdown, no backticks.
     const text = data.content?.[0]?.text || ''
     const clean = text.replace(/```json|```/g, '').trim()
     const parsed = JSON.parse(clean)
+
+    // Merge pre-built postcodeMap — overrides whatever the AI returned
+    if (Array.isArray(postcodeMap) && postcodeMap.length > 0) {
+      parsed.postcodeMap = postcodeMap
+    }
 
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

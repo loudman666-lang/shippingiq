@@ -336,6 +336,131 @@ async function buildFilePayload(file) {
   return { type: 'text', content: content.slice(0, 8000), name: file.name }
 }
 
+// ---------------------------------------------------------------------------
+// Direct zone file parsing — builds postcodeMap without going through the AI.
+// Returns an array of { postcode, zoneCode, zone, suburb, state } objects,
+// or null if the file can't be parsed this way (e.g. PDF).
+// ---------------------------------------------------------------------------
+
+function parseZoneSheetToObjects(XLSX, sheet) {
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' })
+  if (rows.length < 2) return null
+
+  const headers = rows[0]
+  let postcodeCol   = findColIndex(headers, 'postcode', 'post code', 'post_code', 'pc', 'zip')
+  const zoneCodeCol = findColIndex(headers, 'zone code', 'zone_code', 'zonecode')
+  const zoneNameCol = findColIndex(headers, 'zone name', 'zone_name', 'zonename', 'zone')
+  const suburbCol   = findColIndex(headers, 'suburb', 'locality')
+  const stateCol    = findColIndex(headers, 'state')
+
+  if (postcodeCol === -1) {
+    for (let c = 0; c < headers.length; c++) {
+      const samples = rows.slice(1, 11).filter(r => String(r[c] ?? '').trim() !== '')
+      if (samples.length >= 3 && samples.filter(r => looksLikePostcode(r[c])).length >= Math.ceil(samples.length * 0.8)) {
+        postcodeCol = c; break
+      }
+    }
+  }
+  if (postcodeCol === -1) return null
+
+  // If only one generic 'zone' column exists, use it for both code and name.
+  const effectiveCodeCol = zoneCodeCol !== -1 ? zoneCodeCol : zoneNameCol
+  const effectiveNameCol = zoneNameCol !== -1 ? zoneNameCol : zoneCodeCol
+
+  const result = []
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r]
+    const postcode = String(row[postcodeCol] ?? '').trim()
+    if (!looksLikePostcode(postcode)) continue
+    result.push({
+      postcode,
+      zoneCode: effectiveCodeCol !== -1 ? String(row[effectiveCodeCol] ?? '').trim() : '',
+      zone:     effectiveNameCol !== -1 ? String(row[effectiveNameCol] ?? '').trim() : '',
+      suburb:   suburbCol !== -1 ? String(row[suburbCol] ?? '').trim() : '',
+      state:    stateCol  !== -1 ? String(row[stateCol]  ?? '').trim() : '',
+    })
+  }
+  return result.length > 0 ? result : null
+}
+
+function parseCsvLine(line) {
+  const result = []
+  let current = '', inQuotes = false
+  for (const ch of line) {
+    if (ch === '"') { inQuotes = !inQuotes }
+    else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = '' }
+    else { current += ch }
+  }
+  result.push(current.trim())
+  return result
+}
+
+function parseCsvZoneToObjects(text) {
+  const lines = text.trim().split(/\r?\n/)
+  if (lines.length < 2) return null
+
+  const headers = parseCsvLine(lines[0]).map(h => h.replace(/^"|"$/g, '').toLowerCase().trim())
+  let postcodeIdx   = findColIndex(headers, 'postcode', 'post code', 'post_code', 'pc', 'zip')
+  const zoneCodeIdx = findColIndex(headers, 'zone code', 'zone_code', 'zonecode')
+  const zoneNameIdx = findColIndex(headers, 'zone name', 'zone_name', 'zonename', 'zone')
+  const suburbIdx   = findColIndex(headers, 'suburb', 'locality')
+  const stateIdx    = findColIndex(headers, 'state')
+
+  if (postcodeIdx === -1) {
+    for (let c = 0; c < headers.length; c++) {
+      const samples = []
+      for (let r = 1; r < Math.min(lines.length, 11); r++) {
+        const v = (parseCsvLine(lines[r])[c] ?? '').trim()
+        if (v) samples.push(v)
+      }
+      if (samples.length >= 3 && samples.filter(looksLikePostcode).length >= Math.ceil(samples.length * 0.8)) {
+        postcodeIdx = c; break
+      }
+    }
+  }
+  if (postcodeIdx === -1) return null
+
+  const effectiveCodeIdx = zoneCodeIdx !== -1 ? zoneCodeIdx : zoneNameIdx
+  const effectiveNameIdx = zoneNameIdx !== -1 ? zoneNameIdx : zoneCodeIdx
+
+  const result = []
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseCsvLine(lines[i])
+    const postcode = (cols[postcodeIdx] ?? '').trim()
+    if (!looksLikePostcode(postcode)) continue
+    result.push({
+      postcode,
+      zoneCode: effectiveCodeIdx !== -1 ? (cols[effectiveCodeIdx] ?? '').trim() : '',
+      zone:     effectiveNameIdx !== -1 ? (cols[effectiveNameIdx] ?? '').trim() : '',
+      suburb:   suburbIdx !== -1 ? (cols[suburbIdx] ?? '').trim() : '',
+      state:    stateIdx  !== -1 ? (cols[stateIdx]  ?? '').trim() : '',
+    })
+  }
+  return result.length > 0 ? result : null
+}
+
+async function parseZoneFileToPostcodeMap(file) {
+  const type = getFileType(file)
+  if (type === 'excel') {
+    const XLSX = await import('https://esm.sh/xlsx@0.18.5')
+    const base64 = await fileToBase64(file)
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    const workbook = XLSX.read(bytes, { type: 'array' })
+    for (const sheetName of workbook.SheetNames) {
+      const result = parseZoneSheetToObjects(XLSX, workbook.Sheets[sheetName])
+      if (result) return result
+    }
+    return null
+  }
+  if (type === 'csv') {
+    const text = await fileReadAsText(file)
+    return parseCsvZoneToObjects(text)
+  }
+  return null // PDF: fall back to AI
+}
+
 export default function Carriers() {
   const { merchant, isAdmin } = useAuth()
   const [carriers, setCarriers] = useState([])
@@ -381,15 +506,18 @@ export default function Carriers() {
     setSelectedOrigin('')
     try {
       setParsingStep('Reading your files...')
-      const [rateCardPayload, zoneFilePayload, surchargePayload] = await Promise.all([
+      const [rateCardPayload, postcodeMap, surchargePayload] = await Promise.all([
         buildFilePayload(form.rateCard),
-        buildFilePayload(form.zoneFile),
+        parseZoneFileToPostcodeMap(form.zoneFile),
         form.surchargeDoc ? buildFilePayload(form.surchargeDoc) : Promise.resolve(null),
       ])
-      const payload = {
-        carrierName: form.name,
-        rateCard: rateCardPayload,
-        zoneFile: zoneFilePayload,
+      const payload = { carrierName: form.name, rateCard: rateCardPayload }
+      if (postcodeMap) {
+        // CSV/Excel zone file parsed directly in browser — no AI needed for postcode data
+        payload.postcodeMap = postcodeMap
+      } else {
+        // PDF zone file: send to AI for extraction
+        payload.zoneFile = await buildFilePayload(form.zoneFile)
       }
       if (surchargePayload) payload.surchargeDoc = surchargePayload
       setParsingStep('AI is analysing your rate card and zone file — this takes 20–40 seconds, hang tight...')
