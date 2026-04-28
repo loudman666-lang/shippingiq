@@ -241,6 +241,7 @@ IMPORTANT: Keep both in sync — if engine logic changes, update both files
 
 Multi-item: qty + weight + L/W/H per item
 Chargeable = MAX(actual, cubic)
+Cubic weight formula: L(cm) × W(cm) × H(cm) × cubicFactor / 1,000,000 — uses carrier's own cubicFactor from parsed_data (fallback: 250). Standard domestic = 250, air freight = 333, some regional = 200.
 Model B: MAX(basicCharge + chargeable × perKgRate, minimumCharge)
 Surcharge triggers: auto, auto_override, item_weight, consignment_weight, always, never
   - item_weight: fires if maxItemWeight > rule.weightKg
@@ -289,9 +290,11 @@ Model C: Depot-to-depot — Mainfreight style
 
 ## What to build next
 1. Landing page refresh — add visuals showing how ShippingIQ works (upload → configure → live rates), make the value proposition immediately clear to potential users
-2. Team page — multi-user setup for merchant account (invite team members, role management)
-3. Production deployment prep — remove error_log() calls from WooCommerce plugin, enable WC rate caching, enable Supabase RLS, review security before go-live
-4. Settings page — add merchant name edit field (current merchant name "My Store" is set at signup and cannot be changed from within the app)
+2. Cubic Weight Factor field on carrier card — display what AI parsed, allow merchant to manually override. Important for air freight carriers (factor 333) and some regional carriers (factor 200).
+3. WooCommerce free shipping gap — plugin does not send orderValue or hasExemptItem to calculate-freight, so free shipping threshold never triggers at WooCommerce checkout. Need to pass WooCommerce cart total and exempt item flag through to the API.
+4. Team page — multi-user setup for merchant account (invite team members, role management)
+5. Production deployment prep — remove error_log() calls from WooCommerce plugin, enable WC rate caching, enable Supabase RLS, review security before go-live
+6. Settings page — add merchant name edit field (current merchant name "My Store" is set at signup and cannot be changed from within the app)
 
 ## Logged for future build
 - Saved quotes: currently shows list (postcode, item count, date, cheapest rate + carrier) on Dashboard and Quote page. Needs full order management — click to reload all items/postcode/results into quote form, edit and re-quote, print/export as PDF.
