@@ -270,6 +270,8 @@ export default function Quote() {
       if (a.error && !b.error) return 1
       if (!a.error && b.error) return -1
       if (a.error && b.error) return 0
+      if (a.freeShipping && !b.freeShipping) return -1
+      if (!a.freeShipping && b.freeShipping) return 1
       return (a.totalCost || 0) - (b.totalCost || 0)
     })
   }
@@ -294,7 +296,7 @@ export default function Quote() {
         if (rated.error) return rated
         const anySurcharge = (rated.surchargesApplied?.length || 0) > 0 || (rated.surchargeWarnings?.length || 0) > 0
         if (anySurcharge && freeMode === 'smart') return rated
-        return { ...rated, freightCost: 0, fuelLevy: null, surchargesApplied: [], surchargeWarnings: [], surchargeTotal: 0, margin: 0, totalCost: 0, freeShipping: true }
+        return { ...rated, freightCost: 0, fuelLevy: null, surchargesApplied: [], surchargeWarnings: [], surchargeTotal: 0, margin: 0, totalCost: 0, freeShipping: true, originalRate: rated }
       })))
     }
   }
@@ -467,7 +469,7 @@ export default function Quote() {
                   {/* Compact carrier table */}
                   <div style={{ border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', marginBottom: '16px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 52px 68px 82px', gap: '8px', padding: '7px 14px', background: 'var(--surface-2)', borderBottom: '1px solid var(--border)' }}>
-                      {['Carrier', 'Zone', 'Weight', gstEnabled ? 'Total (inc GST)' : 'Total (ex GST)'].map((h, i) => (
+                      {['Carrier', 'Zone', 'Weight', 'Total'].map((h, i) => (
                         <div key={i} style={{ fontSize: '10px', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: i >= 2 ? 'right' : 'left' }}>{h}</div>
                       ))}
                     </div>
@@ -515,9 +517,12 @@ export default function Quote() {
                             ) : result.freeShipping ? (
                               <span style={{ display: 'inline-block', fontSize: '11px', fontWeight: '700', color: '#15803d', background: '#dcfce7', padding: '2px 8px', borderRadius: '10px', border: '1px solid #86efac' }}>FREE</span>
                             ) : (
-                              <span style={{ fontSize: '14px', fontWeight: '700', color: isSelected ? 'var(--accent)' : 'var(--ink)' }}>
-                                ${gstEnabled ? ((result.totalCost || result.freightCost) * 1.1).toFixed(2) : (result.totalCost || result.freightCost).toFixed(2)}
-                              </span>
+                              <div>
+                                <div style={{ fontSize: '14px', fontWeight: '700', color: isSelected ? 'var(--accent)' : 'var(--ink)' }}>
+                                  ${gstEnabled ? ((result.totalCost || result.freightCost) * 1.1).toFixed(2) : (result.totalCost || result.freightCost).toFixed(2)}
+                                </div>
+                                <div style={{ fontSize: '10px', color: 'var(--ink-muted)', marginTop: '1px' }}>{gstEnabled ? 'inc GST' : 'ex GST'}</div>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -526,17 +531,68 @@ export default function Quote() {
                   </div>
 
                   {/* Detail breakdown for selected row */}
-                  {sel && (sel.freeShipping ? (
-                    <div className="card" style={{ borderColor: '#86efac', background: '#f0fdf4' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <div style={{ fontSize: '17px', fontWeight: '600', color: '#15803d', marginBottom: '4px' }}>{sel.carrier}</div>
-                          <div style={{ fontSize: '13px', color: '#16a34a' }}>This order qualifies for free shipping</div>
+                  {sel && (sel.freeShipping ? (() => {
+                    const r = sel.originalRate || sel
+                    return (
+                      <div className="card" style={{ borderColor: '#86efac', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: '#16a34a' }} />
+                        <div style={{ padding: '10px 14px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', marginBottom: '20px', marginTop: '4px' }}>
+                          <div style={{ fontSize: '13px', fontWeight: '600', color: '#15803d', marginBottom: '2px' }}>FREE for customer</div>
+                          <div style={{ fontSize: '12px', color: '#16a34a' }}>This order qualifies for free shipping — the freight cost below is absorbed by you.</div>
                         </div>
-                        <div style={{ fontSize: '48px', fontWeight: '800', color: '#16a34a', lineHeight: 1 }}>FREE</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                          <div>
+                            <div style={{ fontSize: '17px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>{r.carrier}</div>
+                            <div style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>{r.service}</div>
+                            <div style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>{r.origin ? r.origin + ' → ' : ''}{r.destination}</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '32px', fontWeight: '800', color: '#dc2626', lineHeight: 1 }}>${(r.totalCost || r.freightCost || 0).toFixed(2)}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginTop: '4px' }}>your cost · ex GST</div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', borderTop: '1px solid var(--border)', paddingTop: '16px', marginBottom: '14px' }}>
+                          <div>
+                            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Zone</div>
+                            <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>{r.zone}</div>
+                            {r.zoneCode && <div style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>{r.zoneCode}</div>}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Actual / Cubic</div>
+                            <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>{r.totalActualWeight}kg / {r.totalCubicWeight > 0 ? r.totalCubicWeight + 'kg' : '—'}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Chargeable</div>
+                            <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--accent)' }}>{r.chargeableWeight}kg</div>
+                          </div>
+                        </div>
+                        <div style={{ padding: '10px 12px', background: 'var(--surface-2)', borderRadius: '6px', fontSize: '12px', color: 'var(--ink-muted)', fontFamily: 'monospace' }}>
+                          {r.formula} = <strong style={{ color: 'var(--ink)' }}>${r.freightCost.toFixed(2)}</strong>
+                          {r.fuelLevy && (
+                            <div style={{ marginTop: '6px' }}>
+                              + Fuel levy ({r.fuelLevyPct}%) = <strong style={{ color: 'var(--ink)' }}>${r.fuelLevy.toFixed(2)}</strong>
+                              <span style={{ marginLeft: '12px', color: 'var(--accent)', fontWeight: '700' }}>Subtotal: ${r.totalCost.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {r.surchargesApplied?.map((s, j) => (
+                            <div key={j} style={{ marginTop: '6px' }}>
+                              + {s.name} = <strong style={{ color: 'var(--ink)' }}>${s.amount.toFixed(2)}</strong>
+                              <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--ink-muted)' }}>({s.reason})</span>
+                            </div>
+                          ))}
+                          {r.surchargeWarnings?.map((w, j) => (
+                            <div key={j} style={{ marginTop: '6px', color: '#d97706' }}>⚠ {w}</div>
+                          ))}
+                          {r.margin > 0 && (
+                            <div style={{ marginTop: '6px' }}>
+                              + Handling margin ({r.marginType === 'percent' ? merchantRules.freightMarginValue + '%' : '$' + r.margin.toFixed(2)}) = <strong style={{ color: 'var(--ink)' }}>${r.margin.toFixed(2)}</strong>
+                              <span style={{ marginLeft: '12px', color: 'var(--accent)', fontWeight: '700' }}>Subtotal: ${r.totalCost.toFixed(2)}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ) : sel.error ? (
+                    )
+                  })() : sel.error ? (
                     <div className="card" style={{ borderColor: '#fca5a5', background: '#fef2f2' }}>
                       <div style={{ fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>{sel.carrier}</div>
                       <div style={{ fontSize: '13px', color: '#ef4444' }}>{sel.error}</div>
