@@ -340,7 +340,6 @@ export default function Quote() {
       </aside>
 
       <main className="main">
-        <div className="main-inner">
         <div className="main-header">
           <div>
             <h1 className="main-title">Get a Quote</h1>
@@ -684,7 +683,6 @@ export default function Quote() {
             <a href="/carriers"><button className="empty-cta">Go to Carriers</button></a>
           </div>
         )}
-        </div>
       </main>
     </div>
   )
