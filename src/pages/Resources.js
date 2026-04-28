@@ -118,6 +118,27 @@ const STEPS = [
   },
 ]
 
+const TEMPLATES = [
+  {
+    title: 'Rate Card Template',
+    desc: "Your carrier's freight rates by weight and zone",
+    file: '/templates/rate-card-template.csv',
+    filename: 'rate-card-template.csv',
+  },
+  {
+    title: 'Zone File Template',
+    desc: "Postcode-to-zone mapping for your carrier's network",
+    file: '/templates/zone-file-template.csv',
+    filename: 'zone-file-template.csv',
+  },
+  {
+    title: 'Surcharge Template',
+    desc: 'Optional: fuel levies, overlength and residential fees',
+    file: '/templates/surcharge-template.csv',
+    filename: 'surcharge-template.csv',
+  },
+]
+
 export default function Resources() {
   const { profile, merchant, isAdmin } = useAuth()
   const [open, setOpen] = useState({})
@@ -142,20 +163,16 @@ export default function Resources() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
             Rules
           </a>
-          <a href="/quote" className="nav-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-            Get a Quote
-          </a>
           <a href="/resources" className="nav-item active">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
             Resources
           </a>
+          <a href="/quote" className="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            Get a Quote
+          </a>
           {isAdmin && (<>
             <div className="nav-divider" />
-            <a href="/team" className="nav-item">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              Team
-            </a>
             <a href="/settings" className="nav-item">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               Settings
@@ -180,6 +197,41 @@ export default function Resources() {
             <p className="main-subtitle">Templates, guides, and everything you need to get set up.</p>
           </div>
         </div>
+
+        {/* Template Files */}
+        <section style={{ marginBottom: '52px', maxWidth: '760px' }}>
+          <h2 style={{ fontFamily: "'Instrument Serif', serif", fontSize: '22px', fontWeight: '400', color: 'var(--ink)', marginBottom: '6px' }}>
+            Template Files
+          </h2>
+          <p style={{ fontSize: '14px', color: 'var(--ink-muted)', marginBottom: '24px' }}>
+            Download these templates, fill in your carrier's rates and zones, then upload to ShippingIQ.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '12px' }}>
+            {TEMPLATES.map(t => (
+              <div key={t.file} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: 'var(--accent-light)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>{t.title}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--ink-muted)', lineHeight: '1.5' }}>{t.desc}</div>
+                </div>
+                <a href={t.file} download={t.filename} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: 'var(--surface-2)', border: '1px solid var(--border-mid)', borderRadius: '7px', fontSize: '13px', fontWeight: '500', color: 'var(--ink)', textDecoration: 'none', alignSelf: 'flex-start' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Download
+                </a>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* Getting Your Carrier Files */}
         <section style={{ marginBottom: '52px', maxWidth: '680px' }}>

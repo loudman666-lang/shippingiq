@@ -1,0 +1,6 @@
+Surcharge,Description,Trigger,Amount,Unit
+Fuel Levy,Weekly fuel adjustment,Auto,18,percent
+Tail Lift Delivery,Requires tail lift at delivery,Weight,500,kg
+Residential Delivery,Delivery to home address,Always,8.50,flat
+Overlength 4-8m,Items between 4m and 8m,Length,35.00,flat
+Overlength 8m+,Items over 8m,Length,POA,flat

@@ -1,0 +1,6 @@
+Service,Zone,BasicCharge,PerKgRate,Minimum
+Road Express,1,8.50,0.95,12.00
+Road Express,2,9.00,1.10,14.00
+Road Express,3,11.00,1.35,16.00
+Road Express,4,14.00,1.60,20.00
+Road Express,5,18.00,1.90,25.00
