@@ -1046,7 +1046,7 @@ html { scroll-behavior: smooth; }
 @media (max-width: 900px) {
   .landing-page nav { padding: 0 20px; }
   .nav-links { display: none; }
-  .nav-actions .btn-ghost { display: none; }
+  .nav-actions { gap: 4px; }
   .hero { grid-template-columns: 1fr; padding: 48px 20px 60px; gap: 40px; }
   .hero-right { display: none; }
   .hero-sub { max-width: 100%; font-size: 16px; }
