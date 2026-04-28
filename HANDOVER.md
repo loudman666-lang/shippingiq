@@ -129,6 +129,7 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
 ### Settings page
 - GST toggle: Ex GST (B2B default) or Inc GST (B2C)
 - Note: applies to Get a Quote page only — WooCommerce handles GST via its own tax settings
+- Store name edit: merchant can update their store name from Settings. Updates merchants.name in Supabase. Reflected immediately on Dashboard subtitle.
 
 ### Rules page
 - Free shipping threshold with on/off toggle
@@ -300,7 +301,7 @@ Model C: Depot-to-depot — Mainfreight style
 1. Landing page refresh — add visuals showing how ShippingIQ works (upload → configure → live rates), make the value proposition immediately clear to potential users
 2. Team page — multi-user setup for merchant account (invite team members, role management)
 4. Production deployment prep — enable Supabase RLS, review security before go-live (error_logs removed, rate caching done)
-5. Settings page — add merchant name edit field (current merchant name "My Store" is set at signup and cannot be changed from within the app)
+
 
 ## Logged for future build
 - Saved quotes: currently shows list (postcode, item count, date, cheapest rate + carrier) on Dashboard and Quote page. Needs full order management — click to reload all items/postcode/results into quote form, edit and re-quote, print/export as PDF.
