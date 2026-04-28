@@ -114,6 +114,7 @@ export default function Dashboard() {
       </aside>
 
       <main className="main">
+        <div className="main-inner">
         <div className="main-header">
           <div>
             <h1 className="main-title">Dashboard</h1>
@@ -214,6 +215,7 @@ export default function Dashboard() {
 
           </div>
         )}
+        </div>
       </main>
     </div>
   )

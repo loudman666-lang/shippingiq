@@ -101,6 +101,7 @@ export default function Rules() {
       </aside>
 
       <main className="main">
+        <div className="main-inner">
         <div className="main-header">
           <div>
             <h1 className="main-title">Rules</h1>
@@ -249,6 +250,7 @@ export default function Rules() {
             </button>
           </div>
         )}
+        </div>
       </main>
     </div>
   )

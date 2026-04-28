@@ -191,6 +191,7 @@ export default function Resources() {
       </aside>
 
       <main className="main">
+        <div className="main-inner">
         <div className="main-header">
           <div>
             <h1 className="main-title">Resources</h1>
@@ -300,6 +301,7 @@ export default function Resources() {
             </p>
           </div>
         </section>
+        </div>
       </main>
     </div>
   )

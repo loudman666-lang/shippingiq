@@ -72,6 +72,7 @@ export default function Settings() {
       </aside>
 
       <main className="main">
+        <div className="main-inner">
         <div className="main-header">
           <div>
             <h1 className="main-title">Settings</h1>
@@ -120,6 +121,7 @@ export default function Settings() {
             </button>
           </div>
         )}
+        </div>
       </main>
     </div>
   )

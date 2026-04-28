@@ -822,6 +822,7 @@ export default function Carriers() {
       </aside>
 
       <main className="main">
+        <div className="main-inner">
         <div className="main-header">
           <div>
             <h1 className="main-title">Carriers</h1>
@@ -1185,6 +1186,7 @@ export default function Carriers() {
             ))}
           </div>
         )}
+        </div>
       </main>
 
       {showReUploadConfirm && (
