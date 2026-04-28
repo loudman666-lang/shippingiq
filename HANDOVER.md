@@ -118,6 +118,12 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
 - Saved quotes panel: "Saved Quotes" button top-right; auto-opens when navigating from Dashboard via /quote?savedQuotes=open (opens after fetchSavedQuotes resolves — timing fixed)
 - Save Quote to Supabase quotes table
 
+### Resources page
+- Template Files section: 3 downloadable CSVs (rate-card-template.csv, zone-file-template.csv, surcharge-template.csv) served from /public/templates/
+- Getting Your Carrier Files: 3 accordion cards (Rate Card, Zone File, Surcharge Schedule) with plain-English guidance and copy-paste wording for merchants
+- How ShippingIQ Works: 3-step visual (Upload → Configure → Go Live) with callout box
+- Nav order across all pages: Dashboard → Carriers → Rules → Get a Quote → Resources → Settings
+
 ### Settings page
 - GST toggle: Ex GST (B2B default) or Inc GST (B2C)
 - Note: applies to Get a Quote page only — WooCommerce handles GST via its own tax settings
@@ -282,8 +288,8 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Team page — multi-user setup for merchant account (invite team members, role management)
-2. Template downloads — downloadable sample CSV/Excel templates for rate cards and zone files; helps merchants whose carriers don't provide machine-readable files
+1. Landing page refresh — add visuals showing how ShippingIQ works (upload → configure → live rates), make the value proposition immediately clear to potential users
+2. Team page — multi-user setup for merchant account (invite team members, role management)
 3. Production deployment prep — remove error_log() calls from WooCommerce plugin, enable WC rate caching, enable Supabase RLS, review security before go-live
 4. Settings page — add merchant name edit field (current merchant name "My Store" is set at signup and cannot be changed from within the app)
 
