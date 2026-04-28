@@ -132,7 +132,10 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 
 		$order_value = 0;
 		foreach ( $package['contents'] as $item ) {
-			$order_value += $item['line_total'];
+			$product      = $item['data'];
+			$qty          = $item['quantity'];
+			$price        = $product ? floatval( $product->get_price() ) : 0;
+			$order_value += $price * $qty;
 		}
 
 		$has_exempt_item = false;
