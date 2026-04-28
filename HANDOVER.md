@@ -55,6 +55,7 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
   - Fuel levy % editable per carrier (stored in carriers.fuel_levy_pct)
   - Surcharge Rules per carrier: Manual / Auto / Auto with override
   - Analysis progress message and spinner
+  - Progress steps: 'Reading files...' → 'Building postcode map...' → 'Analysing rates — this takes 20–40 seconds...' → 'Extracting surcharges...' → 'Done.'
 - Get a Quote page:
   - Multi-item with qty, dimensions per item
   - Cubic weight calculation
@@ -105,11 +106,45 @@ carriers.surcharge_rules: jsonb — { surcharge_key: { trigger, weightKg, length
 carriers.parsed_data: full AI output including surcharges with autoWeightKg, autoLengthMinCm, autoLengthMaxCm, autoTrigger
 carriers.eligibility_rules: jsonb — { maxWeightKg, maxLengthCm, maxWidthCm, maxHeightCm } (NEW — for WooCommerce carrier filtering)
 
+## File parsing architecture (browser-first, as of April 2026)
+
+### How parsing works
+1. All files (rate card, zone file, surcharge doc) are parsed entirely in the browser using SheetJS (XLSX via esm.sh)
+2. Browser scans ALL tabs of ALL uploaded files for ALL data types — zone data, rate data, surcharge data — regardless of which upload slot the file came from
+3. postcodeMap is built entirely in the browser. It is NEVER sent to the edge function. It is saved directly to Supabase in parsed_data.postcodeMap
+4. Two focused AI calls to rapid-api:
+   - `mode: 'rates'` — structure-only: Claude identifies pricingModel, originDepots, columnMap (exact CSV column headers per depot), cubicFactor, fuelLevyPct. ~200 token response for Model B. max_tokens: 4000
+   - `mode: 'surcharges'` — surcharge extraction: Claude returns {surcharges: [...]} with auto-trigger thresholds
+5. Browser builds modelBRates from the compact CSV rate text using Claude's columnMap — no token limits, all rate rows extracted locally
+6. For Model A/C: Claude still returns weightBreaks, zones, rates/modelCRates (smaller data set, fine to return in response)
+
+### Why this architecture
+- Allied Express zone file = 16,000+ rows — too large to send to any AI
+- Allied Express rate card = 84 zones × 5 depots × 2 charges = 420+ combinations — AI hits token limit trying to return all rows
+- Browser parsing has no timeout or token constraints
+- Tested with Allied Express: 880 rates, 23 surcharges, 17,150 postcode entries, all 5 depots — all correct
+
+### Key browser parsing functions (Carriers.js)
+- `scanExcelBytes(XLSX, bytes)` — scans all sheets, returns {postcodeRows, rateTexts, surchargeTexts}
+- `scanCsvText(text, fileName)` — same for CSV files
+- `parseZoneSheetToObjects(rows, sheetName)` — detects header row (scans rows 0–20), maps postcode/zone/suburb/state columns
+- `extractSurchargeText(rows, sheetName)` — keyword detection, returns CSV text or null
+- `buildModelBRatesFromCSV(rateText, structure)` — uses structure.columnMap to extract all rate rows from compact CSV text
+- `deduplicatePostcodeMap(allRows)` — first-write-wins Map keyed by postcode
+- `looksLikePostcode(val)` — handles JS number type (200–9999) and string '0200'–'9999'
+
+### Allied Express sheet details (for debugging)
+- Zone file sheet name: "AOE Matrix"
+- Headers are NOT in row 0 — they appear mid-sheet; parseZoneSheetToObjects scans rows 0–20 to find them
+- Zone code column is called "G Zone" — included in zoneCodeCol keyword list
+- Rate card: origin depots appear as column headers; zoneCode/zone columns on left
+
 ## Edge Functions
 ### rapid-api
-Extracts: pricingModel, zones, rates, postcodeMap, surcharges with auto thresholds, cubicFactor, fuelLevyPct
-Model: claude-sonnet-4-20250514, max_tokens 8000
-File types: csv (text decode), excel (XLSX via esm.sh), pdf (document block)
+Mode: 'rates' — returns structure only: pricingModel, service, originDepots, cubicFactor, fuelLevyPct, summary, warnings, zoneCodeCol, zoneNameCol, columnMap (Model B), weightBreaks + zones + rates (Model A), modelCRates (Model C)
+Mode: 'surcharges' — returns {surcharges: [...]} with auto-trigger fields
+Model: claude-sonnet-4-20250514, max_tokens: 4000 (rates), 8000 (surcharges)
+rateText capped at 8000 chars before sending to Claude (browser sends compact extracted text only)
 
 ### calculate-freight
 POST { postcode, items, merchant_id }
@@ -117,6 +152,7 @@ Fetches active carriers + merchant rules from Supabase
 Runs calculateRate across all carriers
 Returns { results: [...] }
 Used by WooCommerce plugin — do not break this interface
+Note: postcodeEntry uses `suburb || locality` fallback (old carriers used locality field name)
 
 ## Freight calculation engine
 Lives in both Quote.js (client-side) and calculate-freight/index.ts (server-side)
@@ -184,8 +220,9 @@ Model C: Depot-to-depot — Mainfreight style
 - Rare edge case given large carriers handle all sizes
 
 ## What to build next
-1. Test WooCommerce plugin end-to-end with real carrier data — verify rates appear at checkout, eligibility filtering works, tag overrides work
-2. Production deployment prep — remove error_log() debug calls from plugin, enable WooCommerce rate caching, review Supabase RLS before go-live
+1. Template downloads for merchants without carrier files — downloadable sample CSV templates showing the expected format for rate cards and zone files. Helps merchants who don't have files in the right shape yet, or whose carriers don't provide machine-readable files
+2. Test WooCommerce plugin end-to-end with real carrier data — verify rates appear at checkout, eligibility filtering works, tag overrides work
+3. Production deployment prep — remove error_log() debug calls from plugin, enable WooCommerce rate caching, review Supabase RLS before go-live
 
 ## Logged for future build
 - Address autocomplete to detect residential vs commercial (triggers residential surcharge)
