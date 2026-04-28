@@ -33,9 +33,15 @@ export default function Rules() {
       freeShippingThreshold: savedRules.freeShippingThreshold || '',
       freightMarginType: savedRules.freightMarginType || 'none',
       freightMarginValue: savedRules.freightMarginValue || '',
-      carrierPriority: savedRules.carrierPriority?.length
-        ? savedRules.carrierPriority
-        : carrierList.map(c => c.id),
+      carrierPriority: (() => {
+        const saved = savedRules.carrierPriority || []
+        const allIds = carrierList.map(c => c.id)
+        // Keep saved order, drop deleted carriers, append new carriers at bottom
+        return [
+          ...saved.filter(id => allIds.includes(id)),
+          ...allIds.filter(id => !saved.includes(id)),
+        ]
+      })(),
     })
     setLoading(false)
   }
@@ -186,7 +192,7 @@ export default function Rules() {
             {carriers.length > 1 && (
               <div className="card">
                 <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Carrier Priority</div>
-                <div style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '20px' }}>Set the order carriers appear at checkout. Drag to reorder — top carrier is shown first and pre-selected.</div>
+                <div style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '20px' }}>Set the order carriers appear at checkout. Use the arrows to reorder — top carrier is shown first.</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {rules.carrierPriority.map((id, index) => (
                     <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--surface-2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
