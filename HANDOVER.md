@@ -226,7 +226,7 @@ rateText capped at 8000 chars before sending
 
 ### calculate-freight
 POST { postcode, items, merchant_id, orderValue? (default 0), hasExemptItem? (default false) }
-- orderValue and hasExemptItem are optional — WooCommerce plugin doesn't send them (defaults apply)
+- Sends orderValue (WooCommerce cart subtotal, pre-tax) and hasExemptItem (true if any cart item has shippingiq-exempt tag) to calculate-freight — free shipping threshold works correctly at checkout
 - Fetches active carriers + merchant rules from Supabase
 - Runs calculateRate across all carriers
 - Applies free shipping logic server-side (same 3-step flow as Quote.js)
@@ -291,10 +291,9 @@ Model C: Depot-to-depot — Mainfreight style
 ## What to build next
 1. Landing page refresh — add visuals showing how ShippingIQ works (upload → configure → live rates), make the value proposition immediately clear to potential users
 2. Cubic Weight Factor field on carrier card — display what AI parsed, allow merchant to manually override. Important for air freight carriers (factor 333) and some regional carriers (factor 200).
-3. WooCommerce free shipping gap — plugin does not send orderValue or hasExemptItem to calculate-freight, so free shipping threshold never triggers at WooCommerce checkout. Need to pass WooCommerce cart total and exempt item flag through to the API.
-4. Team page — multi-user setup for merchant account (invite team members, role management)
-5. Production deployment prep — remove error_log() calls from WooCommerce plugin, enable WC rate caching, enable Supabase RLS, review security before go-live
-6. Settings page — add merchant name edit field (current merchant name "My Store" is set at signup and cannot be changed from within the app)
+3. Team page — multi-user setup for merchant account (invite team members, role management)
+4. Production deployment prep — remove error_log() calls from WooCommerce plugin, enable WC rate caching, enable Supabase RLS, review security before go-live
+5. Settings page — add merchant name edit field (current merchant name "My Store" is set at signup and cannot be changed from within the app)
 
 ## Logged for future build
 - Saved quotes: currently shows list (postcode, item count, date, cheapest rate + carrier) on Dashboard and Quote page. Needs full order management — click to reload all items/postcode/results into quote form, edit and re-quote, print/export as PDF.
