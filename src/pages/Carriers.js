@@ -454,6 +454,75 @@ function scanCsvText(text, fileName) {
   return { postcodeRows: [], rateTexts: [`[${fileName}]\n${text.slice(0, 8000)}`], surchargeTexts: [] }
 }
 
+// Build modelBRates array from compact CSV text using the column map Claude identified.
+// Claude returns structure only; this function extracts every rate row locally.
+function buildModelBRatesFromCSV(rateText, structure) {
+  if (structure.pricingModel !== 'B') return []
+  const columnMap = structure.columnMap
+  if (!columnMap || Object.keys(columnMap).length === 0) return []
+
+  const service = structure.service || 'Road Express'
+  const zoneCodeKey = (structure.zoneCodeCol || '').toLowerCase().trim()
+  const zoneNameKey = (structure.zoneNameCol || '').toLowerCase().trim()
+
+  const modelBRates = []
+
+  // rateText may contain multiple sheet sections separated by ---
+  const sections = rateText.split(/\n\n---\n\n/)
+
+  for (const section of sections) {
+    const lines = section.trim().split('\n').filter(l => l.trim())
+    if (lines.length < 2) continue
+
+    // Skip sheet label lines like [SheetName] or (rate table — essential columns only)
+    let headerIdx = 0
+    while (headerIdx < lines.length && /^\[|^\(/.test(lines[headerIdx].trim())) headerIdx++
+    if (headerIdx >= lines.length - 1) continue
+
+    const headers = parseCsvLine(lines[headerIdx]).map(h => h.toLowerCase().trim())
+    const zoneCodeIdx = headers.indexOf(zoneCodeKey)
+    const zoneNameIdx = headers.indexOf(zoneNameKey)
+
+    // Pre-resolve column indices for each depot
+    const depotCols = Object.entries(columnMap).map(([depot, cols]) => ({
+      depot,
+      basicIdx:  headers.indexOf((cols.basic   || '').toLowerCase().trim()),
+      perKgIdx:  headers.indexOf((cols.perKg   || '').toLowerCase().trim()),
+      minIdx:    headers.indexOf((cols.minimum || '').toLowerCase().trim()),
+    })).filter(d => d.basicIdx !== -1 || d.perKgIdx !== -1)
+
+    if (depotCols.length === 0) continue
+
+    for (let i = headerIdx + 1; i < lines.length; i++) {
+      const cols = parseCsvLine(lines[i])
+      if (cols.every(c => !String(c).trim())) continue
+
+      const zoneCode = zoneCodeIdx !== -1 ? String(cols[zoneCodeIdx] ?? '').trim() : ''
+      const zoneName = zoneNameIdx !== -1 ? String(cols[zoneNameIdx] ?? '').trim() : zoneCode
+      if (!zoneCode && !zoneName) continue
+
+      for (const { depot, basicIdx, perKgIdx, minIdx } of depotCols) {
+        const basicCharge    = basicIdx  !== -1 ? parseFloat(cols[basicIdx])  || 0 : 0
+        const perKgRate      = perKgIdx  !== -1 ? parseFloat(cols[perKgIdx])  || 0 : 0
+        const minimumCharge  = minIdx    !== -1 ? parseFloat(cols[minIdx])    || 0 : 0
+        if (basicCharge === 0 && perKgRate === 0) continue
+        modelBRates.push({
+          originDepot: depot,
+          service,
+          zoneCode: zoneCode || zoneName,
+          zone:     zoneName || zoneCode,
+          basicCharge,
+          perKgRate,
+          minimumCharge,
+        })
+      }
+    }
+  }
+
+  console.log('[buildModelBRatesFromCSV] built', modelBRates.length, 'rate rows from CSV')
+  return modelBRates
+}
+
 export default function Carriers() {
   const { merchant, isAdmin } = useAuth()
   const [carriers, setCarriers] = useState([])
@@ -553,13 +622,17 @@ export default function Carriers() {
       }
 
       setParsingStep('Analysing rates — this takes 20–40 seconds...')
-      const ratePayload = { mode: 'rates', carrierName: form.name, rateText: allRateTexts.join('\n\n---\n\n'), pdfs: pdfPayloads }
-      console.log('[payload] rates:', JSON.stringify(ratePayload).slice(0, 500))
-      console.log('[payload size]', JSON.stringify(ratePayload).length, '| rateText length:', ratePayload.rateText?.length, '| pdfs count:', ratePayload.pdfs?.length)
+      const combinedRateText = allRateTexts.join('\n\n---\n\n')
+      const ratePayload = { mode: 'rates', carrierName: form.name, rateText: combinedRateText, pdfs: pdfPayloads }
+      console.log('[payload size]', JSON.stringify(ratePayload).length, '| rateText length:', combinedRateText.length, '| pdfs:', pdfPayloads.length)
       const { data: rateData, error: rateError } = await supabase.functions.invoke('rapid-api', {
         body: ratePayload
       })
       if (rateError) throw rateError
+      console.log('[parseFiles] rate structure from Claude:', JSON.stringify(rateData).slice(0, 300))
+
+      // For Model B: build modelBRates in the browser from CSV using Claude's column map
+      const modelBRates = buildModelBRatesFromCSV(combinedRateText, rateData)
 
       let surchargeData = null
       if (allSurchargeTexts.length > 0) {
@@ -573,6 +646,10 @@ export default function Carriers() {
       setParsingStep('Done.')
       const parsed = {
         ...rateData,
+        modelBRates: modelBRates.length > 0 ? modelBRates : (rateData?.modelBRates ?? []),
+        zones: modelBRates.length > 0
+          ? [...new Set(modelBRates.map(r => r.zone).filter(Boolean))]
+          : (rateData?.zones ?? []),
         postcodeMap,
         surcharges: surchargeData?.surcharges ?? rateData?.surcharges ?? [],
       }

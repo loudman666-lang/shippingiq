@@ -45,51 +45,49 @@ async function handleRates(carrierName: string, rateText: string, pdfs: unknown[
 
   userContent.push({
     type: 'text',
-    text: `You are parsing an Australian freight carrier rate card for a shipping engine called ShippingIQ.
+    text: `You are identifying the structure of an Australian freight carrier rate card for ShippingIQ.
 
 Carrier: ${carrierName}
 
-PRICING MODELS — detect which applies:
+PRICING MODELS:
 - Model A: Weight break table. Flat rate per zone per weight range.
-- Model B: Basic charge + per kg rate + minimum. Formula: MAX(basicCharge + weight × perKgRate, minimumCharge).
-- Model C: Depot-to-depot. Origin depot + destination depot determines rate.
+- Model B: Basic charge + per kg rate + minimum charge, per zone, per origin depot.
+- Model C: Depot-to-depot rates.
 
-MODEL B — COMPACT FORMAT:
-Output modelBRates as an object keyed by origin depot. Under each depot: "service" string and "rates" array.
-Each rate row: zoneCode, zone, basicCharge, perKgRate, minimumCharge. Do NOT repeat the depot name inside rows.
-Extract ALL zones for ALL depots — do not truncate.
-Example:
-"modelBRates": {
-  "Sydney": { "service": "Road Express", "rates": [{ "zoneCode": "MEL1", "zone": "Melbourne Metro", "basicCharge": 8.09, "perKgRate": 0.25, "minimumCharge": 11.04 }] }
-}
+YOUR TASK — identify structure and metadata only. Do NOT output individual rate rows for Model B.
+For Model B, return columnMap so the browser can extract rates directly from the CSV.
 
-MULTI-TAB FILES:
-Sheets are labeled [SheetName]. Extract from ALL sheets.
-
-CUBIC FACTOR:
-If stated, extract as cubicFactor in kg/m3 (e.g. 250 = divisor 4000). Default 250 if not found.
-
-FUEL LEVY:
-Extract fuelLevyPct (e.g. 17.5). Set null if not found.
-
-Respond ONLY with a JSON object. No markdown, no backticks.
+Respond ONLY with this JSON (no markdown, no backticks):
 
 {
   "carrier": "${carrierName}",
   "pricingModel": "A or B or C",
-  "zones": ["zone names"],
-  "weightBreaks": ["weight breaks if Model A"],
-  "serviceTypes": ["service types"],
-  "originDepots": ["depot names"],
+  "service": "primary service name e.g. Road Express",
+  "originDepots": ["list of origin depot names"],
   "cubicFactor": 250,
   "fuelLevyPct": null,
-  "rateCount": 0,
   "summary": "one sentence",
-  "rates": [{ "service": "Road Express", "weight": "0-1kg", "ZoneName": 8.50 }],
-  "modelBRates": { "Melbourne": { "service": "Road Express", "rates": [{ "zoneCode": "SYD1", "zone": "Sydney Metro", "basicCharge": 8.09, "perKgRate": 0.25, "minimumCharge": 11.04 }] } },
-  "modelCRates": [{ "originDepot": "Melbourne", "destinationDepot": "Sydney", "basicCharge": 15.00, "perKgRate": 0.45, "minimumCharge": 22.00 }],
-  "warnings": []
-}`,
+  "warnings": [],
+
+  "zoneCodeCol": "exact CSV column header that contains zone codes (e.g. zone_code or zone)",
+  "zoneNameCol": "exact CSV column header that contains zone names or descriptions",
+  "columnMap": {
+    "Sydney": { "basic": "exact_col_header_for_basic_charge", "perKg": "exact_col_header_for_per_kg_rate", "minimum": "exact_col_header_for_minimum_charge" }
+  },
+
+  "weightBreaks": ["only for Model A — list of weight break labels"],
+  "zones": ["zone names or codes — for Model A/C only; leave [] for Model B"],
+  "rates": [],
+  "modelCRates": []
+}
+
+IMPORTANT for Model B:
+- columnMap keys must be the exact depot names as they appear in the data.
+- Column header values in columnMap must be the EXACT header strings from the CSV (copy them precisely, including underscores and spacing).
+- Leave rates=[] and modelCRates=[].
+
+For Model A: leave columnMap={}, zoneCodeCol="", zoneNameCol="". Output weightBreaks and zones. Output rates array.
+For Model C: leave columnMap={}, output modelCRates with actual values.`,
   })
 
   if (rateText?.trim()) {
@@ -100,22 +98,9 @@ Respond ONLY with a JSON object. No markdown, no backticks.
   addPdfs(userContent, pdfs as { data: string; name: string; slot: string }[])
 
   console.log('[handleRates] calling Claude, userContent blocks:', userContent.length)
-  const text = await callClaude(userContent, 16000)
+  const text = await callClaude(userContent, 4000)
   console.log('[handleRates] Claude response length:', text.length, '| first 200:', text.slice(0, 200))
   const parsed = parseJson(text) as Record<string, unknown>
-
-  // Flatten compact modelBRates {depot: {service, rates: [...]}} → array
-  if (parsed.modelBRates && !Array.isArray(parsed.modelBRates)) {
-    const flat: unknown[] = []
-    for (const [depot, depotData] of Object.entries(parsed.modelBRates as Record<string, { service?: string; rates?: unknown[] }>)) {
-      const service = depotData.service ?? ''
-      for (const rate of (depotData.rates ?? [])) {
-        flat.push({ originDepot: depot, service, ...(rate as object) })
-      }
-    }
-    parsed.modelBRates = flat
-  }
-
   return parsed
 }
 
