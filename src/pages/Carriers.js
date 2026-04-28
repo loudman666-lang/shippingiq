@@ -965,7 +965,8 @@ export default function Carriers() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
                 <h2 style={{ fontSize: '16px', fontWeight: '600' }}>{surchargeRulesCarrier.name} — Surcharge Rules</h2>
-                <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginTop: '4px' }}>Control how each surcharge is applied at checkout. Surcharges are never shown to customers — only the final freight total is displayed.</p>
+                <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginTop: '4px' }}>These surcharges were extracted from your carrier's rate card. By default they are all set to Off — you need to turn on the ones that apply to your business.</p>
+                <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginTop: '6px' }}>For each surcharge, choose how it should be triggered: automatically based on the carrier's own conditions, automatically based on your own thresholds, always added to every quote, or managed manually outside the system.</p>
               </div>
               <button className="btn-secondary" onClick={() => setSurchargeRulesCarrier(null)}>Close</button>
             </div>
