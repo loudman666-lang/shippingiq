@@ -149,7 +149,9 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
   - priority: top-ranked carrier that services the postcode
 - calculate-freight returns carrierId per result + carrierPriority array — plugin sorts without extra Supabase query
 - Always uses totalCost (ex-GST) from API — WooCommerce handles tax independently
-- error_log() debug logging throughout — tail wp-content/debug.log to trace
+- Rate caching: 5-minute WordPress transient keyed on merchant_id + postcode + items. Cache hit skips API call entirely. Error responses not cached.
+- All error_log() debug calls removed — production clean.
+- Free shipping display order fixed: free filtering runs before cheapest/priority display mode, so free rates always take precedence.
 - PHP 8.2 compatible — explicit property declarations, no return type on WC method overrides
 - Allied Express tested end-to-end at WooCommerce checkout — correct rates confirmed
 
@@ -297,7 +299,7 @@ Model C: Depot-to-depot — Mainfreight style
 ## What to build next
 1. Landing page refresh — add visuals showing how ShippingIQ works (upload → configure → live rates), make the value proposition immediately clear to potential users
 2. Team page — multi-user setup for merchant account (invite team members, role management)
-4. Production deployment prep — remove error_log() calls from WooCommerce plugin, enable WC rate caching, enable Supabase RLS, review security before go-live
+4. Production deployment prep — enable Supabase RLS, review security before go-live (error_logs removed, rate caching done)
 5. Settings page — add merchant name edit field (current merchant name "My Store" is set at signup and cannot be changed from within the app)
 
 ## Logged for future build
@@ -342,9 +344,9 @@ Model C: Depot-to-depot — Mainfreight style
 - [ ] Priority display mode shows top-ranked carrier only
 
 ### Production readiness
-- [ ] Remove all error_log() calls from WooCommerce plugin
+- [x] Remove all error_log() calls from WooCommerce plugin
+- [x] Enable WooCommerce rate caching (5-min transient)
 - [ ] Enable Supabase RLS on all tables
-- [ ] Enable WooCommerce rate caching
 
 ## Test files available
 - test_rate_card.csv / .xlsx / .pdf
