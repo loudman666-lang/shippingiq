@@ -241,7 +241,7 @@ Model C: Depot-to-depot — Mainfreight style
 
 ## Logged for future build
 - Address autocomplete to detect residential vs commercial (triggers residential surcharge)
-- Saved quotes: rebuild properly as part of order management with full details, reload, print/export
+- Saved quotes: currently shows a list of saved quotes with postcode, item count, date and cheapest rate (on both Dashboard and Quote page). Needs to be rebuilt as full order management — click a saved quote to reload all items, postcode and results into the quote form, allow editing and re-quoting, print/export as PDF quote document.
 - Edit carrier without deleting (re-upload files)
 - Multi-warehouse / multi-origin support
 - Delivery requirement flags for customers (e.g. tailgate notice at checkout)
