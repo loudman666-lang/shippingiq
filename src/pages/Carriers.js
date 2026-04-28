@@ -1136,11 +1136,14 @@ export default function Carriers() {
                 </div>
               {carrier.status === 'active' && eligibilityCarrierId === carrier.id && (
                 <div style={{ paddingTop: '4px', borderTop: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '8px' }}>
                     Carrier Limits <span style={{ fontWeight: 400, color: 'var(--ink-muted)' }}>(optional)</span>
                   </div>
+                  <div style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '6px' }}>
+                    Set maximum weight and dimensions this carrier can handle. At checkout, carriers that can't handle the cart items are automatically hidden — only eligible carriers appear as shipping options. Leave all fields blank if this carrier has no size restrictions.
+                  </div>
                   <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginBottom: '12px' }}>
-                    Set limits if this carrier can't handle all sizes. Leave blank for no limit.
+                    Example: if StarTrack has a 25kg max weight limit, set Max Weight to 25. Any order over 25kg will automatically show Allied Express or other unlimited carriers instead.
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
                     {[
