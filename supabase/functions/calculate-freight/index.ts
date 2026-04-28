@@ -108,7 +108,7 @@ function calculateRate(carrier, postcode, items, rules = {}) {
 
   const zoneCode = postcodeEntry.zoneCode
   const zoneName = postcodeEntry.zone
-  const suburb = postcodeEntry.suburb
+  const suburb = postcodeEntry.suburb || postcodeEntry.locality
   const state = postcodeEntry.state
 
   let totalActualWeight = 0
