@@ -123,7 +123,7 @@ function calculateRate(carrier, postcode, items, rules = {}) {
     const qty = parseInt(item.qty) || 1
     totalActualWeight += (parseFloat(item.weight) || 0) * qty
     if (item.length && item.width && item.height) {
-      totalCubicWeight += (parseFloat(item.length) * parseFloat(item.width) * parseFloat(item.height) / 4000) * qty
+      totalCubicWeight += (parseFloat(item.length) * parseFloat(item.width) * parseFloat(item.height) * cubicFactor / 1000000) * qty
     }
   })
   totalActualWeight = Math.round(totalActualWeight * 100) / 100
