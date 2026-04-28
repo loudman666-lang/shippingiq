@@ -235,6 +235,35 @@ Model C: Depot-to-depot — Mainfreight style
 - Carrier-per-product mapping (v2 of eligibility rules)
 - Shared engine module in supabase/functions/_shared/ so Quote.js and calculate-freight stay in sync automatically
 
+## Pre-launch testing checklist
+
+### Upload guardrails
+- [ ] Hash check: delete a carrier, re-upload the same files, click Analyse a second time — should show green "Files unchanged — using existing analysis." with no AI call made
+- [ ] Rate limit: upload 11 carriers within 24 hours — the 11th should be blocked with "Daily upload limit reached (10/day)..."
+- [ ] Admin override: run `UPDATE merchants SET upload_limit_exempt = true WHERE id = '[id]'` in Supabase SQL Editor, then attempt an 11th upload — rate limit should be bypassed
+- [ ] Re-upload confirm: upload a carrier, then click "+ Add Carrier" and enter the same carrier name, upload files and click Analyse — confirmation modal should appear before proceeding
+- [ ] Disable after analysis: after clicking Analyse and analysis completes, confirm carrier name field and all file inputs are greyed out until Save or Cancel is clicked
+
+### Freight calculation
+- [ ] Quote with postcode in zone file returns correct rate (Model B: verify basic + per-kg formula)
+- [ ] Quote with postcode not in zone file returns a clear error, not a crash
+- [ ] Fuel levy % applies correctly to freight cost
+- [ ] Surcharge auto-triggers fire correctly (weight threshold, length range)
+- [ ] Free shipping threshold shows FREE card when order value >= threshold
+- [ ] GST toggle: ex-GST vs inc-GST totals correct
+
+### WooCommerce plugin
+- [ ] Rates appear at checkout for a real cart
+- [ ] Carrier eligibility filtering excludes carriers where item exceeds maxWeightKg/maxLengthCm
+- [ ] Product tag shippingiq-only-[carrier-slug] restricts to that carrier only
+- [ ] Product tag shippingiq-exclude-[carrier-slug] removes that carrier from results
+- [ ] Cheapest-only display mode shows single lowest rate
+
+### Production readiness
+- [ ] Remove all error_log() debug calls from WooCommerce plugin
+- [ ] Review Supabase RLS — currently disabled (dev only), enable before go-live
+- [ ] Enable WooCommerce rate caching in plugin settings
+
 ## Test files available
 - test_rate_card.csv / .xlsx / .pdf
 - test_zone_file.csv / .xlsx
