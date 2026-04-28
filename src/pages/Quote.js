@@ -456,6 +456,7 @@ export default function Quote() {
           <div>
             {results ? (() => {
               const cheapestPaidIdx = results.findIndex(r => !r.error && !r.freeShipping)
+              const hasFreeResult = results.some(r => r.freeShipping)
               const sel = results[selectedResultIdx]
               return (
                 <div>
@@ -475,7 +476,7 @@ export default function Quote() {
                     </div>
                     {results.map((result, i) => {
                       const isSelected = selectedResultIdx === i
-                      const isCheapest = !result.error && !result.freeShipping && i === cheapestPaidIdx
+                      const isCheapest = !hasFreeResult && !result.error && !result.freeShipping && i === cheapestPaidIdx
                       return (
                         <div
                           key={i}
