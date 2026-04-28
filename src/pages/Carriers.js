@@ -933,24 +933,27 @@ export default function Carriers() {
                     </ul>
                   </div>
                 )}
-                <div style={{ marginTop: '12px', padding: '12px 14px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '13px', fontWeight: '500', color: '#374151' }}>Cubic weight factor</span>
-                  <input
-                    type="number"
-                    min="100"
-                    max="500"
-                    step="1"
-                    value={parseResult.cubicFactor ?? 250}
-                    onChange={e => setParseResult({ ...parseResult, cubicFactor: parseFloat(e.target.value) || 250 })}
-                    style={{ width: '80px', padding: '5px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }}
-                  />
-                  <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                    {(parseResult.cubicFactor ?? 250) >= 320
-                      ? 'Air freight — L×W×H×factor÷1,000,000'
-                      : (parseResult.cubicFactor ?? 250) <= 210
-                      ? 'Regional carrier — L×W×H×factor÷1,000,000'
-                      : 'Standard domestic (250 = ÷4,000 equivalent)'}
-                  </span>
+                <div style={{ marginTop: '12px', padding: '12px 14px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '500', color: '#374151' }}>Cubic weight factor</span>
+                    <input
+                      type="number"
+                      min="100"
+                      max="500"
+                      step="1"
+                      value={parseResult.cubicFactor ?? 250}
+                      onChange={e => setParseResult({ ...parseResult, cubicFactor: parseFloat(e.target.value) || 250 })}
+                      style={{ width: '80px', padding: '5px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }}
+                    />
+                    <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                      {(parseResult.cubicFactor ?? 250) >= 320
+                        ? 'Air freight — L×W×H×factor÷1,000,000'
+                        : (parseResult.cubicFactor ?? 250) <= 210
+                        ? 'Regional carrier — L×W×H×factor÷1,000,000'
+                        : 'Standard domestic (250 = ÷4,000 equivalent)'}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#9ca3af' }}>Standard Australian road freight is 250 (L × W × H ÷ 4,000). Only change this if your carrier contract specifies a different cubic conversion factor.</span>
                 </div>
                 <SurchargeTable surcharges={parseResult.surcharges} />
               </div>
@@ -1154,6 +1157,9 @@ export default function Carriers() {
                       style={{ width: '70px', padding: '5px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }}
                     />
                   </div>
+                </div>
+                <div style={{ fontSize: '11px', color: '#9ca3af' }}>Standard Australian road freight is 250 (L × W × H ÷ 4,000). Only change this if your carrier contract specifies a different cubic conversion factor.</div>
+                <div className="carrier-actions">
                   <span className={"carrier-status " + carrier.status}>{carrier.status}</span>
                   <button className="btn-secondary" onClick={() => setViewingCarrier(viewingCarrier?.id === carrier.id ? null : carrier)}>
                     {viewingCarrier?.id === carrier.id ? 'Hide Rates' : 'View Rates'}
@@ -1196,7 +1202,7 @@ export default function Carriers() {
                     Set maximum weight and dimensions this carrier can handle. At checkout, carriers that can't handle the cart items are automatically hidden — only eligible carriers appear as shipping options. Leave all fields blank if this carrier has no size restrictions.
                   </div>
                   <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginBottom: '12px' }}>
-                    Example: if StarTrack has a 25kg max weight limit, set Max Weight to 25. Any order over 25kg will automatically show Allied Express or other unlimited carriers instead.
+                    Example: if a carrier has a 25kg max weight limit, set Max Weight to 25. Any order over 25kg will automatically show other eligible carriers instead.
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
                     {[
