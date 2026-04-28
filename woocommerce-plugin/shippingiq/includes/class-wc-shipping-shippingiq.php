@@ -130,6 +130,20 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 		error_log( 'ShippingIQ: eligibility_map=' . wp_json_encode( $eligibility_map ) );
 		error_log( 'ShippingIQ: tag rules — only=' . wp_json_encode( $only_slugs ) . ' exclude=' . wp_json_encode( $exclude_slugs ) );
 
+		$order_value = 0;
+		foreach ( $package['contents'] as $item ) {
+			$order_value += $item['line_total'];
+		}
+
+		$has_exempt_item = false;
+		foreach ( $package['contents'] as $item ) {
+			$product_id = $item['product_id'];
+			if ( has_term( 'shippingiq-exempt', 'product_tag', $product_id ) ) {
+				$has_exempt_item = true;
+				break;
+			}
+		}
+
 		// Call calculate-freight.
 		$response = wp_remote_post(
 			esc_url_raw( $this->api_url ),
@@ -140,9 +154,11 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 					'Authorization' => 'Bearer ' . $this->supabase_anon_key,
 				),
 				'body'    => wp_json_encode( array(
-					'postcode'    => $postcode,
-					'items'       => $items,
-					'merchant_id' => $this->merchant_id,
+					'postcode'      => $postcode,
+					'items'         => $items,
+					'merchant_id'   => $this->merchant_id,
+					'orderValue'    => $order_value,
+					'hasExemptItem' => $has_exempt_item,
 				) ),
 				'timeout' => 20,
 			)
