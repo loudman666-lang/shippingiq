@@ -97,7 +97,9 @@ Respond ONLY with a JSON object. No markdown, no backticks.
   }
   addPdfs(userContent, pdfs as { data: string; name: string; slot: string }[])
 
+  console.log('[handleRates] calling Claude, userContent blocks:', userContent.length)
   const text = await callClaude(userContent)
+  console.log('[handleRates] Claude response length:', text.length, '| first 200:', text.slice(0, 200))
   const parsed = parseJson(text) as Record<string, unknown>
 
   // Flatten compact modelBRates {depot: {service, rates: [...]}} → array
@@ -162,6 +164,7 @@ serve(async (req) => {
   try {
     const body = await req.json()
     const mode = body.mode ?? 'rates'
+    console.log('[rapid-api] mode:', mode, '| carrierName:', body.carrierName, '| rateText length:', body.rateText?.length ?? 0, '| pdfs:', body.pdfs?.length ?? 0)
 
     let result: unknown
     if (mode === 'surcharges') {
@@ -174,7 +177,9 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
+    const e = err as Error
+    console.error('[rapid-api] error:', e.message, e.stack)
+    return new Response(JSON.stringify({ error: e.message, stack: e.stack }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

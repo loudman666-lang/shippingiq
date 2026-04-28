@@ -553,8 +553,11 @@ export default function Carriers() {
       }
 
       setParsingStep('Analysing rates — this takes 20–40 seconds...')
+      const ratePayload = { mode: 'rates', carrierName: form.name, rateText: allRateTexts.join('\n\n---\n\n'), pdfs: pdfPayloads }
+      console.log('[payload] rates:', JSON.stringify(ratePayload).slice(0, 500))
+      console.log('[payload size]', JSON.stringify(ratePayload).length, '| rateText length:', ratePayload.rateText?.length, '| pdfs count:', ratePayload.pdfs?.length)
       const { data: rateData, error: rateError } = await supabase.functions.invoke('rapid-api', {
-        body: { mode: 'rates', carrierName: form.name, rateText: allRateTexts.join('\n\n---\n\n'), pdfs: pdfPayloads }
+        body: ratePayload
       })
       if (rateError) throw rateError
 
