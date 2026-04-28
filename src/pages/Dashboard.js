@@ -6,11 +6,24 @@ import './Dashboard.css'
 
 function cheapestRateLabel(results) {
   if (!results?.length) return null
-  if (results.some(r => r.freeShipping)) return <span style={{ fontSize: '13px', fontWeight: '700', color: '#15803d' }}>FREE</span>
+  if (results.some(r => r.freeShipping)) {
+    const freeResult = results.find(r => r.freeShipping)
+    return (
+      <div style={{ textAlign: 'right' }}>
+        <div style={{ fontSize: '13px', fontWeight: '700', color: '#15803d' }}>FREE</div>
+        {freeResult?.carrier && <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginTop: '1px' }}>via {freeResult.carrier}</div>}
+      </div>
+    )
+  }
   const paid = results.filter(r => !r.error && (r.totalCost != null || r.freightCost != null))
   if (!paid.length) return <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>—</span>
-  const min = Math.min(...paid.map(r => r.totalCost || r.freightCost || 0))
-  return <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--accent)' }}>${min.toFixed(2)}</span>
+  const cheapest = paid.reduce((best, r) => (r.totalCost || r.freightCost || 0) < (best.totalCost || best.freightCost || 0) ? r : best)
+  return (
+    <div style={{ textAlign: 'right' }}>
+      <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--accent)' }}>${(cheapest.totalCost || cheapest.freightCost || 0).toFixed(2)}</div>
+      {cheapest.carrier && <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginTop: '1px' }}>via {cheapest.carrier}</div>}
+    </div>
+  )
 }
 
 export default function Dashboard() {
@@ -159,36 +172,36 @@ export default function Dashboard() {
             {recentQuotes.length > 0 && (
               <div style={{ marginBottom: '40px' }}>
                 <h2 className="section-title">Recent Quotes</h2>
-                <div className="carriers-list">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {recentQuotes.map((q, i) => {
                     const itemCount = q.items?.length || 0
                     return (
-                      <div key={i} className="carrier-card">
-                        <div className="carrier-info">
-                          <div className="carrier-name">Postcode {q.postcode}</div>
-                          <div className="carrier-meta">
+                      <a key={i} href="/quote" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px 16px', textDecoration: 'none', cursor: 'pointer' }}>
+                        <div>
+                          <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ink)', marginBottom: '2px' }}>Postcode {q.postcode}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
                             {itemCount} item{itemCount !== 1 ? 's' : ''} · {new Date(q.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </div>
                         </div>
-                        <div>{cheapestRateLabel(q.results)}</div>
-                      </div>
+                        {cheapestRateLabel(q.results)}
+                      </a>
                     )
                   })}
                 </div>
                 <div style={{ marginTop: '12px' }}>
-                  <a href="/quote" style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '500', textDecoration: 'none' }}>Get a new quote →</a>
+                  <a href="/quote?savedQuotes=open" style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '500', textDecoration: 'none' }}>View all saved quotes →</a>
                 </div>
               </div>
             )}
 
             <h2 className="section-title">Your Carriers</h2>
-            <div className="carriers-list">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {carriers.map(carrier => (
-                <div key={carrier.id} className="carrier-card">
-                  <div className="carrier-info">
-                    <div className="carrier-name">{carrier.name}</div>
-                    <div className="carrier-meta">
-                      {carrier.parsed_data?.modelBRates?.length || carrier.parsed_data?.rateCount || 0} rates · {carrier.parsed_data?.zones?.length || 0} zones · {carrier.parsed_data?.serviceTypes?.join(', ')}
+                <div key={carrier.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', border: '1px solid var(--border)', borderRadius: '10px', padding: '14px 16px' }}>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ink)', marginBottom: '2px' }}>{carrier.name}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
+                      {carrier.parsed_data?.modelBRates?.length || carrier.parsed_data?.rateCount || 0} rates · {carrier.parsed_data?.zones?.length || 0} zones{carrier.parsed_data?.serviceTypes?.length ? ' · ' + carrier.parsed_data.serviceTypes.join(', ') : ''}
                     </div>
                   </div>
                   <span className="carrier-status active">active</span>

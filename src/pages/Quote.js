@@ -227,6 +227,7 @@ export default function Quote() {
   const [selectedResultIdx, setSelectedResultIdx] = useState(0)
 
   useEffect(() => { if (merchant?.id) { fetchCarriers(); fetchSavedQuotes() } }, [merchant])
+  useEffect(() => { if (new URLSearchParams(window.location.search).get('savedQuotes') === 'open') setShowSaved(true) }, [])
 
   async function fetchCarriers() {
     setLoading(true)
