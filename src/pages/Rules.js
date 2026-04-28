@@ -125,22 +125,30 @@ export default function Rules() {
               </div>
 
               {rules.freeShippingEnabled && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>Free shipping on orders over</label>
-                  <div style={{ position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: 'var(--ink-muted)' }}>$</span>
-                    <input
-                      className="form-input"
-                      type="number"
-                      min="0"
-                      step="1"
-                      placeholder="150"
-                      value={rules.freeShippingThreshold}
-                      onChange={e => setRules({ ...rules, freeShippingThreshold: e.target.value })}
-                      style={{ paddingLeft: '24px', width: '120px' }}
-                    />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <label style={{ fontSize: '13px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>Free shipping on orders over</label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: 'var(--ink-muted)' }}>$</span>
+                      <input
+                        className="form-input"
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="150"
+                        value={rules.freeShippingThreshold}
+                        onChange={e => setRules({ ...rules, freeShippingThreshold: e.target.value })}
+                        style={{ paddingLeft: '24px', width: '120px' }}
+                      />
+                    </div>
+                    <label style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>AUD</label>
                   </div>
-                  <label style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>AUD</label>
+                  <p style={{ fontSize: '13px', color: 'var(--ink-muted)', margin: 0 }}>
+                    To exempt specific products from free shipping, tag them with <code style={{ fontSize: '12px', background: 'var(--surface-2)', padding: '1px 5px', borderRadius: '4px', border: '1px solid var(--border)' }}>shippingiq-exempt</code> in WooCommerce. Any order containing an exempt item will always be charged freight, regardless of order value.
+                  </p>
+                  <p style={{ fontSize: '12px', color: 'var(--ink-muted)', margin: 0 }}>
+                    Tip: use this for bulky or heavy items where freight costs exceed the benefit of free shipping.
+                  </p>
                 </div>
               )}
             </div>
