@@ -226,8 +226,12 @@ export default function Quote() {
   const [merchantRules, setMerchantRules] = useState({})
   const [selectedResultIdx, setSelectedResultIdx] = useState(0)
 
-  useEffect(() => { if (merchant?.id) { fetchCarriers(); fetchSavedQuotes() } }, [merchant])
-  useEffect(() => { if (new URLSearchParams(window.location.search).get('savedQuotes') === 'open') setShowSaved(true) }, [])
+  useEffect(() => {
+    if (!merchant?.id) return
+    const openSaved = new URLSearchParams(window.location.search).get('savedQuotes') === 'open'
+    fetchCarriers()
+    fetchSavedQuotes().then(() => { if (openSaved) setShowSaved(true) })
+  }, [merchant])
 
   async function fetchCarriers() {
     setLoading(true)
