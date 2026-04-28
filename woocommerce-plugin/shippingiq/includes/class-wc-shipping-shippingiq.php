@@ -223,7 +223,18 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 			$eligible = array( $eligible[0] );
 		}
 
+		// If any result has free shipping, show only free results.
+		$has_free = false;
 		foreach ( $eligible as $result ) {
+			if ( ! empty( $result['freeShipping'] ) ) {
+				$has_free = true;
+				break;
+			}
+		}
+
+		foreach ( $eligible as $result ) {
+			if ( $has_free && empty( $result['freeShipping'] ) ) continue;
+
 			// Always use totalCost (ex-GST) from the API. WooCommerce applies tax
 			// independently via its own tax settings — never add GST here.
 			$cost  = (float) ( $result['totalCost'] ?? $result['freightCost'] ?? 0 );
