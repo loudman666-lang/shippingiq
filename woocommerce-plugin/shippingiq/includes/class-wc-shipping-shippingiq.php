@@ -102,33 +102,23 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 	// ---------------------------------------------------------------------------
 
 	public function calculate_shipping( $package = array() ) {
-		error_log( 'ShippingIQ: calculate_shipping called' );
-
 		if ( empty( $this->merchant_id ) || empty( $this->api_url ) ) {
-			error_log( 'ShippingIQ: aborting — merchant_id or api_url not configured' );
 			return;
 		}
 
 		$postcode = sanitize_text_field( $package['destination']['postcode'] ?? '' );
 		if ( empty( $postcode ) ) {
-			error_log( 'ShippingIQ: aborting — postcode is empty' );
 			return;
 		}
 
 		$items = $this->build_items( $package['contents'] );
 		if ( empty( $items ) ) {
-			error_log( 'ShippingIQ: aborting — no items with weight found in cart' );
 			return;
 		}
-
-		error_log( 'ShippingIQ: sending request — postcode=' . $postcode . ' items=' . wp_json_encode( $items ) );
 
 		// Fetch eligibility rules and resolve product tag rules before calling the API.
 		$eligibility_map                = $this->fetch_carrier_eligibility();
 		[ $only_slugs, $exclude_slugs ] = $this->resolve_tag_rules( $package['contents'] );
-
-		error_log( 'ShippingIQ: eligibility_map=' . wp_json_encode( $eligibility_map ) );
-		error_log( 'ShippingIQ: tag rules — only=' . wp_json_encode( $only_slugs ) . ' exclude=' . wp_json_encode( $exclude_slugs ) );
 
 		$order_value = 0;
 		foreach ( $package['contents'] as $item ) {
@@ -146,57 +136,68 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 				break;
 			}
 		}
-		// Call calculate-freight.
-		$response = wp_remote_post(
-			esc_url_raw( $this->api_url ),
-			array(
-				'headers' => array(
-					'Content-Type'  => 'application/json',
-					'apikey'        => $this->supabase_anon_key,
-					'Authorization' => 'Bearer ' . $this->supabase_anon_key,
-				),
-				'body'    => wp_json_encode( array(
-					'postcode'      => $postcode,
-					'items'         => $items,
-					'merchant_id'   => $this->merchant_id,
-					'orderValue'    => $order_value,
-					'hasExemptItem' => $has_exempt_item,
-				) ),
-				'timeout' => 20,
-			)
-		);
 
-		if ( is_wp_error( $response ) ) {
-			error_log( 'ShippingIQ: wp_remote_post error — ' . $response->get_error_message() );
-			return;
+		// Check transient cache before calling the API.
+		$cache_key = 'shippingiq_' . md5( $this->merchant_id . $postcode . serialize( $items ) );
+		$body      = get_transient( $cache_key );
+
+		if ( false === $body ) {
+			$response = wp_remote_post(
+				esc_url_raw( $this->api_url ),
+				array(
+					'headers' => array(
+						'Content-Type'  => 'application/json',
+						'apikey'        => $this->supabase_anon_key,
+						'Authorization' => 'Bearer ' . $this->supabase_anon_key,
+					),
+					'body'    => wp_json_encode( array(
+						'postcode'      => $postcode,
+						'items'         => $items,
+						'merchant_id'   => $this->merchant_id,
+						'orderValue'    => $order_value,
+						'hasExemptItem' => $has_exempt_item,
+					) ),
+					'timeout' => 20,
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				return;
+			}
+
+			if ( 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+				return;
+			}
+
+			$body = json_decode( wp_remote_retrieve_body( $response ), true );
+			set_transient( $cache_key, $body, 300 );
 		}
 
-		$http_code = (int) wp_remote_retrieve_response_code( $response );
-		$raw_body  = wp_remote_retrieve_body( $response );
-
-		error_log( 'ShippingIQ: API response — http_code=' . $http_code . ' body=' . $raw_body );
-
-		if ( 200 !== $http_code ) {
-			error_log( 'ShippingIQ: aborting — non-200 response' );
-			return;
-		}
-
-		$body             = json_decode( $raw_body, true );
 		$results          = $body['results'] ?? array();
 		$carrier_priority = $body['carrierPriority'] ?? array();
 
 		if ( empty( $results ) ) {
-			error_log( 'ShippingIQ: aborting — results array is empty' );
 			return;
 		}
 
 		$eligible = $this->filter_results( $results, $eligibility_map, $only_slugs, $exclude_slugs, $package['contents'] );
 
-		error_log( 'ShippingIQ: after filtering — ' . count( $eligible ) . ' of ' . count( $results ) . ' carriers eligible' );
-
 		if ( empty( $eligible ) ) {
-			error_log( 'ShippingIQ: aborting — no eligible carriers after filtering' );
 			return;
+		}
+
+		// If any result has free shipping, filter to free results only before applying display mode.
+		$has_free = false;
+		foreach ( $eligible as $result ) {
+			if ( ! empty( $result['freeShipping'] ) ) {
+				$has_free = true;
+				break;
+			}
+		}
+		if ( $has_free ) {
+			$eligible = array_values( array_filter( $eligible, static function ( $r ) {
+				return ! empty( $r['freeShipping'] );
+			} ) );
 		}
 
 		// Sort by carrier priority order defined in ShippingIQ → Rules.
@@ -221,18 +222,7 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 			$eligible = array( $eligible[0] );
 		}
 
-		// If any result has free shipping, show only free results.
-		$has_free = false;
 		foreach ( $eligible as $result ) {
-			if ( ! empty( $result['freeShipping'] ) ) {
-				$has_free = true;
-				break;
-			}
-		}
-
-		foreach ( $eligible as $result ) {
-			if ( $has_free && empty( $result['freeShipping'] ) ) continue;
-
 			// Always use totalCost (ex-GST) from the API. WooCommerce applies tax
 			// independently via its own tax settings — never add GST here.
 			$cost  = (float) ( $result['totalCost'] ?? $result['freightCost'] ?? 0 );
