@@ -250,6 +250,10 @@ serve(async (req) => {
     const merchantRules = merchantRes.data?.rules || {}
 
     const rawResults = carriers.map(c => {
+      const postcodeMap = c.parsed_data?.postcodeMap
+      if (!postcodeMap || postcodeMap.length === 0) {
+        return { error: 'No zone file uploaded — add a postcode zone file in Carriers to enable this carrier.' }
+      }
       const r = calculateRate(c, postcode, items, merchantRules)
       return r.error ? r : { ...r, carrierId: c.id }
     })

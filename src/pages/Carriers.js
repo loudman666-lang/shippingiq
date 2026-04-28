@@ -754,6 +754,14 @@ export default function Carriers() {
     fetchCarriers()
   }
 
+  async function updateCubicFactor(id, val) {
+    const carrier = carriers.find(c => c.id === id)
+    if (!carrier) return
+    const factor = parseFloat(val) || 250
+    await supabase.from('carriers').update({ parsed_data: { ...carrier.parsed_data, cubicFactor: factor } }).eq('id', id)
+    fetchCarriers()
+  }
+
   async function saveSurchargeRules(carrierId, rules) {
     await supabase.from('carriers').update({ surcharge_rules: rules }).eq('id', carrierId)
     fetchCarriers()
@@ -925,6 +933,25 @@ export default function Carriers() {
                     </ul>
                   </div>
                 )}
+                <div style={{ marginTop: '12px', padding: '12px 14px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '500', color: '#374151' }}>Cubic weight factor</span>
+                  <input
+                    type="number"
+                    min="100"
+                    max="500"
+                    step="1"
+                    value={parseResult.cubicFactor ?? 250}
+                    onChange={e => setParseResult({ ...parseResult, cubicFactor: parseFloat(e.target.value) || 250 })}
+                    style={{ width: '80px', padding: '5px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }}
+                  />
+                  <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                    {(parseResult.cubicFactor ?? 250) >= 320
+                      ? 'Air freight — L×W×H×factor÷1,000,000'
+                      : (parseResult.cubicFactor ?? 250) <= 210
+                      ? 'Regional carrier — L×W×H×factor÷1,000,000'
+                      : 'Standard domestic (250 = ÷4,000 equivalent)'}
+                  </span>
+                </div>
                 <SurchargeTable surcharges={parseResult.surcharges} />
               </div>
             )}
@@ -1095,6 +1122,7 @@ export default function Carriers() {
                     {carrier.parsed_data?.pricingModel && ` · Model ${carrier.parsed_data.pricingModel}`}
                     {carrier.parsed_data?.selectedOrigin && ` · From ${carrier.parsed_data.selectedOrigin}`}
                     {carrier.parsed_data?.surcharges?.length > 0 && ` · ${carrier.parsed_data.surcharges.length} surcharges`}
+                    {` · Cubic ×${carrier.parsed_data?.cubicFactor ?? 250}`}
                   </div>
                   <div className="carrier-summary">{carrier.parsed_data?.summary}</div>
                 </div>
@@ -1110,6 +1138,20 @@ export default function Carriers() {
                       defaultValue={carrier.fuel_levy_pct ?? ''}
                       onBlur={e => updateFuelLevy(carrier.id, e.target.value)}
                       style={{ width: '80px', padding: '5px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <label style={{ fontSize: '12px', color: '#6b7280', whiteSpace: 'nowrap' }}>Cubic factor</label>
+                    <input
+                      type="number"
+                      min="100"
+                      max="500"
+                      step="1"
+                      placeholder="250"
+                      key={carrier.parsed_data?.cubicFactor}
+                      defaultValue={carrier.parsed_data?.cubicFactor ?? 250}
+                      onBlur={e => updateCubicFactor(carrier.id, e.target.value)}
+                      style={{ width: '70px', padding: '5px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }}
                     />
                   </div>
                   <span className={"carrier-status " + carrier.status}>{carrier.status}</span>
