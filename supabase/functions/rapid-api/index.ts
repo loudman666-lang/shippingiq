@@ -43,10 +43,12 @@ PRICING MODELS - detect which applies:
 - Model B: Basic charge + per kg rate, with minimum charge. Formula: MAX(basicCharge + weight x perKgRate, minimumCharge).
 - Model C: Depot-to-depot. Origin depot + destination depot determines rate.
 
-CRITICAL FOR MODEL B WITH MULTIPLE ORIGIN DEPOTS:
-If the rate card has multiple origin depots (e.g. columns for Sydney, Melbourne, Brisbane), you MUST create a separate modelBRates entry for EVERY combination of originDepot + zone. Every single row in modelBRates MUST include the "originDepot" field. Example:
-{ "originDepot": "Sydney", "service": "Road Express", "zone": "Melbourne Metro", "zoneCode": "MEL1", "basicCharge": 8.09, "perKgRate": 0.25, "minimumCharge": 11.04 }
-Never omit originDepot from any modelBRates row.
+MODEL B — COMPACT RATE TABLE FORMAT:
+For Model B, output modelBRates as an object keyed by origin depot name. Under each depot, output a "service" string and a "rates" array. Each rate row needs only: zoneCode, zone, basicCharge, perKgRate, minimumCharge. Do NOT repeat the depot name inside each row — it is already the key. Extract ALL zones for ALL depots — do not truncate. Example:
+"modelBRates": {
+  "Sydney": { "service": "Road Express", "rates": [{ "zoneCode": "MEL1", "zone": "Melbourne Metro", "basicCharge": 8.09, "perKgRate": 0.25, "minimumCharge": 11.04 }] },
+  "Melbourne": { "service": "Road Express", "rates": [{ "zoneCode": "MEL1", "zone": "Melbourne Metro", "basicCharge": 7.50, "perKgRate": 0.22, "minimumCharge": 10.00 }] }
+}
 
 CUBIC FACTOR:
 Extract the cubic conversion factor if stated in any file. This is used to calculate cubic weight from dimensions.
@@ -72,7 +74,7 @@ Respond ONLY with a JSON object. No markdown, no backticks.
   "rateCount": 0,
   "summary": "one sentence summary",
   "rates": [{ "service": "Road Express", "weight": "0-1kg", "ZoneName": 8.50 }],
-  "modelBRates": [{ "originDepot": "Melbourne", "service": "Road Express", "zone": "Sydney Metro", "zoneCode": "SYD1", "basicCharge": 8.09, "perKgRate": 0.25, "minimumCharge": 11.04 }],
+  "modelBRates": { "Melbourne": { "service": "Road Express", "rates": [{ "zoneCode": "SYD1", "zone": "Sydney Metro", "basicCharge": 8.09, "perKgRate": 0.25, "minimumCharge": 11.04 }] } },
   "modelCRates": [{ "originDepot": "Melbourne", "destinationDepot": "Sydney", "basicCharge": 15.00, "perKgRate": 0.45, "minimumCharge": 22.00 }],
   "postcodeMap": [],
   "surcharges": [{ "name": "Tailgate", "amount": "$75.00", "notes": "flat fee per delivery", "autoWeightKg": 750, "autoLengthCm": null, "autoLengthMinCm": null, "autoLengthMaxCm": null, "autoTrigger": null }],
@@ -113,6 +115,18 @@ Respond ONLY with a JSON object. No markdown, no backticks.
     const text = data.content?.[0]?.text || ''
     const clean = text.replace(/```json|```/g, '').trim()
     const parsed = JSON.parse(clean)
+
+    // Flatten compact modelBRates {depot: {service, rates: [...]}} → array for the calculation engine
+    if (parsed.modelBRates && !Array.isArray(parsed.modelBRates)) {
+      const flat = []
+      for (const [depot, depotData] of Object.entries(parsed.modelBRates)) {
+        const service = depotData.service ?? ''
+        for (const rate of (depotData.rates ?? [])) {
+          flat.push({ originDepot: depot, service, ...rate })
+        }
+      }
+      parsed.modelBRates = flat
+    }
 
     // Merge pre-built postcodeMap — overrides whatever the AI returned
     if (Array.isArray(postcodeMap) && postcodeMap.length > 0) {

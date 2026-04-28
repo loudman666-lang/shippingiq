@@ -181,7 +181,8 @@ function findColIndex(headers, ...terms) {
 }
 
 function looksLikePostcode(val) {
-  return /^\d{4}$/.test(String(val ?? '').trim())
+  if (typeof val === 'number') return Number.isInteger(val) && val >= 200 && val <= 9999
+  return /^\d{3,4}$/.test(String(val ?? '').trim())
 }
 
 // If the sheet looks like a postcode→zone mapping, return a compact CSV of only
@@ -347,21 +348,37 @@ function parseZoneSheetToObjects(XLSX, sheet) {
   if (rows.length < 2) return null
 
   const headers = rows[0]
+  console.log('[parseZoneSheetToObjects] all headers (row 0):', headers.map((h, i) => `[${i}]${h}`).join(' | '))
+  if (rows[1]) console.log('[parseZoneSheetToObjects] row 1:', rows[1].map((h, i) => `[${i}]${h}`).join(' | '))
+
   let postcodeCol   = findColIndex(headers, 'postcode', 'post code', 'post_code', 'pc', 'zip')
   const zoneCodeCol = findColIndex(headers, 'zone code', 'zone_code', 'zonecode')
   const zoneNameCol = findColIndex(headers, 'zone name', 'zone_name', 'zonename', 'zone')
   const suburbCol   = findColIndex(headers, 'suburb', 'locality')
   const stateCol    = findColIndex(headers, 'state')
+  console.log('[parseZoneSheetToObjects] header-matched cols — postcode:', postcodeCol, 'zoneCode:', zoneCodeCol, 'zoneName:', zoneNameCol, 'suburb:', suburbCol, 'state:', stateCol)
 
   if (postcodeCol === -1) {
-    for (let c = 0; c < headers.length; c++) {
-      const samples = rows.slice(1, 11).filter(r => String(r[c] ?? '').trim() !== '')
-      if (samples.length >= 3 && samples.filter(r => looksLikePostcode(r[c])).length >= Math.ceil(samples.length * 0.8)) {
-        postcodeCol = c; break
+    // Scan rows 0–19 across full column width — handles sheets where data starts
+    // several rows down (title rows, merged headers) or row 0 has a sparse header.
+    const scanRows = rows.slice(0, Math.min(rows.length, 20))
+    const maxCols = Math.max(...scanRows.map(r => r.length), 0)
+    for (let c = 0; c < maxCols; c++) {
+      const first5 = scanRows.map(r => r[c]).filter(v => v !== '' && v !== null && v !== undefined).slice(0, 5)
+        .map(v => `${v}(${typeof v})`)
+      console.log('[parseZoneSheetToObjects] col', c, String(rows[0]?.[c] ?? '').trim() || '(no header)', '→', first5.join(', '))
+      const hits = scanRows.filter(r => looksLikePostcode(r[c])).length
+      if (hits >= 3) {
+        postcodeCol = c
+        console.log('[parseZoneSheetToObjects] postcode column detected: col', c, '| header:', String(rows[0]?.[c] ?? '(none)').trim(), '| hits:', hits)
+        break
       }
     }
   }
-  if (postcodeCol === -1) return null
+  if (postcodeCol === -1) {
+    console.log('[parseZoneSheetToObjects] no postcode column found — skipping sheet')
+    return null
+  }
 
   // If only one generic 'zone' column exists, use it for both code and name.
   const effectiveCodeCol = zoneCodeCol !== -1 ? zoneCodeCol : zoneNameCol
@@ -441,6 +458,7 @@ function parseCsvZoneToObjects(text) {
 
 async function parseZoneFileToPostcodeMap(file) {
   const type = getFileType(file)
+  console.log('[parseZoneFileToPostcodeMap] file:', file.name, 'type:', type)
   if (type === 'excel') {
     const XLSX = await import('https://esm.sh/xlsx@0.18.5')
     const base64 = await fileToBase64(file)
@@ -448,16 +466,21 @@ async function parseZoneFileToPostcodeMap(file) {
     const bytes = new Uint8Array(binary.length)
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
     const workbook = XLSX.read(bytes, { type: 'array' })
+    console.log('[parseZoneFileToPostcodeMap] sheets:', workbook.SheetNames)
     for (const sheetName of workbook.SheetNames) {
       const result = parseZoneSheetToObjects(XLSX, workbook.Sheets[sheetName])
+      console.log('[parseZoneFileToPostcodeMap] sheet', sheetName, '→', result ? result.length + ' rows' : 'not a zone sheet')
       if (result) return result
     }
     return null
   }
   if (type === 'csv') {
     const text = await fileReadAsText(file)
-    return parseCsvZoneToObjects(text)
+    const result = parseCsvZoneToObjects(text)
+    console.log('[parseZoneFileToPostcodeMap] CSV →', result ? result.length + ' rows' : 'not a zone file')
+    return result
   }
+  console.log('[parseZoneFileToPostcodeMap] PDF — falling back to AI')
   return null // PDF: fall back to AI
 }
 
@@ -511,6 +534,7 @@ export default function Carriers() {
         parseZoneFileToPostcodeMap(form.zoneFile),
         form.surchargeDoc ? buildFilePayload(form.surchargeDoc) : Promise.resolve(null),
       ])
+      console.log('[parseFiles] postcodeMap length:', postcodeMap ? postcodeMap.length : 'null — falling back to AI')
       const payload = { carrierName: form.name, rateCard: rateCardPayload }
       if (postcodeMap) {
         // CSV/Excel zone file parsed directly in browser — no AI needed for postcode data
