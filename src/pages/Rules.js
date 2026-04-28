@@ -56,11 +56,13 @@ export default function Rules() {
   }
 
   function moveCarrier(index, direction) {
-    const newOrder = [...rules.carrierPriority]
-    const swapIndex = index + direction
-    if (swapIndex < 0 || swapIndex >= newOrder.length) return
-    ;[newOrder[index], newOrder[swapIndex]] = [newOrder[swapIndex], newOrder[index]]
-    setRules({ ...rules, carrierPriority: newOrder })
+    setRules(prev => {
+      const newOrder = [...prev.carrierPriority]
+      const swapIndex = index + direction
+      if (swapIndex < 0 || swapIndex >= newOrder.length) return prev
+      ;[newOrder[index], newOrder[swapIndex]] = [newOrder[swapIndex], newOrder[index]]
+      return { ...prev, carrierPriority: newOrder }
+    })
   }
 
   function carrierName(id) {
