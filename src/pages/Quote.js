@@ -71,6 +71,12 @@ function applySurcharges(carrier, items, freightCost) {
         if (wThreshold > 0 && totalWeight > wThreshold) { triggered = true; reason = 'Consignment ' + totalWeight + 'kg > ' + wThreshold + 'kg' }
         else if (dThreshold > 0 && maxItemLength > dThreshold) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm > ' + dThreshold + 'cm' }
       }
+    } else if (rule.trigger === 'item_weight') {
+      const wThreshold = parseFloat(rule.weightKg) || 0
+      if (wThreshold > 0 && maxItemWeight > wThreshold) { triggered = true; reason = 'Item ' + maxItemWeight + 'kg > ' + wThreshold + 'kg threshold' }
+    } else if (rule.trigger === 'consignment_weight') {
+      const wThreshold = parseFloat(rule.weightKg) || 0
+      if (wThreshold > 0 && totalWeight > wThreshold) { triggered = true; reason = 'Consignment ' + totalWeight + 'kg > ' + wThreshold + 'kg threshold' }
     }
 
     if (triggered) {
@@ -267,23 +273,18 @@ export default function Quote() {
     if (validItems.length === 0) { setError('Please enter a weight for at least one item.'); return }
     const orderVal = parseFloat(orderValue) || 0
     const hasExemptItem = validItems.some(i => i.exemptFreeShipping)
-    const isFreeShipping = !hasExemptItem && merchantRules.freeShippingEnabled && merchantRules.freeShippingThreshold && orderVal >= parseFloat(merchantRules.freeShippingThreshold)
-    if (isFreeShipping) {
-      setResults(carriers.map(c => ({
-        carrier: c.name,
-        freightCost: 0,
-        totalCost: 0,
-        freeShipping: true,
-        destination: postcode,
-        service: 'Free Shipping',
-        zone: '—',
-        totalActualWeight: validItems.reduce((s, i) => s + (parseFloat(i.weight)||0) * (parseInt(i.qty)||1), 0),
-        totalCubicWeight: 0,
-        chargeableWeight: 0,
-        model: '—'
-      })))
-    } else {
+    const thresholdMet = merchantRules.freeShippingEnabled && merchantRules.freeShippingThreshold && orderVal >= parseFloat(merchantRules.freeShippingThreshold)
+    if (!thresholdMet || hasExemptItem) {
       setResults(carriers.map(c => calculateRate(c, postcode, validItems, merchantRules)))
+    } else {
+      const freeMode = merchantRules.freeShippingMode || 'smart'
+      setResults(carriers.map(c => {
+        const rated = calculateRate(c, postcode, validItems, merchantRules)
+        if (rated.error) return rated
+        const anySurcharge = (rated.surchargesApplied?.length || 0) > 0 || (rated.surchargeWarnings?.length || 0) > 0
+        if (anySurcharge && freeMode === 'smart') return rated
+        return { ...rated, freightCost: 0, fuelLevy: null, surchargesApplied: [], surchargeWarnings: [], surchargeTotal: 0, margin: 0, totalCost: 0, freeShipping: true }
+      }))
     }
   }
 

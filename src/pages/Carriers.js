@@ -998,6 +998,8 @@ export default function Carriers() {
                           <option value="manual">Off — I'll handle this myself</option>
                           <option value="auto">On — automatic (carrier triggers)</option>
                           <option value="auto_override">On — automatic (my triggers)</option>
+                          <option value="item_weight">On — per-item weight threshold</option>
+                          <option value="consignment_weight">On — consignment weight threshold</option>
                           <option value="always">Always — every quote</option>
                           <option value="never">Off — never apply</option>
                         </select>
@@ -1005,6 +1007,8 @@ export default function Carriers() {
                           {rule.trigger === 'manual' && "Won't be calculated automatically. Add manually when needed."}
                           {rule.trigger === 'auto' && "Applied when carrier's own conditions are met. Thresholds from your rate card."}
                           {rule.trigger === 'auto_override' && "Applied automatically using YOUR threshold. Enter trigger values below."}
+                          {rule.trigger === 'item_weight' && "Applied when any single item in the order exceeds the weight threshold you set."}
+                          {rule.trigger === 'consignment_weight' && "Applied when the total consignment weight exceeds the threshold you set."}
                           {rule.trigger === 'always' && "Added to every quote with no conditions."}
                           {rule.trigger === 'never' && "Ignored completely — never added to any quote."}
                         </div>
@@ -1015,6 +1019,12 @@ export default function Carriers() {
                             {s.autoWeightKg ? 'Over ' + s.autoWeightKg + 'kg' : ''}
                             {s.autoLengthMinCm ? (s.autoWeightKg ? ' · ' : '') + 'Over ' + s.autoLengthMinCm + 'cm' : ''}
                             {!s.autoWeightKg && !s.autoLengthMinCm && 'Using carrier conditions'}
+                          </div>
+                        )}
+                        {(rule.trigger === 'item_weight' || rule.trigger === 'consignment_weight') && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <input type="number" placeholder="kg" value={rule.weightKg || ''} onChange={e => setSurchargeRules({ ...surchargeRules, [key]: { ...rule, weightKg: e.target.value } })} style={{ width: '65px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '12px' }} />
+                            <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>kg</span>
                           </div>
                         )}
                         {rule.trigger === 'auto_override' && (

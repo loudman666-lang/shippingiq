@@ -12,6 +12,7 @@ export default function Rules() {
   const [rules, setRules] = useState({
     freeShippingEnabled: false,
     freeShippingThreshold: '',
+    freeShippingMode: 'smart',
     freightMarginType: 'none',
     freightMarginValue: '',
     carrierPriority: [],
@@ -31,6 +32,7 @@ export default function Rules() {
     setRules({
       freeShippingEnabled: savedRules.freeShippingEnabled || false,
       freeShippingThreshold: savedRules.freeShippingThreshold || '',
+      freeShippingMode: savedRules.freeShippingMode || 'smart',
       freightMarginType: savedRules.freightMarginType || 'none',
       freightMarginValue: savedRules.freightMarginValue || '',
       carrierPriority: (() => {
@@ -149,6 +151,24 @@ export default function Rules() {
                   <p style={{ fontSize: '12px', color: 'var(--ink-muted)', margin: 0 }}>
                     Tip: use this for bulky or heavy items where freight costs exceed the benefit of free shipping.
                   </p>
+                  <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>When surcharges apply</div>
+                    {[
+                      { value: 'smart', label: 'Smart mode', desc: 'If a surcharge triggers (e.g. overlength, tail lift), free shipping is voided and normal freight + surcharges apply.' },
+                      { value: 'true', label: 'Always free', desc: 'Free shipping always means $0, even if surcharges would normally apply. Surcharges are ignored.' },
+                    ].map(opt => (
+                      <label key={opt.value} onClick={() => setRules({ ...rules, freeShippingMode: opt.value })}
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px', border: '2px solid', borderColor: rules.freeShippingMode === opt.value ? 'var(--accent)' : 'var(--border)', borderRadius: '8px', cursor: 'pointer', background: rules.freeShippingMode === opt.value ? 'var(--accent-light)' : 'var(--surface)' }}>
+                        <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid', borderColor: rules.freeShippingMode === opt.value ? 'var(--accent)' : 'var(--border-mid)', background: rules.freeShippingMode === opt.value ? 'var(--accent)' : 'transparent', flexShrink: 0, marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {rules.freeShippingMode === opt.value && <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'white' }} />}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: '600', fontSize: '13px', color: 'var(--ink)', marginBottom: '2px' }}>{opt.label}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>{opt.desc}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

@@ -73,6 +73,12 @@ function applySurcharges(carrier, items, freightCost) {
         if (wThreshold > 0 && totalWeight > wThreshold) { triggered = true; reason = 'Consignment ' + totalWeight + 'kg > ' + wThreshold + 'kg' }
         else if (dThreshold > 0 && maxItemLength > dThreshold) { triggered = true; reason = 'Longest side ' + maxItemLength + 'cm > ' + dThreshold + 'cm' }
       }
+    } else if (rule.trigger === 'item_weight') {
+      const wThreshold = parseFloat(rule.weightKg) || 0
+      if (wThreshold > 0 && maxItemWeight > wThreshold) { triggered = true; reason = 'Item ' + maxItemWeight + 'kg > ' + wThreshold + 'kg threshold' }
+    } else if (rule.trigger === 'consignment_weight') {
+      const wThreshold = parseFloat(rule.weightKg) || 0
+      if (wThreshold > 0 && totalWeight > wThreshold) { triggered = true; reason = 'Consignment ' + totalWeight + 'kg > ' + wThreshold + 'kg threshold' }
     }
 
     if (triggered) {
@@ -214,7 +220,7 @@ serve(async (req) => {
   }
 
   try {
-    const { postcode, items, merchant_id } = await req.json()
+    const { postcode, items, merchant_id, orderValue = 0, hasExemptItem = false } = await req.json()
 
     if (!postcode || !items || !merchant_id) {
       return new Response(
@@ -243,12 +249,23 @@ serve(async (req) => {
     const carriers = carriersRes.data || []
     const merchantRules = merchantRes.data?.rules || {}
 
-    const results = carriers.map(c => {
+    const rawResults = carriers.map(c => {
       const r = calculateRate(c, postcode, items, merchantRules)
       return r.error ? r : { ...r, carrierId: c.id }
     })
 
     const carrierPriority: string[] = merchantRules.carrierPriority || []
+
+    const freeShippingThreshold = parseFloat(merchantRules.freeShippingThreshold) || 0
+    const thresholdMet = merchantRules.freeShippingEnabled && freeShippingThreshold > 0 && orderValue >= freeShippingThreshold
+    const freeMode = merchantRules.freeShippingMode || 'smart'
+
+    const results = (!thresholdMet || hasExemptItem) ? rawResults : rawResults.map(r => {
+      if (r.error) return r
+      const anySurcharge = (r.surchargesApplied?.length || 0) > 0 || (r.surchargeWarnings?.length || 0) > 0
+      if (anySurcharge && freeMode === 'smart') return r
+      return { ...r, freightCost: 0, fuelLevy: null, surchargesApplied: [], surchargeWarnings: [], surchargeTotal: 0, margin: 0, totalCost: 0, freeShipping: true }
+    })
 
     return new Response(
       JSON.stringify({ results, carrierPriority }),
