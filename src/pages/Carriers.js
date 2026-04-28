@@ -546,6 +546,9 @@ export default function Carriers() {
   const [eligibilityForm, setEligibilityForm] = useState({})
   const [showReUploadConfirm, setShowReUploadConfirm] = useState(null)
   const [fromCache, setFromCache] = useState(false)
+  const [editingCarrierId, setEditingCarrierId] = useState(null)
+  const [showSurchargeModal, setShowSurchargeModal] = useState(false)
+  const [surchargeModalChoice, setSurchargeModalChoice] = useState('keep')
 
   useEffect(() => {
     if (merchant?.id) fetchCarriers()
@@ -572,7 +575,12 @@ export default function Carriers() {
     const hash = computeFileHash([form.rateCard, form.zoneFile, form.surchargeDoc])
 
     // 1. File hash check — if these exact files are already parsed, skip AI entirely
-    const hashMatch = carriers.find(c => c.status === 'active' && c.parsed_data?.fileHash === hash)
+    // When editing, only match against the carrier being edited to avoid loading another carrier's parsed data
+    const hashMatch = carriers.find(c =>
+      c.status === 'active' &&
+      c.parsed_data?.fileHash === hash &&
+      (!editingCarrierId || c.id === editingCarrierId)
+    )
     if (hashMatch) {
       setParseResult(hashMatch.parsed_data)
       setSelectedOrigin(hashMatch.parsed_data?.selectedOrigin || (hashMatch.parsed_data?.originDepots?.length === 1 ? hashMatch.parsed_data.originDepots[0] : ''))
@@ -581,8 +589,8 @@ export default function Carriers() {
       return
     }
 
-    // 2. Re-upload confirmation — existing active carrier with same name
-    if (!skipConfirm) {
+    // 2. Re-upload confirmation — existing active carrier with same name (skip when editing that carrier)
+    if (!skipConfirm && !editingCarrierId) {
       const existing = carriers.find(c => c.name.toLowerCase() === form.name.trim().toLowerCase() && c.status === 'active')
       if (existing) {
         setShowReUploadConfirm(existing)
@@ -723,23 +731,46 @@ export default function Carriers() {
     setError(null)
     try {
       const dataToSave = { ...parseResult, selectedOrigin: selectedOrigin || null }
-      const { error } = await supabase.from('carriers').insert({
-        merchant_id: merchant.id,
-        name: form.name,
-        parsed_data: dataToSave,
-        status: 'active'
-      })
-      if (error) throw error
-      setShowAdd(false)
-      setForm({ name: '', rateCard: null, zoneFile: null, surchargeDoc: null })
-      setParseResult(null)
-      setSelectedOrigin('')
-      fetchCarriers()
+      if (editingCarrierId) {
+        const { error } = await supabase.from('carriers')
+          .update({ parsed_data: dataToSave, status: 'active' })
+          .eq('id', editingCarrierId)
+        if (error) throw error
+        setSurchargeModalChoice('keep')
+        setShowSurchargeModal(true)
+      } else {
+        const { error } = await supabase.from('carriers').insert({
+          merchant_id: merchant.id,
+          name: form.name,
+          parsed_data: dataToSave,
+          status: 'active'
+        })
+        if (error) throw error
+        setShowAdd(false)
+        setForm({ name: '', rateCard: null, zoneFile: null, surchargeDoc: null })
+        setParseResult(null)
+        setSelectedOrigin('')
+        fetchCarriers()
+      }
     } catch (err) {
       setError('Could not save carrier. Please try again.')
     } finally {
       setSaving(false)
     }
+  }
+
+  async function handleSurchargeModalApply() {
+    if (surchargeModalChoice === 'reset') {
+      await supabase.from('carriers').update({ surcharge_rules: null }).eq('id', editingCarrierId)
+    }
+    setShowSurchargeModal(false)
+    setShowAdd(false)
+    setEditingCarrierId(null)
+    setForm({ name: '', rateCard: null, zoneFile: null, surchargeDoc: null })
+    setParseResult(null)
+    setSelectedOrigin('')
+    setFromCache(false)
+    fetchCarriers()
   }
 
   async function deleteCarrier(id) {
@@ -836,17 +867,19 @@ export default function Carriers() {
             <h1 className="main-title">Carriers</h1>
             <p className="main-subtitle">Manage your freight carriers and rate cards</p>
           </div>
-          <button className="btn-primary" onClick={() => { setShowAdd(true); setParseResult(null); setError(null); setViewingCarrier(null); setFromCache(false) }}>
+          <button className="btn-primary" onClick={() => { setShowAdd(true); setEditingCarrierId(null); setParseResult(null); setError(null); setViewingCarrier(null); setFromCache(false) }}>
             + Add Carrier
           </button>
         </div>
 
         {showAdd && (
           <div className="card" style={{ marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>Add New Carrier</h2>
+            <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>
+              {editingCarrierId ? `Update Carrier: ${form.name}` : 'Add New Carrier'}
+            </h2>
             <div className="form-group">
               <label className="form-label">Carrier Name</label>
-              <input className="form-input" type="text" placeholder="e.g. Allied Express, Mainfreight, StarTrack" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} disabled={!!parseResult || parsing} />
+              <input className="form-input" type="text" placeholder="e.g. Allied Express, Mainfreight, StarTrack" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} disabled={!!parseResult || parsing || !!editingCarrierId} />
             </div>
             <div className="form-group">
               <label className="form-label">Rate Card <span style={{ color: '#6b7280', fontWeight: 400 }}>(required — CSV, Excel or PDF)</span></label>
@@ -960,7 +993,7 @@ export default function Carriers() {
             )}
 
             <div className="form-actions">
-              <button className="btn-secondary" onClick={() => { setShowAdd(false); setParseResult(null); setError(null); setSelectedOrigin(''); setFromCache(false) }}>Cancel</button>
+              <button className="btn-secondary" onClick={() => { setShowAdd(false); setEditingCarrierId(null); setParseResult(null); setError(null); setSelectedOrigin(''); setFromCache(false) }}>Cancel</button>
               {!parseResult ? (
                 <button className="btn-primary" onClick={parseFiles} disabled={parsing}>
                   {parsing ? 'Analysing...' : 'Analyse Files'}
@@ -1191,6 +1224,16 @@ export default function Carriers() {
                       {eligibilityCarrierId === carrier.id ? 'Hide Limits' : 'Carrier Limits'}
                     </button>
                   )}
+                  <button className="btn-secondary" onClick={() => {
+                    setEditingCarrierId(carrier.id)
+                    setShowAdd(true)
+                    setParseResult(null)
+                    setError(null)
+                    setFromCache(false)
+                    setViewingCarrier(null)
+                    setForm({ name: carrier.name, rateCard: null, zoneFile: null, surchargeDoc: null })
+                    setSelectedOrigin(carrier.parsed_data?.selectedOrigin || '')
+                  }}>Edit Rates</button>
                   <button className="btn-danger" onClick={() => deleteCarrier(carrier.id)}>Delete</button>
                 </div>
               {carrier.status === 'active' && eligibilityCarrierId === carrier.id && (
@@ -1247,6 +1290,48 @@ export default function Carriers() {
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <button className="btn-secondary" onClick={() => setShowReUploadConfirm(null)}>Cancel</button>
               <button className="btn-primary" onClick={() => { setShowReUploadConfirm(null); parseFiles(true) }}>Continue</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSurchargeModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '32px', maxWidth: '480px', width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>Carrier updated successfully</h3>
+            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}>Your rates and zones have been updated. What would you like to do with your surcharge rules?</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="surchargeChoice"
+                  value="keep"
+                  checked={surchargeModalChoice === 'keep'}
+                  onChange={() => setSurchargeModalChoice('keep')}
+                  style={{ marginTop: '2px' }}
+                />
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>Keep existing surcharge rules</div>
+                  <div style={{ fontSize: '13px', color: '#6b7280' }}>Your current surcharge triggers and thresholds stay in place.</div>
+                </div>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="surchargeChoice"
+                  value="reset"
+                  checked={surchargeModalChoice === 'reset'}
+                  onChange={() => setSurchargeModalChoice('reset')}
+                  style={{ marginTop: '2px' }}
+                />
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>Reset to new surcharges from uploaded files</div>
+                  <div style={{ fontSize: '13px', color: '#6b7280' }}>Clears all surcharge rules — you'll need to reconfigure them in Surcharge Rules.</div>
+                </div>
+              </label>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn-primary" onClick={handleSurchargeModalApply}>Apply</button>
             </div>
           </div>
         </div>
