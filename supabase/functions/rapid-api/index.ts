@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function callClaude(userContent: unknown[]): Promise<string> {
+async function callClaude(userContent: unknown[], maxTokens = 8000): Promise<string> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -16,7 +16,7 @@ async function callClaude(userContent: unknown[]): Promise<string> {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 8000,
+      max_tokens: maxTokens,
       messages: [{ role: 'user', content: userContent }],
     }),
   })
@@ -100,7 +100,7 @@ Respond ONLY with a JSON object. No markdown, no backticks.
   addPdfs(userContent, pdfs as { data: string; name: string; slot: string }[])
 
   console.log('[handleRates] calling Claude, userContent blocks:', userContent.length)
-  const text = await callClaude(userContent)
+  const text = await callClaude(userContent, 16000)
   console.log('[handleRates] Claude response length:', text.length, '| first 200:', text.slice(0, 200))
   const parsed = parseJson(text) as Record<string, unknown>
 
