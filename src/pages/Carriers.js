@@ -1306,18 +1306,18 @@ export default function Carriers() {
                 { value: 'keep', label: 'Keep existing surcharge rules', desc: 'Your current surcharge triggers and thresholds stay in place.' },
                 { value: 'reset', label: 'Reset to new surcharges from uploaded files', desc: "Clears all surcharge rules — you'll need to reconfigure them in Surcharge Rules." },
               ].map(({ value, label, desc }) => (
-                <label key={value} onClick={() => setSurchargeModalChoice(value)} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '14px 16px', border: '2px solid', borderColor: surchargeModalChoice === value ? '#E8521A' : '#e5e7eb', borderRadius: '8px', background: surchargeModalChoice === value ? '#fff5f0' : '#fff', cursor: 'pointer' }}>
+                <label key={value} onClick={() => setSurchargeModalChoice(value)} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '14px 16px', border: '2px solid', borderColor: surchargeModalChoice === value ? '#E8521A' : '#e5e7eb', borderRadius: '8px', background: surchargeModalChoice === value ? '#fff5f0' : '#fff', cursor: 'pointer', boxSizing: 'border-box', width: '100%' }}>
                   <input
                     type="radio"
                     name="surchargeChoice"
                     value={value}
                     checked={surchargeModalChoice === value}
                     onChange={() => setSurchargeModalChoice(value)}
-                    style={{ marginTop: '3px', accentColor: '#E8521A', flexShrink: 0 }}
+                    style={{ marginTop: '4px', accentColor: '#E8521A', flexShrink: 0 }}
                   />
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '2px' }}>{label}</div>
-                    <div style={{ fontSize: '13px', color: '#6b7280' }}>{desc}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>{label}</div>
+                    <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>{desc}</div>
                   </div>
                 </label>
               ))}
