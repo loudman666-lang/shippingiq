@@ -79,6 +79,7 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
   - Overlength 4–8m and over 8m handled correctly; lower/upper bound inputs labelled correctly
 - Carrier Limits section: eligibility weight/dim fields with two-paragraph explanation and generic example (no carrier names)
 - Cubic Weight Factor displayed on carrier card and during upload. Editable inline. Help text explains standard is 250 (L × W × H ÷ 4,000) — only change if carrier contract specifies otherwise.
+- Edit Rates button on each carrier card — re-upload files to update rates without deleting. Same two-step analyse → save flow. On save, updates parsed_data only — preserves fuel_levy_pct, eligibility_rules. After save, modal prompts merchant to keep existing surcharge rules or reset to new surcharges from uploaded files.
 - Upload guardrails:
   - Hash check: same files → "Files unchanged — using existing analysis." (no AI call)
   - Re-upload confirmation modal when carrier name matches existing active carrier
@@ -302,7 +303,7 @@ Model C: Depot-to-depot — Mainfreight style
 ## Logged for future build
 - Saved quotes: currently shows list (postcode, item count, date, cheapest rate + carrier) on Dashboard and Quote page. Needs full order management — click to reload all items/postcode/results into quote form, edit and re-quote, print/export as PDF.
 - Address autocomplete to detect residential vs commercial (triggers residential surcharge)
-- Edit carrier without deleting (re-upload files to update rates)
+- Surcharge modal text overflow bug — radio card label/description text overflows modal width on some screen sizes. Styles look correct (flex:1, minWidth:0 on text container, width:100% on card) but issue persists. Needs fresh diagnosis — do not iterate blind on CSS again.
 - Multi-warehouse / multi-origin support
 - Delivery requirement flags for customers (e.g. tailgate notice at checkout)
 - Carrier rate editing without full delete and re-upload
