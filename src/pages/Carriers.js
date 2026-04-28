@@ -965,7 +965,7 @@ export default function Carriers() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
                 <h2 style={{ fontSize: '16px', fontWeight: '600' }}>{surchargeRulesCarrier.name} — Surcharge Rules</h2>
-                <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginTop: '4px' }}>Configure when each surcharge is automatically applied to a quote.</p>
+                <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginTop: '4px' }}>Control how each surcharge is applied at checkout. Surcharges are never shown to customers — only the final freight total is displayed.</p>
               </div>
               <button className="btn-secondary" onClick={() => setSurchargeRulesCarrier(null)}>Close</button>
             </div>
@@ -981,10 +981,10 @@ export default function Carriers() {
                 {surchargeRulesCarrier.parsed_data.surcharges.map((s, i) => {
                   const key = s.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
                   const rule = surchargeRules[key] || { trigger: 'manual' }
-                  const isWeightDim = ['tailgate_delivery','hand_load_per_item','overlength_4_8m','overlength_over_8m'].some(k => key.includes(k.split('_')[0]))
                   const isOverlength = key.includes('overlength')
+                  const isOverlength8m = key === 'overlength_over_8m'
                   return (
-                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '200px 1fr 160px', gap: '12px', alignItems: 'center', padding: '12px', borderTop: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' }}>
+                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '200px 1fr 160px', gap: '12px', alignItems: 'flex-start', padding: '12px', borderTop: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' }}>
                       <div>
                         <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>{s.name}</div>
                         <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>{s.amount}</div>
@@ -993,13 +993,20 @@ export default function Carriers() {
                         <select
                           value={rule.trigger}
                           onChange={e => setSurchargeRules({ ...surchargeRules, [key]: { ...rule, trigger: e.target.value } })}
-                          style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer' }}>
-                          <option value="manual">Manual only</option>
-                          <option value="auto">Auto — use carrier thresholds</option>
-                          <option value="auto_override">Auto with override — use my thresholds</option>
-                          {key.includes('residential') && <option value="always">Always apply</option>}
-                          {key.includes('residential') && <option value="never">Never apply</option>}
+                          style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer', width: '100%' }}>
+                          <option value="manual">Off — I'll handle this myself</option>
+                          <option value="auto">On — automatic (carrier triggers)</option>
+                          <option value="auto_override">On — automatic (my triggers)</option>
+                          <option value="always">Always — every quote</option>
+                          <option value="never">Off — never apply</option>
                         </select>
+                        <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '4px' }}>
+                          {rule.trigger === 'manual' && "Won't be calculated automatically. Add manually when needed."}
+                          {rule.trigger === 'auto' && "Applied when carrier's own conditions are met. Thresholds from your rate card."}
+                          {rule.trigger === 'auto_override' && "Applied automatically using YOUR threshold. Enter trigger values below."}
+                          {rule.trigger === 'always' && "Added to every quote with no conditions."}
+                          {rule.trigger === 'never' && "Ignored completely — never added to any quote."}
+                        </div>
                       </div>
                       <div>
                         {rule.trigger === 'auto' && (
@@ -1017,15 +1024,24 @@ export default function Carriers() {
                                 <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>kg</span>
                               </div>
                             )}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <input type="number" placeholder="cm" value={rule.lengthCm || ''} onChange={e => setSurchargeRules({ ...surchargeRules, [key]: { ...rule, lengthCm: e.target.value } })} style={{ width: '65px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '12px' }} />
-                              <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>cm</span>
-                            </div>
+                            {isOverlength8m ? (
+                              <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Triggers when any item exceeds 800cm (8m)</span>
+                            ) : isOverlength ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={{ fontSize: '11px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>Lower bound (cm)</span>
+                                  <input type="number" placeholder="400" value={rule.lengthCm || ''} onChange={e => setSurchargeRules({ ...surchargeRules, [key]: { ...rule, lengthCm: e.target.value } })} style={{ width: '60px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '12px' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>Upper fixed at 800cm — 4–8m range</span>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <input type="number" placeholder="cm" value={rule.lengthCm || ''} onChange={e => setSurchargeRules({ ...surchargeRules, [key]: { ...rule, lengthCm: e.target.value } })} style={{ width: '65px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '12px' }} />
+                                <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>cm</span>
+                              </div>
+                            )}
                           </div>
                         )}
-                        {rule.trigger === 'manual' && <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Added manually</span>}
-                        {rule.trigger === 'always' && <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Always included</span>}
-                        {rule.trigger === 'never' && <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Never included</span>}
                       </div>
                     </div>
                   )
