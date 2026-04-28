@@ -234,6 +234,7 @@ Model C: Depot-to-depot — Mainfreight style
 - Split shipment across carriers when no single carrier can handle full cart
 - Carrier-per-product mapping (v2 of eligibility rules)
 - Shared engine module in supabase/functions/_shared/ so Quote.js and calculate-freight stay in sync automatically
+- Platform-agnostic product exemption flags: currently free shipping exemption and surcharge triggers use WooCommerce product tags (shippingiq-exempt, shippingiq-taillift etc). When Shopify and Magento plugins are built, equivalent mechanisms needed — Shopify uses product tags (same concept, compatible), Magento uses product attributes. Design the calculate-freight API to accept an array of flags per cart item (e.g. ["exempt", "taillift", "2person"]) so the platform plugin handles the translation and the API stays platform-agnostic.
 
 ## Pre-launch testing checklist
 
