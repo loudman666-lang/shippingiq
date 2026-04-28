@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import './Carriers.css'
 
 export default function Rules() {
-  const { merchant, isAdmin } = useAuth()
+  const { profile, merchant, isAdmin } = useAuth()
   const [carriers, setCarriers] = useState([])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -94,8 +94,8 @@ export default function Rules() {
         </nav>
         <div className="sidebar-footer">
           <div className="sidebar-user">
-            <div className="user-avatar">D</div>
-            <div className="user-info"><div className="user-name">Dave Bishop</div><div className="user-role">{isAdmin ? 'Admin' : 'User'}</div></div>
+            <div className="user-avatar">{profile?.full_name?.charAt(0) || merchant?.name?.charAt(0) || '?'}</div>
+            <div className="user-info"><div className="user-name">{profile?.full_name || merchant?.name}</div><div className="user-role">{isAdmin ? 'Admin' : 'User'}</div></div>
           </div>
         </div>
       </aside>

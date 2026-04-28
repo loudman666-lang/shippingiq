@@ -211,7 +211,7 @@ function calculateRate(carrier, postcode, items, rules = {}) {
 const emptyItem = () => ({ id: Date.now() + Math.random(), qty: 1, desc: '', weight: '', length: '', width: '', height: '', exemptFreeShipping: false })
 
 export default function Quote() {
-  const { merchant, isAdmin } = useAuth()
+  const { profile, merchant, isAdmin } = useAuth()
   const [carriers, setCarriers] = useState([])
   const [loading, setLoading] = useState(true)
   const [postcode, setPostcode] = useState('')
@@ -328,8 +328,8 @@ export default function Quote() {
         </nav>
         <div className="sidebar-footer">
           <div className="sidebar-user">
-            <div className="user-avatar">D</div>
-            <div className="user-info"><div className="user-name">Dave Bishop</div><div className="user-role">{isAdmin ? 'Admin' : 'User'}</div></div>
+            <div className="user-avatar">{profile?.full_name?.charAt(0) || merchant?.name?.charAt(0) || '?'}</div>
+            <div className="user-info"><div className="user-name">{profile?.full_name || merchant?.name}</div><div className="user-role">{isAdmin ? 'Admin' : 'User'}</div></div>
           </div>
         </div>
       </aside>
