@@ -85,10 +85,11 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 			'display_mode'     => array(
 				'title'       => __( 'Display Mode', 'shippingiq' ),
 				'type'        => 'select',
-				'description' => __( 'Show all eligible carriers or only the cheapest option at checkout.', 'shippingiq' ),
+				'description' => __( 'Controls which carriers are shown at checkout. Priority order is set in ShippingIQ → Rules.', 'shippingiq' ),
 				'options'     => array(
-					'all'      => __( 'All eligible carriers', 'shippingiq' ),
+					'all'      => __( 'All eligible carriers (sorted by preference)', 'shippingiq' ),
 					'cheapest' => __( 'Cheapest carrier only', 'shippingiq' ),
+					'priority' => __( 'Preferred carrier only (your top-ranked carrier that services this postcode)', 'shippingiq' ),
 				),
 				'default'     => 'all',
 				'desc_tip'    => true,
@@ -162,8 +163,9 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 			return;
 		}
 
-		$body    = json_decode( $raw_body, true );
-		$results = $body['results'] ?? array();
+		$body             = json_decode( $raw_body, true );
+		$results          = $body['results'] ?? array();
+		$carrier_priority = $body['carrierPriority'] ?? array();
 
 		if ( empty( $results ) ) {
 			error_log( 'ShippingIQ: aborting — results array is empty' );
@@ -179,11 +181,25 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 			return;
 		}
 
+		// Sort by carrier priority order defined in ShippingIQ → Rules.
+		if ( ! empty( $carrier_priority ) ) {
+			usort( $eligible, static function ( $a, $b ) use ( $carrier_priority ) {
+				$pos_a = array_search( $a['carrierId'] ?? '', $carrier_priority, true );
+				$pos_b = array_search( $b['carrierId'] ?? '', $carrier_priority, true );
+				$pos_a = ( false === $pos_a ) ? PHP_INT_MAX : $pos_a;
+				$pos_b = ( false === $pos_b ) ? PHP_INT_MAX : $pos_b;
+				return $pos_a <=> $pos_b;
+			} );
+		}
+
+		// Apply display mode.
 		if ( 'cheapest' === $this->display_mode ) {
 			usort( $eligible, static function ( $a, $b ) {
 				return ( (float) ( $a['totalCost'] ?? $a['freightCost'] ?? 0 ) )
 					<=> ( (float) ( $b['totalCost'] ?? $b['freightCost'] ?? 0 ) );
 			} );
+			$eligible = array( $eligible[0] );
+		} elseif ( 'priority' === $this->display_mode ) {
 			$eligible = array( $eligible[0] );
 		}
 

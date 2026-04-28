@@ -243,10 +243,15 @@ serve(async (req) => {
     const carriers = carriersRes.data || []
     const merchantRules = merchantRes.data?.rules || {}
 
-    const results = carriers.map(c => calculateRate(c, postcode, items, merchantRules))
+    const results = carriers.map(c => {
+      const r = calculateRate(c, postcode, items, merchantRules)
+      return r.error ? r : { ...r, carrierId: c.id }
+    })
+
+    const carrierPriority: string[] = merchantRules.carrierPriority || []
 
     return new Response(
-      JSON.stringify({ results }),
+      JSON.stringify({ results, carrierPriority }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 

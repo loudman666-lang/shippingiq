@@ -186,7 +186,7 @@ export default function Rules() {
             {carriers.length > 1 && (
               <div className="card">
                 <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Carrier Priority</div>
-                <div style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '20px' }}>When multiple carriers can service a postcode, the highest priority carrier is used. Drag to reorder.</div>
+                <div style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '20px' }}>Set the order carriers appear at checkout. Drag to reorder — top carrier is shown first and pre-selected.</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {rules.carrierPriority.map((id, index) => (
                     <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--surface-2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
