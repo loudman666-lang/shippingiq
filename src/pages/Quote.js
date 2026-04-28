@@ -524,7 +524,7 @@ export default function Quote() {
                               <span style={{ display: 'inline-block', fontSize: '11px', fontWeight: '700', color: '#15803d', background: '#dcfce7', padding: '2px 8px', borderRadius: '10px', border: '1px solid #86efac' }}>FREE</span>
                             ) : (
                               <div>
-                                <div style={{ fontSize: '14px', fontWeight: '700', color: isSelected ? 'var(--accent)' : 'var(--ink)' }}>
+                                <div style={{ fontSize: '14px', fontWeight: '700', color: isCheapest ? '#15803d' : isSelected ? 'var(--accent)' : 'var(--ink)' }}>
                                   ${gstEnabled ? ((result.totalCost || result.freightCost) * 1.1).toFixed(2) : (result.totalCost || result.freightCost).toFixed(2)}
                                 </div>
                                 <div style={{ fontSize: '10px', color: 'var(--ink-muted)', marginTop: '1px' }}>{gstEnabled ? 'inc GST' : 'ex GST'}</div>
