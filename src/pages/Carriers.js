@@ -184,7 +184,7 @@ function looksLikePostcode(val) {
 }
 
 function computeFileHash(files) {
-  return files.filter(Boolean).map(f => `${f.name}:${f.size}:${f.lastModified}`).join('|')
+  return files.filter(Boolean).map(f => `${f.name}:${f.size}`).join('|')
 }
 
 // If the sheet looks like a rate table (has basic/per-kg/minimum columns), return
@@ -574,19 +574,19 @@ export default function Carriers() {
     setFromCache(false)
     const hash = computeFileHash([form.rateCard, form.zoneFile, form.surchargeDoc])
 
-    // 1. File hash check — if these exact files are already parsed, skip AI entirely
-    // When editing, only match against the carrier being edited to avoid loading another carrier's parsed data
-    const hashMatch = carriers.find(c =>
-      c.status === 'active' &&
-      c.parsed_data?.fileHash === hash &&
-      (!editingCarrierId || c.id === editingCarrierId)
-    )
-    if (hashMatch) {
-      setParseResult(hashMatch.parsed_data)
-      setSelectedOrigin(hashMatch.parsed_data?.selectedOrigin || (hashMatch.parsed_data?.originDepots?.length === 1 ? hashMatch.parsed_data.originDepots[0] : ''))
-      setFromCache(true)
-      setError(null)
-      return
+    // 1. File hash check — if these exact files are already parsed, skip AI entirely (add flow only)
+    if (!editingCarrierId) {
+      const hashMatch = carriers.find(c =>
+        c.status === 'active' &&
+        c.parsed_data?.fileHash === hash
+      )
+      if (hashMatch) {
+        setParseResult(hashMatch.parsed_data)
+        setSelectedOrigin(hashMatch.parsed_data?.selectedOrigin || (hashMatch.parsed_data?.originDepots?.length === 1 ? hashMatch.parsed_data.originDepots[0] : ''))
+        setFromCache(true)
+        setError(null)
+        return
+      }
     }
 
     // 2. Re-upload confirmation — existing active carrier with same name (skip when editing that carrier)
