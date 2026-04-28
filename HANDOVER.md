@@ -230,6 +230,7 @@ POST { postcode, items, merchant_id, orderValue? (default 0), hasExemptItem? (de
 - Fetches active carriers + merchant rules from Supabase
 - Runs calculateRate across all carriers
 - Applies free shipping logic server-side (same 3-step flow as Quote.js)
+- When free shipping triggers, only FREE options shown at checkout — paid options hidden. Smart mode still voids free shipping and shows paid rates when surcharges apply.
 - Returns { results: [...], carrierPriority: [...] }
 - Each result includes carrierId for WooCommerce priority sorting
 - postcodeEntry uses `suburb || locality` fallback (old carriers used locality)
@@ -266,6 +267,9 @@ Model C: Depot-to-depot — Mainfreight style
 - Customer sees one clean freight total
 - Auto surcharge triggers use carrier's own extracted thresholds
 - Free shipping can be exempted per product/item
+
+## Known decisions
+- WooCommerce plugin zip is gitignored — rebuild with: `cd ~/Downloads/shippingiq/woocommerce-plugin && zip -r shippingiq.zip shippingiq/`
 
 ## Known merchant education points
 - Postcode zone file is required — without it the carrier cannot calculate any quotes. App shows a persistent warning on carrier cards and Dashboard banner. Merchants must upload a zone file, not just a rate card.
