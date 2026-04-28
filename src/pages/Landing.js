@@ -36,15 +36,16 @@ export default function Landing() {
           <div className="hero-left">
             <div className="hero-badge">
               <span className="hero-badge-pulse"></span>
-              Now live — free to start
+              AI-powered freight · Australian-built
             </div>
 
-            <h1>Accurate freight<br />at checkout.<br /><em>Finally.</em></h1>
+            <h1>Your carrier rates.<br />Live at checkout.<br /><em>In under an hour.</em></h1>
 
-            <p className="hero-sub">Upload your carrier rate card. ShippingIQ reads it, maps your zones, and quotes the right freight cost — instantly from the dashboard, or automatically at checkout.</p>
+            <p className="hero-sub">ShippingIQ's AI reads your carrier rate card — any format, any carrier — and turns it into accurate freight quotes at WooCommerce checkout. No developer. No manual data entry. No platform markup.</p>
 
             <div className="hero-cta">
               <Link to="/signup" className="btn-primary-lg">Start for free</Link>
+              <a href="#how-it-works" className="btn-cta-ghost">See how it works</a>
               <span className="cta-note">No credit card required · Live in under an hour</span>
             </div>
 
@@ -131,6 +132,24 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* STATS STRIP */}
+      <div className="stats-strip">
+        <div className="stats-inner">
+          <div className="stat-item">
+            <div className="stat-value">880+</div>
+            <div className="stat-label">rates parsed per carrier</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-value">Any format</div>
+            <div className="stat-label">CSV, Excel or PDF</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-value">Under an hour</div>
+            <div className="stat-label">from upload to live checkout</div>
+          </div>
+        </div>
+      </div>
+
       {/* TRUST STRIP */}
       <div style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '20px 40px' }}>
         <div style={{ maxWidth: '1160px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '32px', flexWrap: 'wrap' }}>
@@ -198,12 +217,12 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* HOW IT WORKS */}
+      {/* HOW THE AI WORKS */}
       <section id="how-it-works">
         <div className="section">
-          <div className="sec-label">How it works</div>
-          <h2>Live in under an hour</h2>
-          <p className="sec-sub">Use it as a standalone quoting tool from day one. Connect it to your store when you're ready. No developer needed at any stage.</p>
+          <div className="sec-label">The AI</div>
+          <h2>Drop in the file. The AI does the rest.</h2>
+          <p className="sec-sub">Most freight tools require you to manually enter every rate. ShippingIQ reads your carrier's own file — however it's formatted — and extracts every zone, rate, and surcharge automatically.</p>
 
           <div className="steps-grid">
             <div className="step">
@@ -216,8 +235,8 @@ export default function Landing() {
                 </svg>
               </div>
               <div className="step-title">Upload your rate card</div>
-              <div className="step-body">Drop in the PDF or Excel from your carrier. ShippingIQ's AI reads every zone, base charge, per-kg rate, and surcharge automatically. No manual data entry.</div>
-              <span className="step-time">About 10 minutes</span>
+              <div className="step-body">PDF, Excel, or CSV — whatever your carrier sent you. ShippingIQ's AI reads every format including messy legacy files with merged cells and inconsistent layouts.</div>
+              <span className="step-time">About 5 minutes</span>
             </div>
 
             <div className="step">
@@ -228,9 +247,9 @@ export default function Landing() {
                   <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                 </svg>
               </div>
-              <div className="step-title">Set your rules — then start quoting</div>
-              <div className="step-body">Confirm your zones, set free shipping thresholds, surcharge handling, and carrier routing. At this point you already have a working freight calculator — use it immediately from the dashboard.</div>
-              <span className="step-time">About 20 minutes</span>
+              <div className="step-title">AI extracts everything</div>
+              <div className="step-body">Zones, weight breaks, base charges, per-kg rates, surcharges, fuel levies — all extracted and mapped automatically in 20–40 seconds. You review and confirm.</div>
+              <span className="step-time">20–40 seconds</span>
             </div>
 
             <div className="step">
@@ -248,12 +267,94 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* TWO WAYS TO USE IT */}
+      <section>
+        <div className="section">
+          <div className="sec-label">Two ways to use it</div>
+          <h2>Use it your way</h2>
+          <p className="sec-sub">Start quoting freight from day one. Connect your store when you're ready.</p>
+
+          <div className="use-cases-grid">
+            <div className="use-case-card">
+              <div className="use-case-tag muted">No website needed</div>
+              <div className="use-case-title">Quote from the dashboard</div>
+              <p className="use-case-body">ShippingIQ works as a standalone freight calculator from the moment setup is complete. Quote phone orders, check freight costs, or give your team accurate rates — before you've touched your website.</p>
+              <ul className="use-case-feats">
+                <li className="use-case-feat"><CheckIcon />Multi-carrier comparison</li>
+                <li className="use-case-feat"><CheckIcon />Full cost breakdown with surcharges</li>
+                <li className="use-case-feat"><CheckIcon />Save and review past quotes</li>
+                <li className="use-case-feat"><CheckIcon />No developer required</li>
+              </ul>
+            </div>
+
+            <div className="use-case-card featured">
+              <div className="use-case-tag accent">WooCommerce ready</div>
+              <div className="use-case-title">Live rates at checkout</div>
+              <p className="use-case-body">Install the ShippingIQ plugin, enter your Merchant ID, and every customer sees real carrier rates at checkout — calculated from your own contracted prices, not industry averages.</p>
+              <ul className="use-case-feats">
+                <li className="use-case-feat"><CheckIcon />Automatic rate calculation</li>
+                <li className="use-case-feat"><CheckIcon />Multi-carrier display at checkout</li>
+                <li className="use-case-feat"><CheckIcon />Free shipping rules</li>
+                <li className="use-case-feat"><CheckIcon />Surcharge handling built in</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FEATURES */}
       <div className="features-bg" id="features">
         <div className="section">
           <div className="sec-label">What's included</div>
           <h2>Everything you need.<br />Nothing you don't.</h2>
           <p className="sec-sub">Built by someone who shipped bulky and small goods nationally for 12 years. Every feature exists because it solves a real problem. And unlike Shippit, StarShipIt, or Smart Send — we never touch your carrier rates. Your negotiated pricing stays yours.</p>
+
+          {/* AI PARSE CARD */}
+          <div className="ai-parse-card">
+            <div className="ai-parse-header">
+              <div className="ai-parse-filename">
+                <span>ShippingIQ AI</span>Parsing allied-express-rates.xlsx
+              </div>
+              <div className="ai-parse-badge">Complete</div>
+            </div>
+            <div className="ai-parse-results">
+              <div className="ai-parse-row">
+                <span className="ai-parse-check">✓</span>
+                <span className="ai-parse-key">Pricing model:</span>
+                <span className="ai-parse-val">Base charge + per kg rate</span>
+              </div>
+              <div className="ai-parse-row">
+                <span className="ai-parse-check">✓</span>
+                <span className="ai-parse-key">Surcharges identified:</span>
+                <span className="ai-parse-val">23</span>
+              </div>
+              <div className="ai-parse-row">
+                <span className="ai-parse-check">✓</span>
+                <span className="ai-parse-key">Origin depots:</span>
+                <span className="ai-parse-val">Sydney, Melbourne, Brisbane, Adelaide, Perth</span>
+              </div>
+              <div className="ai-parse-row">
+                <span className="ai-parse-check">✓</span>
+                <span className="ai-parse-key">Cubic factor:</span>
+                <span className="ai-parse-val">250 (standard domestic)</span>
+              </div>
+              <div className="ai-parse-row">
+                <span className="ai-parse-check">✓</span>
+                <span className="ai-parse-key">Zones mapped:</span>
+                <span className="ai-parse-val">175</span>
+              </div>
+              <div className="ai-parse-row">
+                <span className="ai-parse-check">✓</span>
+                <span className="ai-parse-key">Fuel levy:</span>
+                <span className="ai-parse-val">26.5%</span>
+              </div>
+              <div className="ai-parse-row">
+                <span className="ai-parse-check">✓</span>
+                <span className="ai-parse-key">Rates extracted:</span>
+                <span className="ai-parse-val">880</span>
+              </div>
+            </div>
+          </div>
 
           <div className="features-grid">
 
@@ -288,7 +389,7 @@ export default function Landing() {
                 </svg>
               </div>
               <div className="feat-title">Zone management</div>
-              <div className="feat-body">Postcode-to-zone mapping from your carrier's zone file. Blacklist zones you won't ship to. Set individual postcode exceptions.</div>
+              <div className="feat-body">Upload your carrier's postcode-to-zone mapping file. ShippingIQ maps every postcode automatically — no manual entry.</div>
             </div>
 
             <div>
