@@ -62,15 +62,22 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
   - Cubic weight calculation
   - Full calculation chain: base freight + fuel levy + surcharges + GST
   - Surcharges auto-applied based on weight and dimension triggers
+  - Item weight trigger: fires when any single item exceeds threshold kg (tested with Tail Lift at 30kg)
+  - Consignment weight trigger: fires when total consignment weight exceeds threshold kg
   - POA surcharges flagged as warnings
   - Free shipping threshold applied (green FREE card shown)
   - Order value field for free shipping check
-  - Exempt from free shipping per item — checkbox inside item row, conditional on freeShippingEnabled
+  - Exempt from free shipping per item — checkbox inside item row, conditional on freeShippingEnabled (tested and working)
+  - Free shipping logic: 3-step flow — threshold check → exempt items → surcharge triggers per carrier
+  - Smart free shipping mode: if any surcharge triggers, free shipping voided, normal freight + surcharges charged (tested and working)
+  - True free shipping mode: always $0 regardless of surcharges (tested and working)
+  - Quote results sorted cheapest first; error results (postcode not found) shown at bottom; free shipping ($0) at top
   - Save Quote to Supabase quotes table
 - Settings page: GST toggle (ex GST B2B, inc GST B2C)
 - Rules page: free shipping threshold, freight margin, carrier priority
   - Carrier priority: arrows reorder correctly (stale closure bug fixed), all active carriers shown (new carriers appended at bottom)
   - Free shipping: shippingiq-exempt tag documented inline with tip about bulky items
+  - Free shipping mode: Smart / Always Free radio toggle saved with merchant rules
 - Carrier eligibility limits UI — weight/dim limit fields per carrier on Carriers page, saved to carriers.eligibility_rules
   - Zero values correctly treated as no limit (bug fixed — was incorrectly excluding all carriers when any limit was set to 0)
 - WooCommerce plugin at woocommerce-plugin/shippingiq/:
@@ -229,9 +236,8 @@ Model C: Depot-to-depot — Mainfreight style
 - Rare edge case given large carriers handle all sizes
 
 ## What to build next
-1. Weight/dimension triggers for service-level surcharges — Tail Lift, 2 Person Delivery, Hand Unload currently have no threshold trigger option beyond Always/Never. Need weight and/or dimension thresholds so these can fire automatically like overlength surcharges do
-2. Template downloads for merchants without carrier files — downloadable sample CSV templates showing the expected format for rate cards and zone files. Helps merchants who don't have files in the right shape yet, or whose carriers don't provide machine-readable files
-3. Production deployment prep — remove error_log() debug calls from plugin, enable WooCommerce rate caching, review Supabase RLS before go-live
+1. Template downloads for merchants without carrier files — downloadable sample CSV templates showing the expected format for rate cards and zone files. Helps merchants who don't have files in the right shape yet, or whose carriers don't provide machine-readable files
+2. Production deployment prep — remove error_log() debug calls from plugin, enable WooCommerce rate caching, review Supabase RLS before go-live
 
 ## Logged for future build
 - Address autocomplete to detect residential vs commercial (triggers residential surcharge)

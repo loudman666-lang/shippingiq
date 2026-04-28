@@ -264,6 +264,15 @@ export default function Quote() {
   function addItem() { setItems([...items, emptyItem()]) }
   function removeItem(id) { if (items.length > 1) setItems(items.filter(i => i.id !== id)) }
 
+  function sortResults(arr) {
+    return [...arr].sort((a, b) => {
+      if (a.error && !b.error) return 1
+      if (!a.error && b.error) return -1
+      if (a.error && b.error) return 0
+      return (a.totalCost || 0) - (b.totalCost || 0)
+    })
+  }
+
   function getQuote() {
     setError(null)
     setResults(null)
@@ -275,16 +284,16 @@ export default function Quote() {
     const hasExemptItem = validItems.some(i => i.exemptFreeShipping)
     const thresholdMet = merchantRules.freeShippingEnabled && merchantRules.freeShippingThreshold && orderVal >= parseFloat(merchantRules.freeShippingThreshold)
     if (!thresholdMet || hasExemptItem) {
-      setResults(carriers.map(c => calculateRate(c, postcode, validItems, merchantRules)))
+      setResults(sortResults(carriers.map(c => calculateRate(c, postcode, validItems, merchantRules))))
     } else {
       const freeMode = merchantRules.freeShippingMode || 'smart'
-      setResults(carriers.map(c => {
+      setResults(sortResults(carriers.map(c => {
         const rated = calculateRate(c, postcode, validItems, merchantRules)
         if (rated.error) return rated
         const anySurcharge = (rated.surchargesApplied?.length || 0) > 0 || (rated.surchargeWarnings?.length || 0) > 0
         if (anySurcharge && freeMode === 'smart') return rated
         return { ...rated, freightCost: 0, fuelLevy: null, surchargesApplied: [], surchargeWarnings: [], surchargeTotal: 0, margin: 0, totalCost: 0, freeShipping: true }
-      }))
+      })))
     }
   }
 
