@@ -43,8 +43,15 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
 
 ## What's built and working
 
-### Landing page + Auth
-- Landing page
+### Landing page
+- Live at / route (Landing.js + Landing.css)
+- Sections: Nav → Hero → Stats strip → Trust strip → Integrations → How the AI works → Two ways to use it → AI parser mockup → Features → Pricing → FAQ → CTA → Footer
+- Mobile responsive (breakpoints at 900px and 560px)
+- All CTAs link to /signup and /signin via React Router
+- Shopify/Magento/BigCommerce marked as coming soon
+- Pricing tiers reflect only built features
+
+### Auth
 - Auth: signup, signin, forgot password, reset password
 
 ### Dashboard (fully wired with real data as of 28 Apr 2026)
@@ -298,9 +305,8 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Landing page refresh — add visuals showing how ShippingIQ works (upload → configure → live rates), make the value proposition immediately clear to potential users
-2. Team page — multi-user setup for merchant account (invite team members, role management)
-4. Production deployment prep — enable Supabase RLS, review security before go-live (error_logs removed, rate caching done)
+1. Team page — multi-user setup for merchant account (invite team members, role management)
+2. Production deployment prep — enable Supabase RLS, review security before go-live (error_logs removed, rate caching done)
 
 
 ## Logged for future build

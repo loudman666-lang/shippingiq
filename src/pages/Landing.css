@@ -787,6 +787,7 @@ html { scroll-behavior: smooth; }
   font-weight: 400;
 }
 
+.landing-page .waitlist-headline { color: #fff; }
 .waitlist-headline em { font-style: italic; color: var(--accent); }
 
 .waitlist-sub {
@@ -830,7 +831,7 @@ html { scroll-behavior: smooth; }
   opacity: 0.7;
 }
 
-.footer-copy { font-size: 13px; color: rgba(255,255,255,0.28); }
+.footer-copy { font-size: 13px; color: rgba(255,255,255,0.28); text-align: center; }
 
 .footer-links { display: flex; gap: 24px; }
 
