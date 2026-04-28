@@ -613,7 +613,7 @@ export default function Quote() {
                           <div style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>{sel.origin ? sel.origin + ' → ' : ''}{sel.destination}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--accent)', lineHeight: 1 }}>${gstEnabled ? (((sel.totalCost || sel.freightCost) * 1.1).toFixed(2)) : (sel.totalCost || sel.freightCost).toFixed(2)}</div>
+                          <div style={{ fontSize: '32px', fontWeight: '800', color: (!hasFreeResult && selectedResultIdx === cheapestPaidIdx) ? '#15803d' : 'var(--accent)', lineHeight: 1 }}>${gstEnabled ? (((sel.totalCost || sel.freightCost) * 1.1).toFixed(2)) : (sel.totalCost || sel.freightCost).toFixed(2)}</div>
                           <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginTop: '4px' }}>{gstEnabled ? 'incl. GST & fuel levy' : sel.fuelLevy ? 'incl. fuel levy · excl. GST' : 'excl. GST & fuel levy'}</div>
                         </div>
                       </div>
