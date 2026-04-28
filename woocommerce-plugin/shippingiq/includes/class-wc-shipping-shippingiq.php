@@ -350,16 +350,16 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 			/** @var WC_Product $product */
 			$product = $item['data'];
 
-			if ( isset( $rules['maxWeightKg'] ) && (float) $product->get_weight() > (float) $rules['maxWeightKg'] ) {
+			if ( isset( $rules['maxWeightKg'] ) && (float) $rules['maxWeightKg'] > 0 && (float) $product->get_weight() > (float) $rules['maxWeightKg'] ) {
 				return true;
 			}
-			if ( isset( $rules['maxLengthCm'] ) && (float) $product->get_length() > (float) $rules['maxLengthCm'] ) {
+			if ( isset( $rules['maxLengthCm'] ) && (float) $rules['maxLengthCm'] > 0 && (float) $product->get_length() > (float) $rules['maxLengthCm'] ) {
 				return true;
 			}
-			if ( isset( $rules['maxWidthCm'] ) && (float) $product->get_width() > (float) $rules['maxWidthCm'] ) {
+			if ( isset( $rules['maxWidthCm'] ) && (float) $rules['maxWidthCm'] > 0 && (float) $product->get_width() > (float) $rules['maxWidthCm'] ) {
 				return true;
 			}
-			if ( isset( $rules['maxHeightCm'] ) && (float) $product->get_height() > (float) $rules['maxHeightCm'] ) {
+			if ( isset( $rules['maxHeightCm'] ) && (float) $rules['maxHeightCm'] > 0 && (float) $product->get_height() > (float) $rules['maxHeightCm'] ) {
 				return true;
 			}
 		}
