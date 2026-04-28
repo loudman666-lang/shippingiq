@@ -1296,45 +1296,37 @@ export default function Carriers() {
       )}
 
       {showSurchargeModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', borderRadius: '12px', padding: '32px', maxWidth: '480px', width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+        <>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000 }} />
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1001, background: '#fff', borderRadius: '12px', padding: '32px', width: '480px', maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>Carrier updated successfully</h3>
             <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}>Your rates and zones have been updated. What would you like to do with your surcharge rules?</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  name="surchargeChoice"
-                  value="keep"
-                  checked={surchargeModalChoice === 'keep'}
-                  onChange={() => setSurchargeModalChoice('keep')}
-                  style={{ marginTop: '2px' }}
-                />
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>Keep existing surcharge rules</div>
-                  <div style={{ fontSize: '13px', color: '#6b7280' }}>Your current surcharge triggers and thresholds stay in place.</div>
-                </div>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  name="surchargeChoice"
-                  value="reset"
-                  checked={surchargeModalChoice === 'reset'}
-                  onChange={() => setSurchargeModalChoice('reset')}
-                  style={{ marginTop: '2px' }}
-                />
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>Reset to new surcharges from uploaded files</div>
-                  <div style={{ fontSize: '13px', color: '#6b7280' }}>Clears all surcharge rules — you'll need to reconfigure them in Surcharge Rules.</div>
-                </div>
-              </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+              {[
+                { value: 'keep', label: 'Keep existing surcharge rules', desc: 'Your current surcharge triggers and thresholds stay in place.' },
+                { value: 'reset', label: 'Reset to new surcharges from uploaded files', desc: "Clears all surcharge rules — you'll need to reconfigure them in Surcharge Rules." },
+              ].map(({ value, label, desc }) => (
+                <label key={value} onClick={() => setSurchargeModalChoice(value)} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '14px 16px', border: '2px solid', borderColor: surchargeModalChoice === value ? '#E8521A' : '#e5e7eb', borderRadius: '8px', background: surchargeModalChoice === value ? '#fff5f0' : '#fff', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="surchargeChoice"
+                    value={value}
+                    checked={surchargeModalChoice === value}
+                    onChange={() => setSurchargeModalChoice(value)}
+                    style={{ marginTop: '3px', accentColor: '#E8521A', flexShrink: 0 }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '2px' }}>{label}</div>
+                    <div style={{ fontSize: '13px', color: '#6b7280' }}>{desc}</div>
+                  </div>
+                </label>
+              ))}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button className="btn-primary" onClick={handleSurchargeModalApply}>Apply</button>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   )
