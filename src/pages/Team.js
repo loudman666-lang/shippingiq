@@ -14,10 +14,9 @@ const TEAM_SVG = (
 )
 
 export default function Team() {
-  const { profile, merchant, isAdmin, teamMembers, fetchTeamMembers, signOut } = useAuth()
+  const { user, profile, merchant, isAdmin, teamMembers, fetchTeamMembers, signOut } = useAuth()
   const navigate = useNavigate()
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState('member')
   const [inviting, setInviting] = useState(false)
   const [inviteSuccess, setInviteSuccess] = useState('')
   const [inviteError, setInviteError] = useState('')
@@ -42,12 +41,11 @@ export default function Team() {
     setInviting(true)
     try {
       const { error } = await supabase.functions.invoke('invite-team-member', {
-        body: { email: inviteEmail.trim(), merchantId: merchant.id, role: inviteRole },
+        body: { email: inviteEmail.trim(), merchantId: merchant.id, role: 'member' },
       })
       if (error) throw error
       setInviteSuccess(`Invite sent to ${inviteEmail.trim()}`)
       setInviteEmail('')
-      setInviteRole('member')
       fetchTeamMembers(merchant.id)
     } catch (err) {
       setInviteError(err.message || 'Failed to send invite. Please try again.')
@@ -130,7 +128,10 @@ export default function Team() {
                   <div key={member.id} className="team-member-row">
                     <div className="team-avatar">{member.full_name?.charAt(0)?.toUpperCase() || '?'}</div>
                     <div className="team-member-info">
-                      <div className="team-member-name">{member.full_name || 'Invited user'}</div>
+                      <div className="team-member-name">
+                      {member.full_name || 'Invited user'}
+                      {member.id === user?.id && <span style={{ marginLeft: '6px', fontSize: '12px', color: 'var(--ink-muted)', fontWeight: '400' }}>(You)</span>}
+                    </div>
                       <div className="team-member-since">
                         Joined {new Date(member.created_at).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })}
                       </div>
@@ -159,17 +160,6 @@ export default function Team() {
                     placeholder="colleague@yourstore.com"
                     required
                   />
-                </div>
-                <div className="form-group" style={{ width: '148px', marginBottom: 0 }}>
-                  <label className="form-label">Role</label>
-                  <select
-                    className="form-input"
-                    value={inviteRole}
-                    onChange={e => setInviteRole(e.target.value)}
-                  >
-                    <option value="member">Member</option>
-                    <option value="admin">Admin</option>
-                  </select>
                 </div>
               </div>
               {inviteError && (
