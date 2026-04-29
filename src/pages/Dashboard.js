@@ -55,6 +55,8 @@ export default function Dashboard() {
     navigate('/signin')
   }
 
+  const [nameBannerDismissed, setNameBannerDismissed] = useState(false)
+
   const carriersNeedingPostcode = carriers.filter(c => !c.parsed_data?.postcodeMap?.length)
   const avatarInitial = profile?.full_name?.charAt(0) || merchant?.name?.charAt(0) || '?'
 
@@ -125,6 +127,13 @@ export default function Dashboard() {
             <p className="main-subtitle">{merchant?.name}</p>
           </div>
         </div>
+
+        {profile && !profile.full_name && !nameBannerDismissed && (
+          <div style={{ marginBottom: '24px', padding: '12px 16px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '8px', fontSize: '13px', color: '#92400e', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+            <span>⚠ Welcome! Add your display name in <a href="/settings" style={{ color: '#92400e', fontWeight: '600', textDecoration: 'underline' }}>Settings</a> so your team can identify you.</span>
+            <button onClick={() => setNameBannerDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#92400e', fontSize: '16px', lineHeight: 1, flexShrink: 0, padding: '0 2px' }}>✕</button>
+          </div>
+        )}
 
         {loading ? null : carriers.length === 0 ? (
           <div className="empty-state">

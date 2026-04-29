@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import './Dashboard.css'
 
@@ -140,8 +141,14 @@ const TEMPLATES = [
 ]
 
 export default function Resources() {
-  const { profile, merchant, isAdmin } = useAuth()
+  const { profile, merchant, isAdmin, signOut } = useAuth()
+  const navigate = useNavigate()
   const [open, setOpen] = useState({})
+
+  async function handleSignOut() {
+    await signOut()
+    navigate('/signin')
+  }
 
   const toggle = key => setOpen(prev => ({ ...prev, [key]: !prev[key] }))
   const avatarInitial = profile?.full_name?.charAt(0) || merchant?.name?.charAt(0) || '?'
@@ -191,6 +198,10 @@ export default function Resources() {
               <div className="user-role">{isAdmin ? 'Admin' : 'User'}</div>
             </div>
           </div>
+          <button className="signout-btn" onClick={handleSignOut}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </button>
         </div>
       </aside>
 
