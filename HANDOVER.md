@@ -15,6 +15,7 @@ cd ~/Downloads/shippingiq && git add -A && git commit -m "description" && git pu
 ## Supabase edge function deploy — run when edge function changes
 npx supabase functions deploy rapid-api --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
+npx supabase functions deploy invite-team-member --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 
 ## Tool preference — ALWAYS USE CLAUDE CODE
 - Use Claude Code (claude command in terminal) for all file changes
@@ -64,6 +65,27 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
 - Your Carriers list: compact flex-row layout with inline active badge (not full-width bar)
 - Sidebar avatar + display name: dynamic from profile.full_name with merchant.name fallback
 - Merchant name shown as page subtitle via merchant.name (test merchant = "My Store")
+
+### Team page
+- Live at /team route (Team.js + Team.css)
+- Shows list of team members with avatar, name, join date, role badge (admin = orange, member = grey)
+- Current user marked with (You) indicator
+- Invite form: email input + Send invite button
+- Calls invite-team-member edge function (deployed to Supabase)
+- Friendly error messages: "already registered" vs generic error
+- Nav: appears between Resources and Settings, visible to admin users only
+
+### invite-team-member edge function
+- POST { email, merchantId, role } → calls supabase.auth.admin.inviteUserByEmail with merchant_id and role in user_metadata
+- Requires SUPABASE_SERVICE_ROLE_KEY in edge function secrets (confirmed present)
+- Returns { user } on success, { error } on failure
+
+### handle_new_user Supabase trigger
+- Fires on auth.users INSERT
+- Checks raw_user_meta_data for merchant_id — if present, links invited user to existing merchant
+- If no merchant_id, creates new merchant and sets role to admin
+- Inserts into profiles: id, full_name, email, merchant_id, role
+- Function confirmed updated with email field (was missing, caused "Database error saving new user")
 
 ### Carriers page
 - Add carrier with 3 file uploads (rate card + zone file + optional surcharge doc)
@@ -131,7 +153,7 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
 - Template Files section: 3 downloadable CSVs (rate-card-template.csv, zone-file-template.csv, surcharge-template.csv) served from /public/templates/
 - Getting Your Carrier Files: 3 accordion cards (Rate Card, Zone File, Surcharge Schedule) with plain-English guidance and copy-paste wording for merchants
 - How ShippingIQ Works: 3-step visual (Upload → Configure → Go Live) with callout box
-- Nav order across all pages: Dashboard → Carriers → Rules → Get a Quote → Resources → Settings
+- Nav order across all pages: Dashboard → Carriers → Rules → Get a Quote → Resources → [divider] → Team → Settings (Team and Settings visible to admin only)
 
 ### Settings page
 - GST toggle: Ex GST (B2B default) or Inc GST (B2C)
@@ -183,6 +205,8 @@ woocommerce-plugin/shippingiq/readme.txt
 ## Database (Supabase)
 Tables: profiles, merchants, carriers, quotes, upload_logs
 RLS: DISABLED on all tables (dev only — enable before go-live)
+
+profiles columns: id, merchant_id (FK → merchants.id), full_name, email (NOT NULL), role (default 'user'), created_at, updated_at
 
 merchants.settings: jsonb — { gstEnabled: true/false }
 merchants.rules: jsonb — { freeShippingEnabled, freeShippingThreshold, freeShippingMode ('smart'|'true'), freightMarginType, freightMarginValue, carrierPriority[] }
@@ -282,6 +306,8 @@ Model C: Depot-to-depot — Mainfreight style
 
 ## Known decisions
 - WooCommerce plugin zip is gitignored — rebuild with: `cd ~/Downloads/shippingiq/woocommerce-plugin && zip -r shippingiq.zip shippingiq/`
+- Supabase handle_new_user trigger: manually maintained in Supabase SQL editor — not in codebase. Must include email field in both INSERT statements.
+- profiles table has email NOT NULL column — handle_new_user trigger must always insert NEW.email
 
 ## Known merchant education points
 - Postcode zone file is required — without it the carrier cannot calculate any quotes. App shows a persistent warning on carrier cards and Dashboard banner. Merchants must upload a zone file, not just a rate card.
@@ -305,11 +331,12 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Team page — multi-user setup for merchant account (invite team members, role management)
+1. Fix team invite flow — see logged issue below. Core page UI is complete, just the invite acceptance flow needs debugging.
 2. Production deployment prep — enable Supabase RLS, review security before go-live (error_logs removed, rate caching done)
 
 
 ## Logged for future build
+- Team invite flow: invite sending works (confirmed with kadanaw826@4heats.com), but subsequent invites to new emails failing with "Database error saving new user" despite trigger appearing correct. Trigger function confirmed updated with email field. Needs fresh diagnosis in new session — check Supabase auth logs, not just edge function logs. May be a Supabase free tier limitation on invite emails or a profiles constraint issue.
 - Saved quotes: currently shows list (postcode, item count, date, cheapest rate + carrier) on Dashboard and Quote page. Needs full order management — click to reload all items/postcode/results into quote form, edit and re-quote, print/export as PDF.
 - Address autocomplete to detect residential vs commercial (triggers residential surcharge)
 - Surcharge modal text overflow bug — radio card label/description text overflows modal width on some screen sizes. Styles look correct (flex:1, minWidth:0 on text container, width:100% on card) but issue persists. Needs fresh diagnosis — do not iterate blind on CSS again.
