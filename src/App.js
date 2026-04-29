@@ -16,6 +16,16 @@ import Landing from './pages/Landing'
 import Team from './pages/Team'
 
 export default function App() {
+  // Supabase invite links land at "/". Redirect to /reset-password preserving
+  // the hash/params so the SDK can exchange the invite token there.
+  if (window.location.pathname === '/') {
+    const { hash, search } = window.location
+    if (hash.includes('type=invite') || search.includes('type=invite')) {
+      window.location.replace('/reset-password' + search + hash)
+      return null
+    }
+  }
+
   return (
     <BrowserRouter>
       <AuthProvider>
