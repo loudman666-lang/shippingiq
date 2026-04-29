@@ -48,13 +48,17 @@ export function AuthProvider({ children }) {
 
       // Invited user: profile exists but no merchant association yet
       if (profileData && !profileData.merchant_id && attempt < 5) {
-        const { data: { user: currentUser } } = await supabase.auth.getUser()
-        const merchantId = currentUser?.user_metadata?.merchant_id
-        const role = currentUser?.user_metadata?.role || 'member'
-        if (merchantId) {
-          await supabase.from('profiles').update({ merchant_id: merchantId, role }).eq('id', userId)
-          await new Promise(resolve => setTimeout(resolve, 300))
-          return fetchProfile(userId, attempt + 1)
+        try {
+          const { data } = await supabase.auth.getUser()
+          const merchantId = data?.user?.user_metadata?.merchant_id
+          const role = data?.user?.user_metadata?.role || 'member'
+          if (merchantId) {
+            await supabase.from('profiles').update({ merchant_id: merchantId, role }).eq('id', userId)
+            await new Promise(resolve => setTimeout(resolve, 300))
+            return fetchProfile(userId, attempt + 1)
+          }
+        } catch (inviteErr) {
+          console.error('Error associating invited user profile:', inviteErr)
         }
       }
 
