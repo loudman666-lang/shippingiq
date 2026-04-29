@@ -219,8 +219,14 @@ export default function Resources() {
           <h2 style={{ fontFamily: "'Instrument Serif', serif", fontSize: '22px', fontWeight: '400', color: 'var(--ink)', marginBottom: '6px' }}>
             Template Files
           </h2>
-          <p style={{ fontSize: '14px', color: 'var(--ink-muted)', marginBottom: '24px' }}>
+          <p style={{ fontSize: '14px', color: 'var(--ink-muted)', marginBottom: '16px' }}>
             Download these templates, fill in your carrier's rates and zones, then upload to ShippingIQ.
+          </p>
+          <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '24px' }}>
+            Have a PDF rate card?{' '}
+            <a href="/convert" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '500' }}>
+              Use the Rate Card Converter →
+            </a>
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '12px' }}>
             {TEMPLATES.map(t => (

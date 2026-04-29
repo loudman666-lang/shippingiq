@@ -14,6 +14,7 @@ import Rules from './pages/Rules'
 import Resources from './pages/Resources'
 import Landing from './pages/Landing'
 import Team from './pages/Team'
+import PdfConverter from './pages/PdfConverter'
 
 export default function App() {
   // Supabase invite links land at "/". Redirect to /reset-password preserving
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
           <Route path="/rules" element={<ProtectedRoute><Rules /></ProtectedRoute>} />
           <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
+          <Route path="/convert" element={<ProtectedRoute><PdfConverter /></ProtectedRoute>} />
           <Route path="/" element={<Landing />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
