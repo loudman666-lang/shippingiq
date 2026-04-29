@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [merchant, setMerchant] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [teamMembers, setTeamMembers] = useState([])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -45,6 +46,18 @@ export function AuthProvider({ children }) {
         throw profileError
       }
 
+      // Invited user: profile exists but no merchant association yet
+      if (profileData && !profileData.merchant_id && attempt < 5) {
+        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        const merchantId = currentUser?.user_metadata?.merchant_id
+        const role = currentUser?.user_metadata?.role || 'member'
+        if (merchantId) {
+          await supabase.from('profiles').update({ merchant_id: merchantId, role }).eq('id', userId)
+          await new Promise(resolve => setTimeout(resolve, 300))
+          return fetchProfile(userId, attempt + 1)
+        }
+      }
+
       setProfile(profileData)
       setMerchant(profileData.merchants)
     } catch (error) {
@@ -52,6 +65,15 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function fetchTeamMembers(merchantId) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, role, created_at')
+      .eq('merchant_id', merchantId)
+      .order('created_at', { ascending: true })
+    setTeamMembers(data || [])
   }
 
   async function signUp({ email, password, fullName, storeName }) {
@@ -92,8 +114,8 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, profile, merchant, loading, isAdmin, planTier,
-      signUp, signIn, signOut, resetPassword, updatePassword, fetchProfile
+      user, profile, merchant, loading, isAdmin, planTier, teamMembers,
+      signUp, signIn, signOut, resetPassword, updatePassword, fetchProfile, fetchTeamMembers
     }}>
       {children}
     </AuthContext.Provider>

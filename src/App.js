@@ -13,6 +13,7 @@ import Settings from './pages/Settings'
 import Rules from './pages/Rules'
 import Resources from './pages/Resources'
 import Landing from './pages/Landing'
+import Team from './pages/Team'
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/carriers" element={<ProtectedRoute><Carriers /></ProtectedRoute>} />
           <Route path="/quote" element={<ProtectedRoute><Quote /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
           <Route path="/rules" element={<ProtectedRoute><Rules /></ProtectedRoute>} />
           <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
           <Route path="/" element={<Landing />} />
