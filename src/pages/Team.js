@@ -48,7 +48,12 @@ export default function Team() {
       setInviteEmail('')
       fetchTeamMembers(merchant.id)
     } catch (err) {
-      setInviteError(err.message || 'Failed to send invite. Please try again.')
+      const msg = err.message || ''
+      if (msg.includes('already been registered') || msg.includes('email_exists')) {
+        setInviteError('This email is already registered. Ask them to sign in directly.')
+      } else {
+        setInviteError('Something went wrong. Please try again.')
+      }
     }
     setInviting(false)
   }

@@ -12,6 +12,8 @@ serve(async (req) => {
   try {
     const { email, merchantId, role = 'member' } = await req.json()
 
+    console.log('Invite request:', { email, merchantId, role })
+
     if (!email || !merchantId) {
       return new Response(
         JSON.stringify({ error: 'email and merchantId are required' }),
@@ -29,6 +31,8 @@ serve(async (req) => {
       data: { merchant_id: merchantId, role },
     })
 
+    console.log('Invite result:', { data: JSON.stringify(data), error: JSON.stringify(error) })
+
     if (error) throw error
 
     return new Response(
@@ -36,6 +40,7 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (err) {
+    console.error('Invite error:', err)
     return new Response(
       JSON.stringify({ error: (err as Error).message ?? 'Unknown error' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
