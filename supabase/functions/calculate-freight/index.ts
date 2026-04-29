@@ -102,6 +102,15 @@ function applyMargin(subtotal, rules) {
   return 0
 }
 
+function getModelCPerKgRate(perKgRates, chargeableWeight) {
+  if (chargeableWeight <= 250) return perKgRates['1-250'] ?? 0
+  if (chargeableWeight <= 500) return perKgRates['251-500'] ?? 0
+  if (chargeableWeight <= 1000) return perKgRates['501-1000'] ?? 0
+  if (chargeableWeight <= 3000) return perKgRates['1001-3000'] ?? 0
+  if (chargeableWeight <= 12000) return perKgRates['3001-12000'] ?? 0
+  return perKgRates['12001+'] ?? 0
+}
+
 function calculateRate(carrier, postcode, items, rules = {}) {
   const data = carrier.parsed_data
   const model = data?.pricingModel
@@ -157,7 +166,8 @@ function calculateRate(carrier, postcode, items, rules = {}) {
     const rates = data.modelCRates || []
     const rate = rates.find(r => (!origin || r.originDepot === origin) && r.destinationDepot === zoneName)
     if (!rate) return { error: 'No depot-to-depot rate found from ' + origin + ' to ' + zoneName }
-    const freight = Math.max(rate.basicCharge + chargeableWeight * rate.perKgRate, rate.minimumCharge)
+    const perKgRate = rate.perKgRates ? getModelCPerKgRate(rate.perKgRates, chargeableWeight) : rate.perKgRate
+    const freight = Math.max(rate.basicCharge + chargeableWeight * perKgRate, rate.minimumCharge)
     const fuelLevy = fuelLevyPct ? Math.round(freight * fuelLevyPct / 100 * 100) / 100 : null
     const { applied: surchargesApplied, warnings: surchargeWarnings } = applySurcharges(carrier, items, freight)
     const surchargeTotal = surchargesApplied.reduce((s, x) => s + x.amount, 0)
@@ -168,10 +178,10 @@ function calculateRate(carrier, postcode, items, rules = {}) {
       carrier: carrier.name, origin, destination: suburb + ', ' + state + ' ' + postcode,
       zone: zoneName, service: 'Depot to Depot',
       totalActualWeight, totalCubicWeight, chargeableWeight, cubicFactor,
-      basicCharge: rate.basicCharge, perKgRate: rate.perKgRate, minimumCharge: rate.minimumCharge,
+      basicCharge: rate.basicCharge, perKgRate, minimumCharge: rate.minimumCharge,
       freightCost: Math.round(freight * 100) / 100,
       fuelLevyPct, fuelLevy, surchargesApplied, surchargeWarnings, surchargeTotal, margin, marginType: rules.freightMarginType, totalCost,
-      formula: 'MAX($' + rate.basicCharge.toFixed(2) + ' + ' + chargeableWeight + 'kg x $' + rate.perKgRate.toFixed(3) + ', $' + rate.minimumCharge.toFixed(2) + ')',
+      formula: 'MAX($' + rate.basicCharge.toFixed(2) + ' + ' + chargeableWeight + 'kg x $' + perKgRate.toFixed(3) + ', $' + rate.minimumCharge.toFixed(2) + ')',
       model: 'C'
     }
   }

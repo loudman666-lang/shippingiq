@@ -87,7 +87,8 @@ IMPORTANT for Model B:
 - Leave rates=[] and modelCRates=[].
 
 For Model A: leave columnMap={}, zoneCodeCol="", zoneNameCol="". Output weightBreaks and zones. Output rates array.
-For Model C: leave columnMap={}, output modelCRates with actual values.`,
+IMPORTANT: If the rate card header says "EX [CITY]" or "FROM [CITY]" and rows are destination city/location names (not zone codes), this is ALWAYS Model C regardless of column structure.
+For Model C: detect when rows are named locations/cities AND columns are weight break ranges. Leave columnMap={}. Output modelCRates with ALL rows using this exact schema per entry: { "originDepot": "Melbourne", "destinationDepot": "ADELAIDE", "basicCharge": 20.00, "minimumCharge": 75.00, "perKgRates": { "1-250": 0.5413, "251-500": 0.3608, "501-1000": 0.3018, "1001-3000": 0.2790, "3001-12000": 0.2478, "12001+": 0.2248 } } — originDepot from the column header or sheet context, destinationDepot is the exact row name, extract ALL rows.`,
   })
 
   if (rateText?.trim()) {
