@@ -16,6 +16,7 @@ cd ~/Downloads/shippingiq && git add -A && git commit -m "description" && git pu
 npx supabase functions deploy rapid-api --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 npx supabase functions deploy invite-team-member --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
+npx supabase functions deploy remove-team-member --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 
 ## Tool preference — ALWAYS USE CLAUDE CODE
 - Use Claude Code (claude command in terminal) for all file changes
@@ -59,6 +60,7 @@ npx supabase functions deploy invite-team-member --project-ref soaxvqkkecqzarwmb
 - Fetches active carriers only (status='active'), quote count, and last 5 recent quotes in parallel
 - Four stat cards: Active Carriers, Total Rates (uses modelBRates.length for Model B carriers), Zones Covered, Quotes Generated
 - Postcode warning banner: shown when any active carrier has no postcodeMap data — names the affected carriers, links to /carriers
+- First-login banner: shown when profile is loaded and full_name is blank — yellow, same style as postcode warning, links to /settings, dismissible (state only, no persist)
 - Quick actions: Add Carrier → /carriers, Get a Quote → /quote, View Rules → /rules
 - Recent Quotes section: last 5 quotes showing postcode, item count, date, cheapest rate + carrier name (e.g. "$16.09 via Allied Express" or "FREE via Allied"). Each row links to /quote
 - "View all saved quotes" link → /quote?savedQuotes=open (auto-opens saved panel after data loads)
@@ -70,15 +72,25 @@ npx supabase functions deploy invite-team-member --project-ref soaxvqkkecqzarwmb
 - Live at /team route (Team.js + Team.css)
 - Shows list of team members with avatar, name, join date, role badge (admin = orange, member = grey)
 - Current user marked with (You) indicator
-- Invite form: email input + Send invite button
+- Invite form: email input + Send invite button — fully working including acceptance flow
 - Calls invite-team-member edge function (deployed to Supabase)
 - Friendly error messages: "already registered" vs generic error
+- Remove button: visible to admins only, hidden on own row. Confirm dialog → calls remove-team-member edge function → refreshes list on success. Friendly error for last-admin protection.
+- Sign out button in sidebar footer (icon + "Sign out" text)
 - Nav: appears between Resources and Settings, visible to admin users only
 
 ### invite-team-member edge function
 - POST { email, merchantId, role } → calls supabase.auth.admin.inviteUserByEmail with merchant_id and role in user_metadata
 - Requires SUPABASE_SERVICE_ROLE_KEY in edge function secrets (confirmed present)
 - Returns { user } on success, { error } on failure
+
+### remove-team-member edge function
+- POST { userId, merchantId } — requires Authorization header (caller's JWT)
+- Verifies caller is admin for the same merchantId (checks profiles table via admin client)
+- Confirms target user belongs to same merchant
+- Rejects self-deletion; rejects removing last admin (counts admins for merchant)
+- Calls supabaseAdmin.auth.admin.deleteUser(userId)
+- Returns { success: true } or { error: '...' }
 
 ### handle_new_user Supabase trigger
 - Fires on auth.users INSERT
@@ -154,11 +166,14 @@ npx supabase functions deploy invite-team-member --project-ref soaxvqkkecqzarwmb
 - Getting Your Carrier Files: 3 accordion cards (Rate Card, Zone File, Surcharge Schedule) with plain-English guidance and copy-paste wording for merchants
 - How ShippingIQ Works: 3-step visual (Upload → Configure → Go Live) with callout box
 - Nav order across all pages: Dashboard → Carriers → Rules → Get a Quote → Resources → [divider] → Team → Settings (Team and Settings visible to admin only)
+- Sign out button (icon + "Sign out" text) is now consistent across all pages: Dashboard, Carriers, Rules, Quote, Resources, Team, Settings
 
 ### Settings page
+- Your Profile card: display name input, pre-filled from profile.full_name. Saves to profiles table, calls fetchProfile on success so sidebar updates immediately. Intended entry point for invited users who have no name set.
+- Store Details card: merchant can update their store name. Updates merchants.name in Supabase. Reflected immediately on Dashboard subtitle.
 - GST toggle: Ex GST (B2B default) or Inc GST (B2C)
-- Note: applies to Get a Quote page only — WooCommerce handles GST via its own tax settings
-- Store name edit: merchant can update their store name from Settings. Updates merchants.name in Supabase. Reflected immediately on Dashboard subtitle.
+- Note: GST applies to Get a Quote page only — WooCommerce handles GST via its own tax settings
+- Sign out button in sidebar footer (icon + "Sign out" text)
 
 ### Rules page
 - Free shipping threshold with on/off toggle
@@ -198,6 +213,8 @@ src/lib/supabase.js
 src/App.js
 supabase/functions/rapid-api/index.ts
 supabase/functions/calculate-freight/index.ts
+supabase/functions/invite-team-member/index.ts
+supabase/functions/remove-team-member/index.ts
 woocommerce-plugin/shippingiq/shippingiq.php
 woocommerce-plugin/shippingiq/includes/class-wc-shipping-shippingiq.php
 woocommerce-plugin/shippingiq/readme.txt
@@ -331,12 +348,10 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Fix team invite flow — see logged issue below. Core page UI is complete, just the invite acceptance flow needs debugging.
-2. Production deployment prep — enable Supabase RLS, review security before go-live (error_logs removed, rate caching done)
+1. Production deployment prep — enable Supabase RLS, review security before go-live (error_logs removed, rate caching done)
 
 
 ## Logged for future build
-- Team invite flow: invite sending works (confirmed with kadanaw826@4heats.com), but subsequent invites to new emails failing with "Database error saving new user" despite trigger appearing correct. Trigger function confirmed updated with email field. Needs fresh diagnosis in new session — check Supabase auth logs, not just edge function logs. May be a Supabase free tier limitation on invite emails or a profiles constraint issue.
 - Saved quotes: currently shows list (postcode, item count, date, cheapest rate + carrier) on Dashboard and Quote page. Needs full order management — click to reload all items/postcode/results into quote form, edit and re-quote, print/export as PDF.
 - Address autocomplete to detect residential vs commercial (triggers residential surcharge)
 - Surcharge modal text overflow bug — radio card label/description text overflows modal width on some screen sizes. Styles look correct (flex:1, minWidth:0 on text container, width:100% on card) but issue persists. Needs fresh diagnosis — do not iterate blind on CSS again.
