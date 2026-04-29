@@ -20,6 +20,8 @@ export default function Team() {
   const [inviting, setInviting] = useState(false)
   const [inviteSuccess, setInviteSuccess] = useState('')
   const [inviteError, setInviteError] = useState('')
+  const [removingId, setRemovingId] = useState(null)
+  const [removeError, setRemoveError] = useState('')
 
   useEffect(() => {
     if (isAdmin === false) navigate('/dashboard')
@@ -32,6 +34,28 @@ export default function Team() {
   async function handleSignOut() {
     await signOut()
     navigate('/signin')
+  }
+
+  async function handleRemove(member) {
+    const name = member.full_name || 'this member'
+    if (!window.confirm(`Remove ${name} from your team? This cannot be undone.`)) return
+    setRemoveError('')
+    setRemovingId(member.id)
+    try {
+      const { error } = await supabase.functions.invoke('remove-team-member', {
+        body: { userId: member.id, merchantId: merchant.id },
+      })
+      if (error) throw error
+      fetchTeamMembers(merchant.id)
+    } catch (err) {
+      const msg = err.message || ''
+      if (msg.includes('last admin')) {
+        setRemoveError('Cannot remove the last admin.')
+      } else {
+        setRemoveError('Something went wrong. Please try again.')
+      }
+    }
+    setRemovingId(null)
   }
 
   async function handleInvite(e) {
@@ -142,8 +166,22 @@ export default function Team() {
                       </div>
                     </div>
                     <span className={`team-role-badge team-role-${member.role}`}>{member.role}</span>
+                    {isAdmin && member.id !== user?.id && (
+                      <button
+                        onClick={() => handleRemove(member)}
+                        disabled={removingId === member.id}
+                        style={{ marginLeft: '8px', padding: '4px 10px', fontSize: '12px', fontWeight: '500', color: '#dc2626', background: 'transparent', border: '1px solid #fca5a5', borderRadius: '6px', cursor: 'pointer', flexShrink: 0, opacity: removingId === member.id ? 0.5 : 1 }}
+                      >
+                        {removingId === member.id ? '…' : 'Remove'}
+                      </button>
+                    )}
                   </div>
                 ))}
+              </div>
+            )}
+            {removeError && (
+              <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', fontSize: '13px', color: '#dc2626' }}>
+                {removeError}
               </div>
             )}
           </div>

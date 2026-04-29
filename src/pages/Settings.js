@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import './Carriers.css'
 
 export default function Settings() {
-  const { profile, merchant, isAdmin } = useAuth()
+  const { user, profile, merchant, isAdmin, signOut, fetchProfile } = useAuth()
+  const navigate = useNavigate()
   const [storeName, setStoreName] = useState('')
   const [savingName, setSavingName] = useState(false)
   const [nameSaved, setNameSaved] = useState(false)
@@ -13,6 +15,35 @@ export default function Settings() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [displayName, setDisplayName] = useState('')
+  const [savingName2, setSavingName2] = useState(false)
+  const [nameSaved2, setNameSaved2] = useState(false)
+  const [nameError2, setNameError2] = useState('')
+
+  useEffect(() => {
+    if (profile?.full_name) setDisplayName(profile.full_name)
+  }, [profile])
+
+  async function handleSignOut() {
+    await signOut()
+    navigate('/signin')
+  }
+
+  async function saveDisplayName() {
+    if (!displayName.trim()) { setNameError2('Display name cannot be empty.'); return }
+    setNameError2('')
+    setSavingName2(true)
+    setNameSaved2(false)
+    const { error } = await supabase.from('profiles').update({ full_name: displayName.trim() }).eq('id', user.id)
+    setSavingName2(false)
+    if (error) {
+      setNameError2('Something went wrong. Please try again.')
+    } else {
+      fetchProfile(user.id)
+      setNameSaved2(true)
+      setTimeout(() => setNameSaved2(false), 3000)
+    }
+  }
 
   useEffect(() => {
     if (merchant?.name) setStoreName(merchant.name)
@@ -91,6 +122,10 @@ export default function Settings() {
             <div className="user-avatar">{profile?.full_name?.charAt(0) || merchant?.name?.charAt(0) || '?'}</div>
             <div className="user-info"><div className="user-name">{profile?.full_name || merchant?.name}</div><div className="user-role">{isAdmin ? 'Admin' : 'User'}</div></div>
           </div>
+          <button className="signout-btn" onClick={handleSignOut}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </button>
         </div>
       </aside>
 
@@ -101,6 +136,32 @@ export default function Settings() {
             <h1 className="main-title">Settings</h1>
             <p className="main-subtitle">Configure how ShippingIQ works for your store</p>
           </div>
+        </div>
+
+        <div className="card" style={{ maxWidth: '520px', marginBottom: '24px' }}>
+          <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Your Profile</div>
+          <div style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '20px' }}>
+            Your display name is shown to other team members.
+          </div>
+          <div className="form-group">
+            <label className="form-label">Display name</label>
+            <input
+              className="form-input"
+              type="text"
+              value={displayName}
+              onChange={e => { setDisplayName(e.target.value); setNameError2('') }}
+              style={{ maxWidth: '320px' }}
+            />
+            {nameError2 && <div style={{ marginTop: '6px', fontSize: '13px', color: '#dc2626' }}>{nameError2}</div>}
+          </div>
+          {nameSaved2 && (
+            <div style={{ marginBottom: '16px', padding: '10px 14px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '13px', color: '#16a34a', fontWeight: '500' }}>
+              ✓ Display name updated
+            </div>
+          )}
+          <button className="btn-primary" onClick={saveDisplayName} disabled={savingName2} style={{ padding: '10px 24px' }}>
+            {savingName2 ? 'Saving...' : 'Save'}
+          </button>
         </div>
 
         <div className="card" style={{ maxWidth: '520px', marginBottom: '24px' }}>
