@@ -848,7 +848,7 @@ export default function Carriers() {
           </a>
           <a href="/convert" className="nav-item">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
-            Convert PDF
+            Rate Card Converter
           </a>
           {isAdmin && (
             <>
@@ -919,8 +919,10 @@ export default function Carriers() {
               {form.surchargeDoc && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.surchargeDoc.name}</div>}
             </div>
 
-            <div style={{ padding: '12px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '13px', color: '#0369a1', lineHeight: '1.6', marginBottom: '16px' }}>
-              <strong>Tip:</strong> CSV and Excel files give the most accurate results. If you only have a PDF rate card, use the <a href="/convert" style={{ color: '#0369a1', fontWeight: '600', textDecoration: 'none' }}>Rate Card Converter</a> to extract your rates before uploading here.
+            <div style={{ padding: '12px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '13px', color: '#0369a1', lineHeight: '1.6', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <p style={{ margin: 0 }}>CSV and Excel files give the most accurate results and are always recommended. If you only have a PDF rate card, use the <a href="/convert" style={{ color: '#0369a1', fontWeight: '600', textDecoration: 'none' }}>Rate Card Converter</a> to extract your rates first.</p>
+              <p style={{ margin: 0 }}>Note: PDF conversion is AI-generated and may contain minor errors — always verify the converted CSV against your original document before saving.</p>
+              <p style={{ margin: 0 }}>PDF zone files are not supported — contact your carrier for a CSV or Excel postcode listing.</p>
             </div>
 
             {error && <div className="error-msg">{error}</div>}

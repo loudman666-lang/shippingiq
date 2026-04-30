@@ -113,7 +113,7 @@ export default function PdfConverter() {
           </a>
           <a href="/convert" className="nav-item active">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
-            Convert PDF
+            Rate Card Converter
           </a>
           {isAdmin && (<>
             <div className="nav-divider" />
@@ -152,8 +152,10 @@ export default function PdfConverter() {
           </div>
 
           <div className="card" style={{ maxWidth: '560px' }}>
-            <div style={{ padding: '12px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '13px', color: '#0369a1', lineHeight: '1.6', marginBottom: '20px' }}>
-              For best results, use the original PDF from your carrier — emailed directly or exported digitally. Scanned or photographed rate cards may produce errors.
+            <div style={{ padding: '12px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '13px', color: '#0369a1', lineHeight: '1.6', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <p style={{ margin: 0 }}>For the most accurate results, ask your carrier for a CSV or Excel rate sheet and upload it directly — no conversion needed.</p>
+              <p style={{ margin: 0 }}>If your carrier only provides a PDF, upload it here and we'll convert it. Use the original PDF from your carrier — emailed directly or exported digitally. Scanned or photographed rate cards may produce errors.</p>
+              <p style={{ margin: 0 }}><strong>Important:</strong> AI conversion is not guaranteed to be 100% accurate. Destination names and rate values should always be verified against your original PDF before uploading. Minor errors in a small number of rows are possible — particularly in scanned documents or PDFs with complex formatting.</p>
             </div>
             {step !== 'done' && (
               <>
