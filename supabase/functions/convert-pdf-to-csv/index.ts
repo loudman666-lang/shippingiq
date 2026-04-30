@@ -139,33 +139,115 @@ serve(async (req) => {
       return match ? match[1].replace('.0', '') : null
     }
 
-    const [csv1, csv2, csv3, csv4, cubicFactor] = await Promise.all([
-      callClaude('1/4', 'ADELAIDE', 'CROOKWELL'),
-      callClaude('2/4', 'DALBY', 'LAUNCESTON'),
-      callClaude('3/4', 'LEONORA', 'PORT PIRIE'),
-      callClaude('4/4', 'PORTLAND', 'YOUNG'),
+    async function detectPricingModel(): Promise<'B' | 'C'> {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': Deno.env.get('ANTHROPIC_API_KEY') ?? '',
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 10,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'document', source: { type: 'base64', media_type: mediaType || 'application/pdf', data: pdfBase64 } },
+              { type: 'text', text: 'Look at the rate table in this freight carrier rate card. Does it use named destination cities or towns as rows (e.g. Adelaide, Brisbane, Leonora)? Or does it use zone codes or zone names as rows (e.g. Zone 1, MEL1, Sydney Metro)? Reply with only "C" for destination cities, or "B" for zones.' },
+            ],
+          }],
+        }),
+      })
+      const data = await res.json()
+      const text = (data.content?.[0]?.text || '').trim().toUpperCase()
+      return text.startsWith('C') ? 'C' : 'B'
+    }
+
+    async function callClaudeModelB(): Promise<string> {
+      const prompt = `Extract the complete rate table from this freight carrier rate card PDF as CSV.
+
+This is a Model B rate card: zones or regions as rows, with a basic charge, per kg rate, and minimum charge per zone.
+
+Output CSV with exactly these headers: Service,Zone,BasicCharge,PerKgRate,Minimum
+
+Rules:
+- Extract EVERY zone row without exception
+- Service = the service name or "Standard" if not specified
+- Zone = the zone code or zone name exactly as shown (e.g. MEL1, Zone 1, Sydney Metro)
+- BasicCharge, PerKgRate, Minimum = numbers only, no $ signs, no commas
+- If minimum is not shown, use the basic charge value
+- Respond with ONLY the CSV. No explanation, no markdown, no backticks, no blank lines before the header.`
+
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': Deno.env.get('ANTHROPIC_API_KEY') ?? '',
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'document', source: { type: 'base64', media_type: mediaType || 'application/pdf', data: pdfBase64 } },
+              { type: 'text', text: prompt },
+            ],
+          }],
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error?.message || 'Anthropic API error')
+      return data.content?.[0]?.text || ''
+    }
+
+    const [pricingModel, cubicFactor] = await Promise.all([
+      detectPricingModel(),
       detectCubicFactorFromPdf(),
     ])
 
-    const lines1 = csv1.trim().split('\n')
-    const lines2 = csv2.trim().split('\n')
-    const lines3 = csv3.trim().split('\n')
-    const lines4 = csv4.trim().split('\n')
-    const header = lines1[0]
-    const dataRows1 = lines1.slice(1).filter(l => l.trim())
-    const dataRows2 = lines2.slice(1).filter(l => l.trim())
-    const dataRows3 = lines3.slice(1).filter(l => l.trim())
-    const dataRows4 = lines4.slice(1).filter(l => l.trim())
+    console.log('Detected pricing model:', pricingModel, '| cubic factor:', cubicFactor)
 
-    // Deduplicate by destination name (column index 1)
-    const seen = new Set<string>()
-    const allDataRows: string[] = []
-    for (const row of [...dataRows1, ...dataRows2, ...dataRows3, ...dataRows4]) {
-      const dest = row.split(',')[1]?.trim().toLowerCase() ?? row
-      if (!seen.has(dest)) {
-        seen.add(dest)
-        allDataRows.push(row)
+    let allDataRows: string[] = []
+    let header = ''
+
+    if (pricingModel === 'B') {
+      const csvB = await callClaudeModelB()
+      const linesB = csvB.trim().split('\n').filter(l => l.trim())
+      header = linesB[0]
+      allDataRows = linesB.slice(1).filter(l => l.trim())
+      console.log('Model B extraction: rows:', allDataRows.length)
+    } else {
+      const [csv1, csv2, csv3, csv4] = await Promise.all([
+        callClaude('1/4', 'ADELAIDE', 'CROOKWELL'),
+        callClaude('2/4', 'DALBY', 'LAUNCESTON'),
+        callClaude('3/4', 'LEONORA', 'PORT PIRIE'),
+        callClaude('4/4', 'PORTLAND', 'YOUNG'),
+      ])
+      const lines1 = csv1.trim().split('\n')
+      const lines2 = csv2.trim().split('\n')
+      const lines3 = csv3.trim().split('\n')
+      const lines4 = csv4.trim().split('\n')
+      header = lines1[0]
+      const dataRows1 = lines1.slice(1).filter(l => l.trim())
+      const dataRows2 = lines2.slice(1).filter(l => l.trim())
+      const dataRows3 = lines3.slice(1).filter(l => l.trim())
+      const dataRows4 = lines4.slice(1).filter(l => l.trim())
+      const seen = new Set<string>()
+      for (const row of [...dataRows1, ...dataRows2, ...dataRows3, ...dataRows4]) {
+        const dest = row.split(',')[1]?.trim().toLowerCase() ?? row
+        if (!seen.has(dest)) {
+          seen.add(dest)
+          allDataRows.push(row)
+        }
       }
+      console.log('Model C extraction: rows:', allDataRows.length,
+        '(ADELAIDE-CROOKWELL:', dataRows1.length,
+        'DALBY-LAUNCESTON:', dataRows2.length,
+        'LEONORA-PORT PIRIE:', dataRows3.length,
+        'PORTLAND-YOUNG:', dataRows4.length, ')')
     }
 
     const DEST_CORRECTIONS: Record<string, string> = {
@@ -197,12 +279,7 @@ serve(async (req) => {
 
     const csv = [header, ...correctedRows].join('\n')
     const rowCount = correctedRows.length
-
-    console.log('Converted PDF for carrier:', carrierName, '| rows:', rowCount,
-      '(ADELAIDE-CROOKWELL:', dataRows1.length,
-      'DALBY-LAUNCESTON:', dataRows2.length,
-      'LEONORA-PORT PIRIE:', dataRows3.length,
-      'PORTLAND-YOUNG:', dataRows4.length, ')')
+    console.log('Converted PDF for carrier:', carrierName, '| model:', pricingModel, '| rows:', rowCount)
 
     // Log the conversion using admin client (SERVICE_ROLE_KEY)
     if (merchantId) {
