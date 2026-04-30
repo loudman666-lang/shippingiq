@@ -1134,7 +1134,7 @@ export default function Carriers() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
                 <h2 style={{ fontSize: '16px', fontWeight: '600' }}>{surchargeRulesCarrier.name} — Surcharge Rules</h2>
-                <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginTop: '4px' }}>These surcharges were extracted from your carrier's rate card. By default they are all set to Off — you need to turn on the ones that apply to your business.</p>
+                <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginTop: '4px' }}>These surcharges were extracted from your carrier's rate card. Triggers are pre-set based on your store's customer type. Review and adjust below.</p>
                 <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginTop: '6px' }}>For each surcharge, choose how it should be triggered: automatically based on the carrier's own conditions, automatically based on your own thresholds, always added to every quote, or managed manually outside the system.</p>
               </div>
               <button className="btn-secondary" onClick={() => setSurchargeRulesCarrier(null)}>Close</button>
@@ -1150,7 +1150,10 @@ export default function Carriers() {
                 </div>
                 {surchargeRulesCarrier.parsed_data.surcharges.map((s, i) => {
                   const key = s.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
-                  const rule = surchargeRules[key] || { trigger: 'manual' }
+                  const isResidential = s.name.toLowerCase().includes('residential')
+                  const customerType = merchant?.settings?.customerType
+                  const defaultTrigger = isResidential && customerType !== 'b2b' ? 'always' : 'manual'
+                  const rule = surchargeRules[key] || { trigger: defaultTrigger }
                   const isOverlength = key.includes('overlength')
                   const isOverlength8m = key === 'overlength_over_8m'
                   return (

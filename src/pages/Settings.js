@@ -12,6 +12,9 @@ export default function Settings() {
   const [nameSaved, setNameSaved] = useState(false)
   const [nameError, setNameError] = useState(false)
   const [gstEnabled, setGstEnabled] = useState(false)
+  const [customerType, setCustomerType] = useState('b2c')
+  const [savingCustomerType, setSavingCustomerType] = useState(false)
+  const [customerTypeSaved, setCustomerTypeSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -57,6 +60,7 @@ export default function Settings() {
     setLoading(true)
     const { data } = await supabase.from('merchants').select('settings').eq('id', merchant.id).single()
     if (data?.settings?.gstEnabled !== undefined) setGstEnabled(data.settings.gstEnabled)
+    if (data?.settings?.customerType) setCustomerType(data.settings.customerType)
     setLoading(false)
   }
 
@@ -71,10 +75,19 @@ export default function Settings() {
     setTimeout(() => setNameSaved(false), 3000)
   }
 
+  async function saveCustomerType() {
+    setSavingCustomerType(true)
+    setCustomerTypeSaved(false)
+    await supabase.from('merchants').update({ settings: { gstEnabled, customerType } }).eq('id', merchant.id)
+    setSavingCustomerType(false)
+    setCustomerTypeSaved(true)
+    setTimeout(() => setCustomerTypeSaved(false), 3000)
+  }
+
   async function saveSettings() {
     setSaving(true)
     setSaved(false)
-    await supabase.from('merchants').update({ settings: { gstEnabled } }).eq('id', merchant.id)
+    await supabase.from('merchants').update({ settings: { gstEnabled, customerType } }).eq('id', merchant.id)
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
@@ -165,6 +178,41 @@ export default function Settings() {
           )}
           <button className="btn-primary" onClick={saveDisplayName} disabled={savingName2} style={{ padding: '10px 24px' }}>
             {savingName2 ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+
+        <div className="card" style={{ maxWidth: '520px', marginBottom: '24px' }}>
+          <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Customer Type</div>
+          <div style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '20px' }}>
+            Controls how surcharge defaults are set when you add a new carrier.
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '14px 16px', border: '2px solid', borderColor: customerType === 'b2c' ? 'var(--accent)' : 'var(--border)', borderRadius: '10px', cursor: 'pointer', background: customerType === 'b2c' ? 'var(--accent-light)' : 'var(--surface)' }} onClick={() => setCustomerType('b2c')}>
+              <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid', borderColor: customerType === 'b2c' ? 'var(--accent)' : 'var(--border-mid)', background: customerType === 'b2c' ? 'var(--accent)' : 'transparent', flexShrink: 0, marginTop: '1px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {customerType === 'b2c' && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'white' }} />}
+              </div>
+              <div>
+                <div style={{ fontWeight: '600', fontSize: '14px', color: 'var(--ink)', marginBottom: '3px' }}>Residential / Consumer (B2C)</div>
+                {customerType === 'b2c' && <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Residential surcharges on new carriers will default to Always.</div>}
+              </div>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '14px 16px', border: '2px solid', borderColor: customerType === 'b2b' ? 'var(--accent)' : 'var(--border)', borderRadius: '10px', cursor: 'pointer', background: customerType === 'b2b' ? 'var(--accent-light)' : 'var(--surface)' }} onClick={() => setCustomerType('b2b')}>
+              <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid', borderColor: customerType === 'b2b' ? 'var(--accent)' : 'var(--border-mid)', background: customerType === 'b2b' ? 'var(--accent)' : 'transparent', flexShrink: 0, marginTop: '1px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {customerType === 'b2b' && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'white' }} />}
+              </div>
+              <div>
+                <div style={{ fontWeight: '600', fontSize: '14px', color: 'var(--ink)', marginBottom: '3px' }}>Business (B2B)</div>
+                {customerType === 'b2b' && <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Residential surcharges on new carriers will default to Off.</div>}
+              </div>
+            </label>
+          </div>
+          {customerTypeSaved && (
+            <div style={{ marginBottom: '16px', padding: '10px 14px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '13px', color: '#16a34a', fontWeight: '500' }}>
+              ✓ Customer type saved
+            </div>
+          )}
+          <button className="btn-primary" onClick={saveCustomerType} disabled={savingCustomerType} style={{ padding: '10px 24px' }}>
+            {savingCustomerType ? 'Saving...' : 'Save'}
           </button>
         </div>
 
