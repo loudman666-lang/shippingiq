@@ -270,7 +270,7 @@ function parseZoneSheetToObjects(XLSX, sheet) {
 
   let postcodeCol   = findColIndex(headers, 'postcode', 'post code', 'post_code', 'pc', 'zip')
   const zoneCodeCol = findColIndex(headers, 'zone code', 'zone_code', 'zonecode', 'g zone', 'g-zone', 'gzone')
-  const zoneNameTerms = ['zone name', 'zone_name', 'zonename', 'zone']
+  const zoneNameTerms = ['zone name', 'zone_name', 'zonename', 'zone', 'ratinglocation', 'rating location', 'rating_location', 'depot', 'service area']
   const zoneNameCol = headers.map(h => String(h ?? '').toLowerCase().trim())
     .findIndex((h, i) => i !== zoneCodeCol && zoneNameTerms.some(t => h === t || h.includes(t)))
   const suburbCol   = findColIndex(headers, 'suburb', 'locality')
@@ -339,7 +339,7 @@ function parseCsvZoneToObjects(text) {
   const headers = parseCsvLine(lines[0]).map(h => h.replace(/^"|"$/g, '').toLowerCase().trim())
   let postcodeIdx   = findColIndex(headers, 'postcode', 'post code', 'post_code', 'pc', 'zip')
   const zoneCodeIdx = findColIndex(headers, 'zone code', 'zone_code', 'zonecode')
-  const zoneNameIdx = findColIndex(headers, 'zone name', 'zone_name', 'zonename', 'zone')
+  const zoneNameIdx = findColIndex(headers, 'zone name', 'zone_name', 'zonename', 'zone', 'ratinglocation', 'rating location', 'rating_location', 'depot', 'service area')
   const suburbIdx   = findColIndex(headers, 'suburb', 'locality')
   const stateIdx    = findColIndex(headers, 'state')
 
