@@ -146,14 +146,19 @@ serve(async (req) => {
       'INGLEWOOD': 'INGHAM',
       'SEABROOK': 'SEAFORTH',
       'BREWARRINA': '',
+      'BANDANEWBURN': 'BANNOCKBURN',
+      'COLIE': 'COLLIE',
+      'SEAFORD': 'SEAFORTH',
     }
 
+    const corrections: { original: string; corrected: string }[] = []
     const correctedRows = allDataRows.reduce<string[]>((acc, row) => {
       const fields = row.split(',')
       const dest = (fields[1] ?? '').trim().toUpperCase()
       if (dest in DEST_CORRECTIONS) {
         const replacement = DEST_CORRECTIONS[dest]
         if (replacement === '') return acc
+        corrections.push({ original: dest, corrected: replacement })
         fields[1] = replacement
         return [...acc, fields.join(',')]
       }
@@ -178,7 +183,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ csv, rowCount }),
+      JSON.stringify({ csv, rowCount, corrections }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (err) {

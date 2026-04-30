@@ -16,7 +16,16 @@ const ACCORDION = [
     content: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <p style={{ fontSize: '14px', lineHeight: '1.65', color: 'var(--ink-mid)', margin: 0 }}>
-          Your rate card shows freight prices by weight and zone. Ask your carrier account manager for: a CSV or Excel export of your contracted rates, including all weight breaks and zones. If they send a PDF, ShippingIQ can read that too.
+          Your rate card shows freight prices by weight and zone. Ask your carrier account manager for a CSV or Excel export — this gives the most accurate results in ShippingIQ.
+        </p>
+        <div style={{ padding: '12px 16px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', borderLeft: '3px solid var(--accent)' }}>
+          <p style={{ fontSize: '13px', color: 'var(--ink)', margin: 0, lineHeight: '1.6' }}>
+            <strong>Use this exact wording with your account manager:</strong><br/>
+            <em>"Can you send me a CSV or Excel export of my contracted freight rates? I need all weight breaks and zones included."</em>
+          </p>
+        </div>
+        <p style={{ fontSize: '14px', lineHeight: '1.65', color: 'var(--ink-mid)', margin: 0 }}>
+          <strong style={{ color: 'var(--ink)', fontWeight: '600' }}>Only have a PDF?</strong> Use the <a href="/convert" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '500' }}>Rate Card Converter</a> to extract your rates automatically.
         </p>
         <p style={{ fontSize: '14px', lineHeight: '1.65', color: 'var(--ink-mid)', margin: 0 }}>
           <strong style={{ color: 'var(--ink)', fontWeight: '600' }}>Key things to confirm:</strong> which pricing model applies (flat rate per zone, or base + per kg), which origin depot your freight leaves from, and whether fuel levy is included or separate.
@@ -177,6 +186,10 @@ export default function Resources() {
           <a href="/resources" className="nav-item active">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
             Resources
+          </a>
+          <a href="/convert" className="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
+            Convert PDF
           </a>
           {isAdmin && (<>
             <div className="nav-divider" />

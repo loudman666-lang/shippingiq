@@ -23,6 +23,7 @@ export default function PdfConverter() {
   const [step, setStep] = useState(null) // null | 'uploading' | 'extracting' | 'done'
   const [rowCount, setRowCount] = useState(0)
   const [csv, setCsv] = useState('')
+  const [corrections, setCorrections] = useState([])
   const [error, setError] = useState('')
 
   const avatarInitial = profile?.full_name?.charAt(0) || merchant?.name?.charAt(0) || '?'
@@ -54,6 +55,7 @@ export default function PdfConverter() {
 
       setCsv(data.csv)
       setRowCount(data.rowCount)
+      setCorrections(data.corrections || [])
       setStep('done')
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')
@@ -75,6 +77,7 @@ export default function PdfConverter() {
     setStep(null)
     setCsv('')
     setRowCount(0)
+    setCorrections([])
     setError('')
     setPdfFile(null)
     setCarrierName('')
@@ -107,6 +110,10 @@ export default function PdfConverter() {
           <a href="/resources" className="nav-item">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
             Resources
+          </a>
+          <a href="/convert" className="nav-item active">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
+            Convert PDF
           </a>
           {isAdmin && (<>
             <div className="nav-divider" />
@@ -145,6 +152,9 @@ export default function PdfConverter() {
           </div>
 
           <div className="card" style={{ maxWidth: '560px' }}>
+            <div style={{ padding: '12px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '13px', color: '#0369a1', lineHeight: '1.6', marginBottom: '20px' }}>
+              For best results, use the original PDF from your carrier — emailed directly or exported digitally. Scanned or photographed rate cards may produce errors.
+            </div>
             {step !== 'done' && (
               <>
                 <div className="form-group">
@@ -222,6 +232,19 @@ export default function PdfConverter() {
                     Done — {rowCount} rate{rowCount !== 1 ? 's' : ''} extracted.
                   </div>
                 </div>
+
+                <div style={{ padding: '12px 14px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '13px', color: '#166534', lineHeight: '1.6', marginBottom: '16px' }}>
+                  Before uploading this CSV, open it and compare destination names and rates against your original PDF. Check for missing rows, incorrect values, or destinations that look unfamiliar.
+                </div>
+
+                {corrections.length > 0 && (
+                  <div style={{ padding: '12px 14px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '8px', fontSize: '13px', color: '#92400e', lineHeight: '1.6', marginBottom: '16px' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '6px' }}>Auto-corrected {corrections.length} destination name{corrections.length !== 1 ? 's' : ''}:</div>
+                    {corrections.map(c => (
+                      <div key={c.original}>{c.original} → {c.corrected}</div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="converter-preview" style={{ marginBottom: '20px' }}>
                   <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--ink)', marginBottom: '8px' }}>

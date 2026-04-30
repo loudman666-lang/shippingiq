@@ -846,6 +846,10 @@ export default function Carriers() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
             Resources
           </a>
+          <a href="/convert" className="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
+            Convert PDF
+          </a>
           {isAdmin && (
             <>
               <div className="nav-divider" />
@@ -900,6 +904,9 @@ export default function Carriers() {
               <label className="form-label">Rate Card <span style={{ color: '#6b7280', fontWeight: 400 }}>(required — CSV, Excel or PDF)</span></label>
               <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, rateCard: e.target.files[0] })} disabled={!!parseResult || parsing} />
               {form.rateCard && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.rateCard.name}</div>}
+              <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '4px' }}>
+                Only have a PDF? <a href="/convert" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '500' }}>Convert it to CSV first →</a>
+              </div>
             </div>
             <div className="form-group">
               <label className="form-label">Zone File <span style={{ color: '#6b7280', fontWeight: 400 }}>(required — CSV, Excel or PDF)</span></label>
@@ -910,6 +917,10 @@ export default function Carriers() {
               <label className="form-label">Additional Charges Schedule <span style={{ color: '#6b7280', fontWeight: 400 }}>(optional — CSV, Excel or PDF)</span></label>
               <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, surchargeDoc: e.target.files[0] })} disabled={!!parseResult || parsing} />
               {form.surchargeDoc && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.surchargeDoc.name}</div>}
+            </div>
+
+            <div style={{ padding: '12px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '13px', color: '#0369a1', lineHeight: '1.6', marginBottom: '16px' }}>
+              <strong>Tip:</strong> CSV and Excel files give the most accurate results. If you only have a PDF rate card, use the <a href="/convert" style={{ color: '#0369a1', fontWeight: '600', textDecoration: 'none' }}>Rate Card Converter</a> to extract your rates before uploading here.
             </div>
 
             {error && <div className="error-msg">{error}</div>}
