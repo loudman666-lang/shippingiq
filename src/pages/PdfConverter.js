@@ -43,8 +43,10 @@ export default function PdfConverter() {
       const pdfBase64 = await readFileAsBase64(pdfFile)
       setStep('extracting')
 
+      const { data: { session } } = await supabase.auth.getSession()
       const { data, error: fnError } = await supabase.functions.invoke('convert-pdf-to-csv', {
         body: { pdfBase64, mediaType: 'application/pdf', carrierName: carrierName.trim() },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
       })
 
       if (fnError) throw fnError
@@ -203,6 +205,12 @@ export default function PdfConverter() {
                 >
                   {converting ? 'Converting…' : 'Convert to CSV'}
                 </button>
+
+                {converting && (
+                  <p style={{ marginTop: '12px', fontSize: '13px', color: 'var(--ink-muted)', lineHeight: '1.5' }}>
+                    This may take 60–90 seconds. Please don't close or refresh this page.
+                  </p>
+                )}
               </>
             )}
 
