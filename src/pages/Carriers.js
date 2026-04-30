@@ -397,6 +397,39 @@ function deduplicatePostcodeMap(allRows) {
   return Array.from(seen.values())
 }
 
+function getZonesForCarrier(carrier) {
+  const data = carrier?.parsed_data
+  const model = data?.pricingModel
+  if (model === 'A') return data?.zones || []
+  if (model === 'B') return [...new Set((data?.modelBRates || []).map(r => r.zone).filter(Boolean))]
+  if (model === 'C') return [...new Set((data?.modelCRates || []).map(r => r.destinationDepot).filter(Boolean))]
+  return []
+}
+
+function expandPostcodeRanges(ranges) {
+  const rows = []
+  for (const { from, to, zone } of ranges) {
+    const f = parseInt(from, 10), t = parseInt(to, 10)
+    if (isNaN(f) || isNaN(t) || f > t || !zone) continue
+    for (let pc = f; pc <= t; pc++) {
+      rows.push({ postcode: String(pc).padStart(4, '0'), zone, zoneCode: zone, suburb: '', state: '' })
+    }
+  }
+  return rows
+}
+
+function validatePostcodeRanges(ranges) {
+  return ranges.map(({ from, to, zone }) => {
+    if (!from && !to && !zone) return null
+    const f = parseInt(from, 10), t = parseInt(to, 10)
+    if (isNaN(f) || f < 200 || f > 9999) return 'Invalid "From" postcode (200–9999)'
+    if (isNaN(t) || t < 200 || t > 9999) return 'Invalid "To" postcode (200–9999)'
+    if (f > t) return '"From" must be ≤ "To"'
+    if (!zone) return 'Select a zone'
+    return null
+  })
+}
+
 // Scan all sheets in an already-loaded Excel workbook.
 // Returns { postcodeRows, rateTexts, surchargeTexts }.
 function scanExcelBytes(XLSX, bytes) {
@@ -619,6 +652,12 @@ export default function Carriers() {
   const [editingCarrierId, setEditingCarrierId] = useState(null)
   const [showSurchargeModal, setShowSurchargeModal] = useState(false)
   const [surchargeModalChoice, setSurchargeModalChoice] = useState('keep')
+  const [postcodeRangesCarrier, setPostcodeRangesCarrier] = useState(null)
+  const [postcodeRanges, setPostcodeRanges] = useState([{ from: '', to: '', zone: '' }])
+  const [postcodeRangeRowErrors, setPostcodeRangeRowErrors] = useState([])
+  const [savingPostcodeRanges, setSavingPostcodeRanges] = useState(false)
+  const [postcodeRangeError, setPostcodeRangeError] = useState(null)
+  const [postcodeRangeSuccess, setPostcodeRangeSuccess] = useState(false)
 
   async function handleSignOut() {
     await signOut()
@@ -641,8 +680,8 @@ export default function Carriers() {
   }
 
   async function parseFiles(skipConfirm = false) {
-    if (!form.name || !form.rateCard || !form.zoneFile) {
-      setError('Please enter a carrier name and upload both the rate card and zone file.')
+    if (!form.name || !form.rateCard) {
+      setError('Please enter a carrier name and upload a rate card.')
       return
     }
 
@@ -893,6 +932,43 @@ export default function Carriers() {
     setEligibilityCarrierId(null)
   }
 
+  function openPostcodeRanges(carrier) {
+    const existing = carrier.parsed_data?.manualPostcodeRanges || []
+    setPostcodeRanges(existing.length ? existing : [{ from: '', to: '', zone: '' }])
+    setPostcodeRangeRowErrors([])
+    setPostcodeRangeError(null)
+    setPostcodeRangeSuccess(false)
+    setPostcodeRangesCarrier(carrier)
+  }
+
+  async function savePostcodeRanges() {
+    const errors = validatePostcodeRanges(postcodeRanges)
+    const hasErrors = errors.some(e => e !== null)
+    setPostcodeRangeRowErrors(errors)
+    if (hasErrors) return
+    const nonEmpty = postcodeRanges.filter(r => r.from || r.to || r.zone)
+    if (!nonEmpty.length) {
+      setPostcodeRangeError('Add at least one postcode range.')
+      return
+    }
+    setSavingPostcodeRanges(true)
+    setPostcodeRangeError(null)
+    try {
+      const expanded = expandPostcodeRanges(nonEmpty)
+      const deduplicated = deduplicatePostcodeMap(expanded)
+      const updatedData = { ...postcodeRangesCarrier.parsed_data, postcodeMap: deduplicated, manualPostcodeRanges: nonEmpty }
+      const { error } = await supabase.from('carriers').update({ parsed_data: updatedData }).eq('id', postcodeRangesCarrier.id)
+      if (error) throw error
+      setPostcodeRangeSuccess(true)
+      await fetchCarriers()
+      setTimeout(() => { setPostcodeRangesCarrier(null); setPostcodeRangeSuccess(false) }, 1500)
+    } catch (e) {
+      setPostcodeRangeError(e.message || 'Failed to save.')
+    } finally {
+      setSavingPostcodeRanges(false)
+    }
+  }
+
   const originDepots = parseResult?.originDepots || []
 
   return (
@@ -986,7 +1062,7 @@ export default function Carriers() {
               </div>
             </div>
             <div className="form-group">
-              <label className="form-label">Zone File <span style={{ color: '#6b7280', fontWeight: 400 }}>(required — CSV, Excel or PDF)</span></label>
+              <label className="form-label">Zone File <span style={{ color: '#6b7280', fontWeight: 400 }}>(optional — CSV or Excel; or enter postcode ranges manually after saving)</span></label>
               <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, zoneFile: e.target.files[0] })} disabled={!!parseResult || parsing} />
               {form.zoneFile && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.zoneFile.name}</div>}
             </div>
@@ -1254,13 +1330,13 @@ export default function Carriers() {
           <div className="carriers-list">
             {carriers.map(carrier => (
               <div key={carrier.id} className="carrier-card">
-                {carrier.status === 'active' && !carrier.parsed_data?.postcodeMap?.length && (
-                  <div style={{ padding: '8px 12px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '6px', fontSize: '13px', color: '#92400e' }}>
-                    ⚠ No postcode data — freight quotes will fail for this carrier. Contact your carrier account manager for a postcode zone file.
-                  </div>
-                )}
                 <div className="carrier-info">
-                  <div className="carrier-name">{carrier.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="carrier-name">{carrier.name}</div>
+                    {!carrier.parsed_data?.postcodeMap?.length && (
+                      <span style={{ padding: '2px 8px', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '12px', fontSize: '11px', color: '#92400e', fontWeight: '600', whiteSpace: 'nowrap' }}>No zone file</span>
+                    )}
+                  </div>
                   <div className="carrier-meta">
                     {carrier.parsed_data?.rateCount} rates · {carrier.parsed_data?.pricingModel === 'C' ? `${carrier.parsed_data?.modelCRates?.length ?? 0} destinations` : `${carrier.parsed_data?.zones?.length ?? 0} zones`} · {carrier.parsed_data?.serviceTypes?.join(', ')}
                     {carrier.parsed_data?.pricingModel && ` · Model ${carrier.parsed_data.pricingModel}`}
@@ -1332,6 +1408,9 @@ export default function Carriers() {
                       {eligibilityCarrierId === carrier.id ? 'Hide Limits' : 'Carrier Limits'}
                     </button>
                   )}
+                  <button className="btn-secondary" onClick={() => openPostcodeRanges(carrier)}>
+                    {carrier.parsed_data?.manualPostcodeRanges?.length > 0 ? 'Edit Ranges' : 'Postcode Ranges'}
+                  </button>
                   <button className="btn-secondary" onClick={() => {
                     setEditingCarrierId(carrier.id)
                     setShowAdd(true)
@@ -1436,6 +1515,103 @@ export default function Carriers() {
           </div>
         </>
       )}
+
+      {postcodeRangesCarrier && (() => {
+        const zones = getZonesForCarrier(postcodeRangesCarrier)
+        const totalPostcodes = postcodeRanges.reduce((sum, { from, to }) => {
+          const f = parseInt(from, 10), t = parseInt(to, 10)
+          return !isNaN(f) && !isNaN(t) && t >= f ? sum + (t - f + 1) : sum
+        }, 0)
+        const coveredZones = [...new Set(postcodeRanges.filter(r => r.zone && !isNaN(parseInt(r.from)) && !isNaN(parseInt(r.to)) && parseInt(r.to) >= parseInt(r.from)).map(r => r.zone))]
+        return (
+          <>
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000 }} onClick={() => setPostcodeRangesCarrier(null)} />
+            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1001, background: '#fff', borderRadius: '12px', padding: '32px', width: '620px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>Postcode Ranges</h3>
+              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '20px' }}>{postcodeRangesCarrier.name}</p>
+
+              <div style={{ display: 'flex', gap: '0', borderBottom: '2px solid #e5e7eb', marginBottom: '20px' }}>
+                <button disabled style={{ padding: '8px 16px', fontSize: '13px', fontWeight: '500', color: '#9ca3af', background: 'none', border: 'none', cursor: 'not-allowed', borderBottom: '2px solid transparent', marginBottom: '-2px' }}>
+                  Upload zone file
+                </button>
+                <button style={{ padding: '8px 16px', fontSize: '13px', fontWeight: '600', color: 'var(--accent)', background: 'none', border: 'none', cursor: 'default', borderBottom: '2px solid var(--accent)', marginBottom: '-2px' }}>
+                  Enter ranges manually
+                </button>
+              </div>
+
+              {zones.length > 0 ? (
+                <div style={{ fontSize: '13px', color: '#374151', marginBottom: '16px', padding: '10px 14px', background: '#f9fafb', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
+                  <strong>{zones.length} zone{zones.length !== 1 ? 's' : ''}</strong> from rate card: {zones.slice(0, 8).join(', ')}{zones.length > 8 ? ` +${zones.length - 8} more` : ''}
+                </div>
+              ) : (
+                <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>No zones detected from rate card. Save the carrier first, then re-open this panel.</div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 16px 1fr 2fr 32px', gap: '6px', alignItems: 'center', marginBottom: '6px' }}>
+                <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>From</div>
+                <div />
+                <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>To</div>
+                <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Zone</div>
+                <div />
+              </div>
+
+              {postcodeRanges.map((row, i) => (
+                <div key={i}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 16px 1fr 2fr 32px', gap: '6px', alignItems: 'center', marginBottom: '4px' }}>
+                    <input
+                      type="number" min="200" max="9999" placeholder="0200" value={row.from}
+                      onChange={e => { const next = [...postcodeRanges]; next[i] = { ...next[i], from: e.target.value }; setPostcodeRanges(next) }}
+                      style={{ padding: '7px 10px', border: `1px solid ${postcodeRangeRowErrors[i] ? '#ef4444' : '#e5e7eb'}`, borderRadius: '6px', fontSize: '13px', width: '100%', boxSizing: 'border-box' }}
+                    />
+                    <div style={{ textAlign: 'center', color: '#9ca3af', fontWeight: '600', fontSize: '14px' }}>–</div>
+                    <input
+                      type="number" min="200" max="9999" placeholder="0299" value={row.to}
+                      onChange={e => { const next = [...postcodeRanges]; next[i] = { ...next[i], to: e.target.value }; setPostcodeRanges(next) }}
+                      style={{ padding: '7px 10px', border: `1px solid ${postcodeRangeRowErrors[i] ? '#ef4444' : '#e5e7eb'}`, borderRadius: '6px', fontSize: '13px', width: '100%', boxSizing: 'border-box' }}
+                    />
+                    <select
+                      value={row.zone}
+                      onChange={e => { const next = [...postcodeRanges]; next[i] = { ...next[i], zone: e.target.value }; setPostcodeRanges(next) }}
+                      style={{ padding: '7px 10px', border: `1px solid ${postcodeRangeRowErrors[i] ? '#ef4444' : '#e5e7eb'}`, borderRadius: '6px', fontSize: '13px', width: '100%', boxSizing: 'border-box', background: '#fff' }}
+                    >
+                      <option value="">Select zone…</option>
+                      {zones.map(z => <option key={z} value={z}>{z}</option>)}
+                    </select>
+                    <button
+                      onClick={() => { const next = postcodeRanges.filter((_, idx) => idx !== i); setPostcodeRanges(next.length ? next : [{ from: '', to: '', zone: '' }]) }}
+                      style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #e5e7eb', borderRadius: '6px', cursor: 'pointer', color: '#9ca3af', fontSize: '16px', flexShrink: 0 }}
+                    >×</button>
+                  </div>
+                  {postcodeRangeRowErrors[i] && (
+                    <div style={{ fontSize: '11px', color: '#ef4444', marginBottom: '4px', paddingLeft: '2px' }}>{postcodeRangeRowErrors[i]}</div>
+                  )}
+                </div>
+              ))}
+
+              <button
+                onClick={() => setPostcodeRanges([...postcodeRanges, { from: '', to: '', zone: '' }])}
+                style={{ fontSize: '13px', color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0', marginTop: '4px', marginBottom: '16px', fontWeight: '500' }}
+              >+ Add range</button>
+
+              {totalPostcodes > 0 && (
+                <div style={{ fontSize: '13px', color: '#166534', marginBottom: '16px', padding: '8px 12px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '6px' }}>
+                  {totalPostcodes.toLocaleString()} postcodes covered · {coveredZones.length} zone{coveredZones.length !== 1 ? 's' : ''}
+                </div>
+              )}
+
+              {postcodeRangeError && <div style={{ fontSize: '13px', color: '#ef4444', marginBottom: '12px' }}>{postcodeRangeError}</div>}
+              {postcodeRangeSuccess && <div style={{ fontSize: '13px', color: '#166534', marginBottom: '12px' }}>✓ Postcode ranges saved.</div>}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+                <button className="btn-secondary" onClick={() => setPostcodeRangesCarrier(null)} disabled={savingPostcodeRanges}>Cancel</button>
+                <button className="btn-primary" onClick={savePostcodeRanges} disabled={savingPostcodeRanges}>
+                  {savingPostcodeRanges ? 'Saving…' : 'Save Ranges'}
+                </button>
+              </div>
+            </div>
+          </>
+        )
+      })()}
     </div>
   )
 }

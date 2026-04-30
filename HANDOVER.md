@@ -132,6 +132,8 @@ npx supabase functions deploy remove-team-member --project-ref soaxvqkkecqzarwmb
 - Carrier eligibility limits UI — maxWeightKg, maxLengthCm, maxWidthCm, maxHeightCm saved to carriers.eligibility_rules
   - Zero values = no limit (bug fixed — was incorrectly excluding all carriers when any limit was 0)
 - Dynamic sidebar avatar across all pages (see Dashboard note above)
+- **Manual postcode range entry** — carrier card "Postcode Ranges" / "Edit Ranges" button (always visible). Opens modal with two tabs: "Upload zone file" (disabled) and "Enter ranges manually" (active). Modal shows zones from rate card (pulled live from parsed_data), grid of From/To/Zone rows with row-level validation, live postcode count display, and Save Ranges → writes both `postcodeMap` and `manualPostcodeRanges` to `carriers.parsed_data`. Zone file upload in the add-carrier form is now optional (label says "optional — or enter postcode ranges manually after saving").
+- **No zone file badge** — amber pill "No zone file" shown next to carrier name when postcodeMap is empty.
 
 ### Get a Quote page
 - Multi-item with qty, dimensions per item
@@ -350,8 +352,8 @@ Model C: Depot-to-depot — Mainfreight style
 - Model C carrier card shows destination count ("261 destinations") not zone count — zones.length was always 1 for Model C (single origin depot). Carrier card now checks pricingModel === 'C' and uses modelCRates.length instead.
 
 ## Known merchant education points
-- Postcode zone file is required — without it the carrier cannot calculate any quotes. App shows a persistent warning on carrier cards and Dashboard banner. Merchants must upload a zone file, not just a rate card.
-- Some carriers (including StarTrack) don't publish postcode zone files publicly. Merchants must contact their account manager and ask specifically for a postcode-to-zone mapping file (CSV or Excel).
+- Postcode zone file is optional in the upload form — but without postcode data the carrier cannot calculate any quotes. Merchants either upload a zone file OR use the "Postcode Ranges" button after saving to enter ranges manually. App shows a "No zone file" amber badge on carrier cards and a Dashboard banner warning when postcodeMap is empty.
+- Some carriers (including StarTrack) don't publish postcode zone files publicly. Merchants must contact their account manager and ask specifically for a postcode-to-zone mapping file (CSV or Excel), or use the manual postcode range entry feature.
 - StarTrack Fixed Price Premium is Model A (weight break flat rate), not Model B. AI correctly detects this. Both services can coexist in the same carrier.
 
 ## WooCommerce Plugin — design decisions
@@ -371,11 +373,10 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Manual postcode range entry — MUST HAVE before launch. Allows merchants to manually enter postcode ranges mapped to zones, for carriers that don't provide a zone file (e.g. StarTrack). Merchant enters ranges: 3000-3999 = Zone 1, 2000-2999 = Zone 2 etc.
-2. Production deployment prep — enable Supabase RLS on all tables before go-live
-3. Resources page surcharge section update — rewrite Surcharge Schedule accordion text: CSV/Excel preferred, PDF accepted, use original documents
-4. Rate Card Converter dim factor detection — surface detected dim factor to merchant after conversion
-5. Landing page — manual quote tool ("Get a Quote") needs more prominent placement
+1. Production deployment prep — enable Supabase RLS on all tables before go-live
+2. Resources page surcharge section update — rewrite Surcharge Schedule accordion text: CSV/Excel preferred, PDF accepted, use original documents
+3. Rate Card Converter dim factor detection — surface detected dim factor to merchant after conversion
+4. Landing page — manual quote tool ("Get a Quote") needs more prominent placement
 
 
 ## Logged for future build
