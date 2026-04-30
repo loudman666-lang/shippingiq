@@ -88,7 +88,9 @@ IMPORTANT for Model B:
 
 For Model A: leave columnMap={}, zoneCodeCol="", zoneNameCol="". Output weightBreaks and zones. Output rates array.
 IMPORTANT: If the rate card header says "EX [CITY]" or "FROM [CITY]" and rows are destination city/location names (not zone codes), this is ALWAYS Model C regardless of column structure.
-For Model C: detect when rows are named locations/cities AND columns are weight break ranges. Leave columnMap={}. Output modelCRates with ALL rows using this exact schema per entry: { "originDepot": "Melbourne", "destinationDepot": "ADELAIDE", "basicCharge": 20.00, "minimumCharge": 75.00, "perKgRates": { "1-250": 0.5413, "251-500": 0.3608, "501-1000": 0.3018, "1001-3000": 0.2790, "3001-12000": 0.2478, "12001+": 0.2248 } } — originDepot from the column header or sheet context, destinationDepot is the exact row name, extract ALL rows.`,
+For Model C: detect when rows are named locations/cities AND columns are weight break ranges. Leave columnMap={}.
+IMPORTANT — CSV with standard header: If the rateText contains a header row exactly matching "OriginDepot,Destination,BasicCharge,Minimum,PerKg_1-250,PerKg_251-500,PerKg_501-1000,PerKg_1001-3000,PerKg_3001-12000,PerKg_12001+", this is ALWAYS Model C. Leave modelCRates=[] — the browser extracts all rows directly from the CSV. Still populate originDepots with the unique values from the OriginDepot column.
+For all other Model C (PDF-sourced or non-standard CSV): Output modelCRates with ALL rows using this exact schema per entry: { "originDepot": "Melbourne", "destinationDepot": "ADELAIDE", "basicCharge": 20.00, "minimumCharge": 75.00, "perKgRates": { "1-250": 0.5413, "251-500": 0.3608, "501-1000": 0.3018, "1001-3000": 0.2790, "3001-12000": 0.2478, "12001+": 0.2248 } } — originDepot from the column header or sheet context, destinationDepot is the exact row name, extract ALL rows.`,
   })
 
   if (rateText?.trim()) {
@@ -109,7 +111,7 @@ For Model C: detect when rows are named locations/cities AND columns are weight 
 // Mode: surcharges
 // ---------------------------------------------------------------------------
 
-async function handleSurcharges(carrierName: string, surchargeText: string) {
+async function handleSurcharges(carrierName: string, surchargeText: string, pdfs: { data: string; name: string; slot: string }[] = []) {
   const userContent: unknown[] = []
 
   userContent.push({
@@ -134,7 +136,10 @@ Respond ONLY with a JSON object. No markdown, no backticks.
 }`,
   })
 
-  userContent.push({ type: 'text', text: `Surcharge data:\n${surchargeText}` })
+  if (surchargeText?.trim()) {
+    userContent.push({ type: 'text', text: `Surcharge data:\n${surchargeText}` })
+  }
+  addPdfs(userContent, pdfs)
 
   const text = await callClaude(userContent)
   return parseJson(text)
@@ -156,7 +161,7 @@ serve(async (req) => {
 
     let result: unknown
     if (mode === 'surcharges') {
-      result = await handleSurcharges(body.carrierName, body.surchargeText)
+      result = await handleSurcharges(body.carrierName, body.surchargeText ?? '', body.pdfs ?? [])
     } else {
       result = await handleRates(body.carrierName, body.rateText, body.pdfs ?? [])
     }

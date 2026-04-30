@@ -455,8 +455,8 @@ function scanCsvText(text, fileName) {
     console.log('[scan] surcharge CSV:', fileName)
     return { postcodeRows: [], rateTexts: [], surchargeTexts: [`[${fileName}]\n${text.slice(0, 4000)}`] }
   }
-  console.log('[scan] rate CSV:', fileName)
-  return { postcodeRows: [], rateTexts: [`[${fileName}]\n${text.slice(0, 8000)}`], surchargeTexts: [] }
+  console.log('[scan] rate CSV:', fileName, '→', text.length, 'chars,', text.split('\n').length, 'lines')
+  return { postcodeRows: [], rateTexts: [`[${fileName}]\n${text}`], surchargeTexts: [] }
 }
 
 // Build modelBRates array from compact CSV text using the column map Claude identified.
@@ -526,6 +526,74 @@ function buildModelBRatesFromCSV(rateText, structure) {
 
   console.log('[buildModelBRatesFromCSV] built', modelBRates.length, 'rate rows from CSV')
   return modelBRates
+}
+
+// Build modelCRates array from CSV with the standard Rate Card Converter header.
+// Claude identifies pricingModel=C and leaves modelCRates=[]; this function extracts every row.
+const MODEL_C_CSV_HEADER = 'origindepot,destination,basiccharge,minimum,perkg_1-250,perkg_251-500,perkg_501-1000,perkg_1001-3000,perkg_3001-12000,perkg_12001+'
+
+function buildModelCRatesFromCSV(rateText, structure) {
+  if (structure.pricingModel !== 'C') return []
+
+  const sections = rateText.split(/\n\n---\n\n/)
+  const modelCRates = []
+
+  for (const section of sections) {
+    const lines = section.trim().split('\n').filter(l => l.trim())
+    if (lines.length < 2) continue
+
+    let headerIdx = 0
+    while (headerIdx < lines.length && /^\[|^\(/.test(lines[headerIdx].trim())) headerIdx++
+    if (headerIdx >= lines.length - 1) continue
+
+    const rawHeaders = parseCsvLine(lines[headerIdx]).map(h => h.toLowerCase().trim())
+    const normalizedHeader = rawHeaders.join(',')
+    if (normalizedHeader !== MODEL_C_CSV_HEADER) {
+      console.log('[buildModelCRatesFromCSV] header mismatch, skipping section. Got:', normalizedHeader.slice(0, 80))
+      continue
+    }
+
+    const dataLines = lines.length - headerIdx - 1
+    console.log('[buildModelCRatesFromCSV] header matched, data lines in section:', dataLines)
+
+    const col = name => rawHeaders.indexOf(name)
+    const originDepotIdx  = col('origindepot')
+    const destinationIdx  = col('destination')
+    const basicChargeIdx  = col('basiccharge')
+    const minimumIdx      = col('minimum')
+    const pk1_250Idx      = col('perkg_1-250')
+    const pk251_500Idx    = col('perkg_251-500')
+    const pk501_1000Idx   = col('perkg_501-1000')
+    const pk1001_3000Idx  = col('perkg_1001-3000')
+    const pk3001_12000Idx = col('perkg_3001-12000')
+    const pk12001Idx      = col('perkg_12001+')
+
+    for (let i = headerIdx + 1; i < lines.length; i++) {
+      const cols = parseCsvLine(lines[i])
+      if (cols.every(c => !String(c).trim())) continue
+
+      const destination = String(cols[destinationIdx] ?? '').trim()
+      if (!destination) continue
+
+      modelCRates.push({
+        originDepot:    String(cols[originDepotIdx] ?? '').trim(),
+        destinationDepot: destination,
+        basicCharge:    parseFloat(cols[basicChargeIdx])  || 0,
+        minimumCharge:  parseFloat(cols[minimumIdx])      || 0,
+        perKgRates: {
+          '1-250':       parseFloat(cols[pk1_250Idx])      || 0,
+          '251-500':     parseFloat(cols[pk251_500Idx])    || 0,
+          '501-1000':    parseFloat(cols[pk501_1000Idx])   || 0,
+          '1001-3000':   parseFloat(cols[pk1001_3000Idx])  || 0,
+          '3001-12000':  parseFloat(cols[pk3001_12000Idx]) || 0,
+          '12001+':      parseFloat(cols[pk12001Idx])      || 0,
+        },
+      })
+    }
+  }
+
+  console.log('[buildModelCRatesFromCSV] built', modelCRates.length, 'rate rows from CSV')
+  return modelCRates
 }
 
 export default function Carriers() {
@@ -691,12 +759,15 @@ export default function Carriers() {
 
       // For Model B: build modelBRates in the browser from CSV using Claude's column map
       const modelBRates = buildModelBRatesFromCSV(combinedRateText, rateData)
+      // For Model C CSV with standard Rate Card Converter header: build modelCRates in the browser
+      const modelCRates = buildModelCRatesFromCSV(combinedRateText, rateData)
 
+      const surchargeDocPdfs = pdfPayloads.filter(p => p.slot === 'surcharge doc')
       let surchargeData = null
-      if (allSurchargeTexts.length > 0) {
+      if (allSurchargeTexts.length > 0 || surchargeDocPdfs.length > 0) {
         setParsingStep('Extracting surcharges...')
         const { data: sd } = await supabase.functions.invoke('rapid-api', {
-          body: { mode: 'surcharges', carrierName: form.name, surchargeText: allSurchargeTexts.join('\n\n---\n\n') }
+          body: { mode: 'surcharges', carrierName: form.name, surchargeText: allSurchargeTexts.join('\n\n---\n\n'), pdfs: surchargeDocPdfs }
         })
         surchargeData = sd
       }
@@ -709,9 +780,15 @@ export default function Carriers() {
         ...rateData,
         fileHash: hash,
         modelBRates: modelBRates.length > 0 ? modelBRates : (rateData?.modelBRates ?? []),
+        modelCRates: modelCRates.length > 0 ? modelCRates : (rateData?.modelCRates ?? []),
+        rateCount: modelBRates.length > 0 ? modelBRates.length
+          : modelCRates.length > 0 ? modelCRates.length
+          : (rateData?.rateCount ?? 0),
         zones: modelBRates.length > 0
           ? [...new Set(modelBRates.map(r => r.zone).filter(Boolean))]
-          : (rateData?.zones ?? []),
+          : modelCRates.length > 0
+            ? [...new Set(modelCRates.map(r => r.destinationDepot).filter(Boolean))]
+            : (rateData?.zones ?? []),
         postcodeMap,
         surcharges: surchargeData?.surcharges ?? rateData?.surcharges ?? [],
       }
@@ -1182,7 +1259,7 @@ export default function Carriers() {
                 <div className="carrier-info">
                   <div className="carrier-name">{carrier.name}</div>
                   <div className="carrier-meta">
-                    {carrier.parsed_data?.rateCount} rates · {carrier.parsed_data?.zones?.length} zones · {carrier.parsed_data?.serviceTypes?.join(', ')}
+                    {carrier.parsed_data?.rateCount} rates · {carrier.parsed_data?.pricingModel === 'C' ? `${carrier.parsed_data?.modelCRates?.length ?? 0} destinations` : `${carrier.parsed_data?.zones?.length ?? 0} zones`} · {carrier.parsed_data?.serviceTypes?.join(', ')}
                     {carrier.parsed_data?.pricingModel && ` · Model ${carrier.parsed_data.pricingModel}`}
                     {carrier.parsed_data?.selectedOrigin && ` · From ${carrier.parsed_data.selectedOrigin}`}
                     {carrier.parsed_data?.surcharges?.length > 0 && ` · ${carrier.parsed_data.surcharges.length} surcharges`}
