@@ -371,9 +371,11 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Production deployment prep — enable Supabase RLS, review security before go-live (error_logs removed, rate caching done)
-2. Resources page surcharge section update — rewrite Surcharge Schedule accordion text: CSV/Excel files preferred, PDF accepted via surcharge doc upload slot, always use original carrier documents not photocopies or scans.
-3. Rate Card Converter dim factor detection — after conversion, parse the CSV for any dim/cubic factor value (e.g. "250", "1/4000") and surface it to the merchant: "We detected a cubic factor of 250 — set this on your carrier card after uploading."
+1. Manual postcode range entry — MUST HAVE before launch. Allows merchants to manually enter postcode ranges mapped to zones, for carriers that don't provide a zone file (e.g. StarTrack). Merchant enters ranges: 3000-3999 = Zone 1, 2000-2999 = Zone 2 etc.
+2. Production deployment prep — enable Supabase RLS on all tables before go-live
+3. Resources page surcharge section update — rewrite Surcharge Schedule accordion text: CSV/Excel preferred, PDF accepted, use original documents
+4. Rate Card Converter dim factor detection — surface detected dim factor to merchant after conversion
+5. Landing page — manual quote tool ("Get a Quote") needs more prominent placement
 
 
 ## Logged for future build
@@ -389,6 +391,9 @@ Model C: Depot-to-depot — Mainfreight style
 - Platform-agnostic product exemption flags: WooCommerce uses product tags (shippingiq-exempt etc). When Shopify/Magento plugins are built, design calculate-freight API to accept flags array per cart item (["exempt", "taillift", "2person"]) so the platform plugin handles translation.
 - PDF converter gated to Growth tier and above — requires billing/tier system to be built first.
 - Surcharge PDF reading improvement — rapid-api surcharges mode already accepts PDF document blocks and calls addPdfs, but the AI prompt could be tuned for better extraction from PDF surcharge schedules specifically.
+- Manual quote tool landing page prominence — currently shares a card in "Two ways to use it" section, deserves its own section.
+- StarTrack and Hunter Express — test with real carrier files once available.
+- Residential surcharge auto-detection via address lookup — parked, current merchant-configured trigger (B2B/B2C setting) is correct for both use cases.
 
 ## Pre-launch testing checklist
 
