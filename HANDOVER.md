@@ -15,6 +15,7 @@ cd ~/Downloads/shippingiq && git add -A && git commit -m "description" && git pu
 ## Supabase edge function deploy — run when edge function changes
 npx supabase functions deploy rapid-api --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
+npx supabase functions deploy convert-pdf-to-csv --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 npx supabase functions deploy invite-team-member --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 npx supabase functions deploy remove-team-member --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 
@@ -164,9 +165,23 @@ npx supabase functions deploy remove-team-member --project-ref soaxvqkkecqzarwmb
 ### Resources page
 - Template Files section: 3 downloadable CSVs (rate-card-template.csv, zone-file-template.csv, surcharge-template.csv) served from /public/templates/
 - Getting Your Carrier Files: 3 accordion cards (Rate Card, Zone File, Surcharge Schedule) with plain-English guidance and copy-paste wording for merchants
+- Rate Card accordion includes: CSV/Excel preference, copy-paste wording for merchants, "Only have a PDF?" link to Rate Card Converter, key things to confirm
 - How ShippingIQ Works: 3-step visual (Upload → Configure → Go Live) with callout box
-- Nav order across all pages: Dashboard → Carriers → Rules → Get a Quote → Resources → [divider] → Team → Settings (Team and Settings visible to admin only)
+- Nav order across all pages: Dashboard → Carriers → Rules → Get a Quote → Resources → Rate Card Converter → [divider] → Team → Settings (Team and Settings visible to admin only)
 - Sign out button (icon + "Sign out" text) is now consistent across all pages: Dashboard, Carriers, Rules, Quote, Resources, Team, Settings
+
+### Rate Card Converter
+- Live at /convert route (PdfConverter.js + PdfConverter.css), nav label "Rate Card Converter"
+- Upload a carrier PDF rate card + enter carrier name → converts to downloadable CSV
+- 4 parallel AI calls with destination range splitting (ADELAIDE–CROOKWELL, DALBY–LAUNCESTON, LEONORA–PORT PIRIE, PORTLAND–YOUNG), merged and deduplicated
+- Output CSV format: OriginDepot,Destination,BasicCharge,Minimum,PerKg_1-250,PerKg_251-500,PerKg_501-1000,PerKg_1001-3000,PerKg_3001-12000,PerKg_12001+
+- Destination name correction map applied post-merge (COLLE→COLLIE, CRAIGIIE→CRAIGIE, DEVONFORT→DEVONPORT, GOONIWINDI→GOONDIWINDI, INGLEWOOD→INGHAM, SEABROOK→SEAFORTH, BANDANEWBURN→BANNOCKBURN, COLIE→COLLIE, SEAFORD→SEAFORTH; BREWARRINA removed)
+- Returns corrections array {original, corrected} — yellow warning box shown if any corrections applied
+- Rate limiting: 5 conversions/day per merchant via upload_logs (action='convert'); fails open if check errors
+- Info box warns: CSV/Excel preferred, PDF accepted, use original not scanned, AI not 100% accurate, verify before uploading
+- Action box on completion: "Before uploading this CSV, open it and compare destination names and rates against your original PDF"
+- Nav item "Rate Card Converter" on all pages (Dashboard, Carriers, Rules, Quote, Resources, Team, Settings, PdfConverter), positioned after Resources, before admin divider, visible to all authenticated users
+- Edge function: supabase/functions/convert-pdf-to-csv/index.ts
 
 ### Settings page
 - Your Profile card: display name input, pre-filled from profile.full_name. Saves to profiles table, calls fetchProfile on success so sidebar updates immediately. Intended entry point for invited users who have no name set.
@@ -206,6 +221,9 @@ src/pages/Carriers.js + Carriers.css
 src/pages/Quote.js
 src/pages/Settings.js
 src/pages/Rules.js
+src/pages/Resources.js
+src/pages/Team.js + Team.css
+src/pages/PdfConverter.js + PdfConverter.css
 src/pages/SignIn.js, SignUp.js, ForgotPassword.js, ResetPassword.js
 src/contexts/AuthContext.js
 src/components/auth/ProtectedRoute.js
@@ -213,6 +231,7 @@ src/lib/supabase.js
 src/App.js
 supabase/functions/rapid-api/index.ts
 supabase/functions/calculate-freight/index.ts
+supabase/functions/convert-pdf-to-csv/index.ts
 supabase/functions/invite-team-member/index.ts
 supabase/functions/remove-team-member/index.ts
 woocommerce-plugin/shippingiq/shippingiq.php
@@ -325,6 +344,8 @@ Model C: Depot-to-depot — Mainfreight style
 - WooCommerce plugin zip is gitignored — rebuild with: `cd ~/Downloads/shippingiq/woocommerce-plugin && zip -r shippingiq.zip shippingiq/`
 - Supabase handle_new_user trigger: manually maintained in Supabase SQL editor — not in codebase. Must include email field in both INSERT statements.
 - profiles table has email NOT NULL column — handle_new_user trigger must always insert NEW.email
+- Zone name column detection: recognises 'ratinglocation', 'rating location', 'rating_location', 'depot', 'service area' as zone name headers in addition to standard 'zone', 'zone name' etc. Added to support Mainfreight MFT_Rating_Locations.xlsx (RatingLocation column).
+- Model C carrier card shows destination count ("261 destinations") not zone count — zones.length was always 1 for Model C (single origin depot). Carrier card now checks pricingModel === 'C' and uses modelCRates.length instead.
 
 ## Known merchant education points
 - Postcode zone file is required — without it the carrier cannot calculate any quotes. App shows a persistent warning on carrier cards and Dashboard banner. Merchants must upload a zone file, not just a rate card.
@@ -349,6 +370,8 @@ Model C: Depot-to-depot — Mainfreight style
 
 ## What to build next
 1. Production deployment prep — enable Supabase RLS, review security before go-live (error_logs removed, rate caching done)
+2. Resources page surcharge section update — rewrite Surcharge Schedule accordion text: CSV/Excel files preferred, PDF accepted via surcharge doc upload slot, always use original carrier documents not photocopies or scans.
+3. Rate Card Converter dim factor detection — after conversion, parse the CSV for any dim/cubic factor value (e.g. "250", "1/4000") and surface it to the merchant: "We detected a cubic factor of 250 — set this on your carrier card after uploading."
 
 
 ## Logged for future build
@@ -362,6 +385,8 @@ Model C: Depot-to-depot — Mainfreight style
 - Carrier-per-product mapping (v2 of eligibility rules)
 - Shared engine module in supabase/functions/_shared/ so Quote.js and calculate-freight stay in sync automatically
 - Platform-agnostic product exemption flags: WooCommerce uses product tags (shippingiq-exempt etc). When Shopify/Magento plugins are built, design calculate-freight API to accept flags array per cart item (["exempt", "taillift", "2person"]) so the platform plugin handles translation.
+- PDF converter gated to Growth tier and above — requires billing/tier system to be built first.
+- Surcharge PDF reading improvement — rapid-api surcharges mode already accepts PDF document blocks and calls addPdfs, but the AI prompt could be tuned for better extraction from PDF surcharge schedules specifically.
 
 ## Pre-launch testing checklist
 
@@ -405,6 +430,14 @@ These simulate Allied/Mainfreight/StarTrack style files.
 
 ## Real carrier file structures (AI handles any format)
 Allied Express: Excel, Model B, origin depots across top columns, zones down side
-Mainfreight: Excel zone file 15,976 rows, Model C depot-to-depot
+Mainfreight: Excel zone file 15,976 rows (MFT_Rating_Locations.xlsx), Model C depot-to-depot — confirmed working end to end
 StarTrack: PDF rate card, mix of Model A and Model B services
 Hunter Express: PDF, Model B, single origin Melbourne
+
+### Mainfreight confirmed working pipeline
+- Rate card: PDF → Rate Card Converter → CSV with standard OriginDepot,Destination,... header
+- Zone file: Excel (MFT_Rating_Locations.xlsx) — columns: Suburb, Post Code, State, RatingLocation
+- Surcharge schedule: PDF — read as base64 document block by rapid-api surcharges mode
+- Model C browser parsing: buildModelCRatesFromCSV detects standard header, extracts all 261 rows
+- RatingLocation column correctly mapped to zone field after zone parser fix (see Known Decisions)
+- Carrier card shows "261 destinations" (not "1 zones")
