@@ -237,6 +237,7 @@ export default function Quote() {
   const [gstEnabled, setGstEnabled] = useState(false)
   const [merchantRules, setMerchantRules] = useState({})
   const [selectedResultIdx, setSelectedResultIdx] = useState(0)
+  const [loadedQuoteDate, setLoadedQuoteDate] = useState(null)
 
   async function handleSignOut() {
     await signOut()
@@ -287,6 +288,17 @@ export default function Quote() {
   function addItem() { setItems([...items, emptyItem()]) }
   function removeItem(id) { if (items.length > 1) setItems(items.filter(i => i.id !== id)) }
 
+  function loadSavedQuote(q) {
+    const loadedItems = (q.items || []).map(item => ({ ...item, id: Date.now() + Math.random() }))
+    setItems(loadedItems.length > 0 ? loadedItems : [emptyItem()])
+    setPostcode(q.postcode || '')
+    setResults(q.results || null)
+    setSelectedResultIdx(0)
+    setLoadedQuoteDate(new Date(q.created_at).toLocaleString('en-AU'))
+    setShowSaved(false)
+    window.scrollTo(0, 0)
+  }
+
   function sortResults(arr) {
     return [...arr].sort((a, b) => {
       if (a.error && !b.error) return 1
@@ -300,6 +312,7 @@ export default function Quote() {
 
   function getQuote() {
     setError(null)
+    setLoadedQuoteDate(null)
     setResults(null)
     if (!postcode || postcode.length < 4) { setError('Please enter a valid Australian postcode.'); return }
     if (carriers.length === 0) { setError('No active carriers found. Add a carrier first.'); return }
@@ -381,18 +394,26 @@ export default function Quote() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {savedQuotes.map((q, i) => (
-                  <div key={i} style={{ padding: '12px 16px', background: 'var(--surface-2)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
+                  <div key={i} style={{ padding: '12px 16px', background: 'var(--surface-2)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: '500', fontSize: '14px' }}>Postcode {q.postcode} · {q.items?.length} item{q.items?.length !== 1 ? 's' : ''}</div>
                       <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '2px' }}>{new Date(q.created_at).toLocaleString('en-AU')}</div>
                     </div>
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                      {q.results?.filter(r => !r.error).map((r, j) => (
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                      {q.results?.filter(r => !r.error).slice(0, 2).map((r, j) => (
                         <div key={j} style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--accent)' }}>${r.freightCost?.toFixed(2)}</div>
+                          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--accent)' }}>
+                            {r.freeShipping ? 'FREE' : r.totalCost != null ? `$${r.totalCost.toFixed(2)}` : `$${r.freightCost?.toFixed(2)}`}
+                          </div>
                           <div style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>{r.carrier}</div>
                         </div>
                       ))}
+                      <button
+                        onClick={() => loadSavedQuote(q)}
+                        style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '6px', border: '1px solid var(--color-border-secondary)', background: 'var(--color-background-primary)', color: 'var(--color-text-primary)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      >
+                        Load
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -482,6 +503,12 @@ export default function Quote() {
           </div>
 
           <div>
+            {results && loadedQuoteDate && (
+              <div style={{ background: 'var(--color-background-warning)', border: '1px solid var(--color-border-warning)', borderRadius: '8px', padding: '10px 14px', marginBottom: '12px', fontSize: '13px', color: 'var(--color-text-warning)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Loaded from saved quote ({loadedQuoteDate}). Rates may have changed — click Calculate Freight to refresh.</span>
+                <button onClick={() => setLoadedQuoteDate(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-warning)', padding: '0 0 0 12px' }}>×</button>
+              </div>
+            )}
             {results ? (() => {
               const cheapestPaidIdx = results.findIndex(r => !r.error && !r.freeShipping)
               const hasFreeResult = results.some(r => r.freeShipping)
