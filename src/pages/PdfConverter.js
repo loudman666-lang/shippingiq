@@ -24,6 +24,7 @@ export default function PdfConverter() {
   const [rowCount, setRowCount] = useState(0)
   const [csv, setCsv] = useState('')
   const [corrections, setCorrections] = useState([])
+  const [detectedCubicFactor, setDetectedCubicFactor] = useState(null)
   const [error, setError] = useState('')
 
   const avatarInitial = profile?.full_name?.charAt(0) || merchant?.name?.charAt(0) || '?'
@@ -56,6 +57,7 @@ export default function PdfConverter() {
       setCsv(data.csv)
       setRowCount(data.rowCount)
       setCorrections(data.corrections || [])
+      setDetectedCubicFactor(data.cubicFactor || null)
       setStep('done')
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')
@@ -78,6 +80,7 @@ export default function PdfConverter() {
     setCsv('')
     setRowCount(0)
     setCorrections([])
+    setDetectedCubicFactor(null)
     setError('')
     setPdfFile(null)
     setCarrierName('')
@@ -245,6 +248,12 @@ export default function PdfConverter() {
                     {corrections.map(c => (
                       <div key={c.original}>{c.original} → {c.corrected}</div>
                     ))}
+                  </div>
+                )}
+
+                {detectedCubicFactor && (
+                  <div style={{ padding: '10px 14px', background: 'var(--color-background-info)', borderLeft: '3px solid var(--color-border-info)', borderRadius: 'var(--border-radius-md)', fontSize: '14px', color: 'var(--color-text-info)', marginBottom: '12px' }}>
+                    Cubic factor {detectedCubicFactor} detected in your rate card. After uploading this CSV to ShippingIQ, set the cubic factor to {detectedCubicFactor} on your carrier card.
                   </div>
                 )}
 

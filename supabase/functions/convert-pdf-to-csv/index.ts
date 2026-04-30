@@ -110,11 +110,41 @@ serve(async (req) => {
       return data.content?.[0]?.text || ''
     }
 
-    const [csv1, csv2, csv3, csv4] = await Promise.all([
+    async function detectCubicFactorFromPdf(): Promise<string | null> {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': Deno.env.get('ANTHROPIC_API_KEY') ?? '',
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 50,
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: 'document',
+                source: { type: 'base64', media_type: mediaType || 'application/pdf', data: pdfBase64 },
+              },
+              { type: 'text', text: 'What is the cubic weight factor (also called dim factor, volumetric divisor, or cubic conversion factor) stated in this document? Common values are 250, 333, 200, 167. Return a single number only (e.g. 250). If not mentioned anywhere in the document, return nothing.' },
+            ],
+          }],
+        }),
+      })
+      const data = await res.json()
+      const text = (data.content?.[0]?.text || '').trim()
+      const match = text.match(/\b(250|333|200|167|250\.0|333\.0)\b/)
+      return match ? match[1].replace('.0', '') : null
+    }
+
+    const [csv1, csv2, csv3, csv4, cubicFactor] = await Promise.all([
       callClaude('1/4', 'ADELAIDE', 'CROOKWELL'),
       callClaude('2/4', 'DALBY', 'LAUNCESTON'),
       callClaude('3/4', 'LEONORA', 'PORT PIRIE'),
       callClaude('4/4', 'PORTLAND', 'YOUNG'),
+      detectCubicFactorFromPdf(),
     ])
 
     const lines1 = csv1.trim().split('\n')
@@ -183,7 +213,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ csv, rowCount, corrections }),
+      JSON.stringify({ csv, rowCount, corrections, cubicFactor }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (err) {
