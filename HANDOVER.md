@@ -178,6 +178,8 @@ npx supabase functions deploy remove-team-member --project-ref soaxvqkkecqzarwmb
 - 4 parallel AI calls with destination range splitting (ADELAIDE–CROOKWELL, DALBY–LAUNCESTON, LEONORA–PORT PIRIE, PORTLAND–YOUNG), merged and deduplicated
 - Output CSV format: OriginDepot,Destination,BasicCharge,Minimum,PerKg_1-250,PerKg_251-500,PerKg_501-1000,PerKg_1001-3000,PerKg_3001-12000,PerKg_12001+
 - Destination name correction map applied post-merge (COLLE→COLLIE, CRAIGIIE→CRAIGIE, DEVONFORT→DEVONPORT, GOONIWINDI→GOONDIWINDI, INGLEWOOD→INGHAM, SEABROOK→SEAFORTH, BANDANEWBURN→BANNOCKBURN, COLIE→COLLIE, SEAFORD→SEAFORTH; BREWARRINA removed)
+- Model B support: detects pricing model before extraction. Model B (zone-based) uses a single focused AI call. Model C (destination cities) uses the existing 4-call parallel flow. Detection runs in parallel with cubic factor detection.
+- Cubic factor detection: 5th parallel AI call reads the PDF for cubic/dim factor (250, 333, 200, 167). Returns as cubicFactor in response. PdfConverter.js shows a blue info box if detected.
 - Returns corrections array {original, corrected} — yellow warning box shown if any corrections applied
 - Rate limiting: 5 conversions/day per merchant via upload_logs (action='convert'); fails open if check errors
 - Info box warns: CSV/Excel preferred, PDF accepted, use original not scanned, AI not 100% accurate, verify before uploading
@@ -373,10 +375,10 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Production deployment prep — enable Supabase RLS on all tables before go-live
-2. Resources page surcharge section update — rewrite Surcharge Schedule accordion text: CSV/Excel preferred, PDF accepted, use original documents
-3. Rate Card Converter dim factor detection — surface detected dim factor to merchant after conversion
-4. Landing page — manual quote tool ("Get a Quote") needs more prominent placement
+1. Production deployment prep — enable Supabase RLS on all tables before go-live *(Next session priority)*
+2. Resources page surcharge section update — DONE
+3. Rate Card Converter dim factor detection — DONE
+4. Landing page — manual quote tool needs more prominent placement
 
 
 ## Logged for future build
