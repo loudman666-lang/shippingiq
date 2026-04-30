@@ -185,9 +185,11 @@ npx supabase functions deploy remove-team-member --project-ref soaxvqkkecqzarwmb
 
 ### Settings page
 - Your Profile card: display name input, pre-filled from profile.full_name. Saves to profiles table, calls fetchProfile on success so sidebar updates immediately. Intended entry point for invited users who have no name set.
+- Customer Type card: B2B or B2C radio selection, saved to merchants.settings.customerType ('b2b' or 'b2c'). Drives default residential surcharge trigger when opening Surcharge Rules on a carrier — B2C (or unset) defaults residential surcharges to Always, B2B defaults to Off. Confirmed working: Mainfreight residential = Always, Allied Express has no residential surcharge.
 - Store Details card: merchant can update their store name. Updates merchants.name in Supabase. Reflected immediately on Dashboard subtitle.
 - GST toggle: Ex GST (B2B default) or Inc GST (B2C)
 - Note: GST applies to Get a Quote page only — WooCommerce handles GST via its own tax settings
+- Fixed silent settings-clobber bug: all settings saves (GST, Customer Type) now write { gstEnabled, customerType } together — previously GST save was overwriting the entire settings jsonb and wiping other fields.
 - Sign out button in sidebar footer (icon + "Sign out" text)
 
 ### Rules page
