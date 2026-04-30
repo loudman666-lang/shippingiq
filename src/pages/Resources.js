@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import './Dashboard.css'
 
@@ -25,7 +25,10 @@ const ACCORDION = [
           </p>
         </div>
         <p style={{ fontSize: '14px', lineHeight: '1.65', color: 'var(--ink-mid)', margin: 0 }}>
-          <strong style={{ color: 'var(--ink)', fontWeight: '600' }}>Only have a PDF?</strong> Use the <a href="/convert" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '500' }}>Rate Card Converter</a> to extract your rates automatically.
+          If your carrier only provides a PDF, use the <Link to="/convert" style={{ color: 'var(--color-text-info)', textDecoration: 'none', fontWeight: '500' }}>Rate Card Converter</Link> to extract your rates automatically. Always use the original PDF from your carrier — emailed directly or exported digitally. Scanned or photographed rate cards may produce errors.
+        </p>
+        <p style={{ fontSize: '14px', lineHeight: '1.65', color: 'var(--ink-mid)', margin: 0, borderLeft: '3px solid var(--color-border-warning)', paddingLeft: '10px' }}>
+          AI conversion is not 100% accurate. Always verify destination names and rate values against your original PDF before uploading to ShippingIQ. Minor errors are possible, particularly in scanned documents or PDFs with complex formatting.
         </p>
         <p style={{ fontSize: '14px', lineHeight: '1.65', color: 'var(--ink-mid)', margin: 0 }}>
           <strong style={{ color: 'var(--ink)', fontWeight: '600' }}>Key things to confirm:</strong> which pricing model applies (flat rate per zone, or base + per kg), which origin depot your freight leaves from, and whether fuel levy is included or separate.
@@ -77,7 +80,7 @@ const ACCORDION = [
           Surcharges are optional but recommended. Common surcharges include fuel levy, tail lift, residential delivery, and overlength fees.
         </p>
         <p style={{ fontSize: '14px', lineHeight: '1.65', color: 'var(--ink-mid)', margin: 0 }}>
-          Ask your carrier for: a surcharge schedule or ancillary charges document. ShippingIQ will extract the surcharges automatically and let you configure when each one applies.
+          Ask your carrier for a surcharge schedule or ancillary charges document. CSV or Excel files work best — PDF is also accepted. Always use the original document direct from your carrier, not a photocopy or scanned copy, as these can affect how accurately ShippingIQ reads the data.
         </p>
       </div>
     ),
