@@ -246,7 +246,7 @@ woocommerce-plugin/shippingiq/readme.txt
 
 ## Database (Supabase)
 Tables: profiles, merchants, carriers, quotes, upload_logs
-RLS: DISABLED on all tables (dev only — enable before go-live)
+RLS: ENABLED on all tables (carriers, merchants, profiles, quotes, upload_logs). Policies use get_merchant_id() and get_user_role() helper functions already defined in Supabase. Performance indexes added on merchant_id columns. upload_logs had RLS enabled but no policies — now fixed.
 
 profiles columns: id, merchant_id (FK → merchants.id), full_name, email (NOT NULL), role (default 'user'), created_at, updated_at
 
@@ -375,7 +375,7 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Production deployment prep — enable Supabase RLS on all tables before go-live *(Next session priority)*
+1. Production deployment prep — Supabase RLS enabled on all tables ✅ DONE
 2. Resources page surcharge section update — DONE
 3. Rate Card Converter dim factor detection — DONE
 4. Landing page — manual quote tool needs more prominent placement
