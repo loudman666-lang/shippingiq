@@ -504,9 +504,9 @@ export default function Quote() {
 
           <div>
             {results && loadedQuoteDate && (
-              <div style={{ background: 'var(--color-background-warning)', border: '1px solid var(--color-border-warning)', borderRadius: '8px', padding: '10px 14px', marginBottom: '12px', fontSize: '13px', color: 'var(--color-text-warning)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ background: 'var(--accent-light)', borderLeft: '3px solid var(--accent)', borderRadius: '8px', padding: '10px 14px', marginBottom: '12px', fontSize: '13px', color: 'var(--ink)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>Loaded from saved quote ({loadedQuoteDate}). Rates may have changed — click Calculate Freight to refresh.</span>
-                <button onClick={() => setLoadedQuoteDate(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--color-text-warning)', padding: '0 0 0 12px' }}>×</button>
+                <button onClick={() => setLoadedQuoteDate(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--accent)', padding: '0 0 0 12px' }}>×</button>
               </div>
             )}
             {results ? (() => {
