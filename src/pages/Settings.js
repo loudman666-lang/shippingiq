@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import './Carriers.css'
+import { TermsModal, PrivacyModal, RefundModal } from '../components/LegalModals'
 
 export default function Settings() {
   const { user, profile, merchant, isAdmin, signOut, fetchProfile } = useAuth()
@@ -22,6 +23,9 @@ export default function Settings() {
   const [savingName2, setSavingName2] = useState(false)
   const [nameSaved2, setNameSaved2] = useState(false)
   const [nameError2, setNameError2] = useState('')
+  const [showTerms, setShowTerms] = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
+  const [showRefund, setShowRefund] = useState(false)
 
   useEffect(() => {
     if (profile?.full_name) setDisplayName(profile.full_name)
@@ -288,6 +292,17 @@ export default function Settings() {
             </button>
           </div>
         )}
+        <div className="settings-card">
+          <div className="settings-card-title">Legal</div>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <button onClick={() => setShowTerms(true)} style={{ fontSize: '13px', padding: '8px 16px', borderRadius: 'var(--radius)', border: '1px solid var(--border-mid)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer' }}>Terms of Service</button>
+            <button onClick={() => setShowPrivacy(true)} style={{ fontSize: '13px', padding: '8px 16px', borderRadius: 'var(--radius)', border: '1px solid var(--border-mid)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer' }}>Privacy Policy</button>
+            <button onClick={() => setShowRefund(true)} style={{ fontSize: '13px', padding: '8px 16px', borderRadius: 'var(--radius)', border: '1px solid var(--border-mid)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer' }}>Refund Policy</button>
+          </div>
+          {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
+          {showPrivacy && <PrivacyModal onClose={() => setShowPrivacy(false)} />}
+          {showRefund && <RefundModal onClose={() => setShowRefund(false)} />}
+        </div>
         </div>
       </main>
     </div>

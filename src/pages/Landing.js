@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import './Landing.css'
+import { TermsModal, PrivacyModal, RefundModal } from '../components/LegalModals'
 
 function CheckIcon() {
   return (
@@ -10,6 +12,10 @@ function CheckIcon() {
 }
 
 export default function Landing() {
+  const [showTerms, setShowTerms] = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
+  const [showRefund, setShowRefund] = useState(false)
+
   return (
     <div className="landing-page">
 
@@ -599,11 +605,15 @@ export default function Landing() {
           <p style={{ marginTop: '6px' }}><a href="mailto:support@shippingiq.com.au" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>support@shippingiq.com.au</a></p>
         </div>
         <div className="footer-links">
-          <a href="#">Terms of Service</a>
-          <a href="#">Privacy Policy</a>
-          <a href="#">Refund Policy</a>
+          <a href="#" onClick={e => { e.preventDefault(); setShowTerms(true) }}>Terms of Service</a>
+          <a href="#" onClick={e => { e.preventDefault(); setShowPrivacy(true) }}>Privacy Policy</a>
+          <a href="#" onClick={e => { e.preventDefault(); setShowRefund(true) }}>Refund Policy</a>
         </div>
       </footer>
+
+      {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
+      {showPrivacy && <PrivacyModal onClose={() => setShowPrivacy(false)} />}
+      {showRefund && <RefundModal onClose={() => setShowRefund(false)} />}
 
     </div>
   )
