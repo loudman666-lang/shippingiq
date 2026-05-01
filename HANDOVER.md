@@ -18,6 +18,9 @@ npx supabase functions deploy calculate-freight --project-ref soaxvqkkecqzarwmbe
 npx supabase functions deploy convert-pdf-to-csv --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 npx supabase functions deploy invite-team-member --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 npx supabase functions deploy remove-team-member --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
+npx supabase functions deploy create-checkout-session --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
+npx supabase functions deploy stripe-webhook --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
+npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 
 ## Tool preference — ALWAYS USE CLAUDE CODE
 - Use Claude Code (claude command in terminal) for all file changes
@@ -174,6 +177,23 @@ npx supabase functions deploy remove-team-member --project-ref soaxvqkkecqzarwmb
 - Saved Quotes nav link on all pages
 - quotes table: id, merchant_id, postcode, items (jsonb), results (jsonb), reference (text), created_at
 
+### Billing (Stripe)
+- Stripe account: acct_1T9F7lDdBlDgOLr3 (shared with ImporterIQ and MarginIQ)
+- Three edge functions deployed: create-checkout-session, stripe-webhook, create-portal-session
+- Stripe products: Starter $39/mo, Growth $79/mo, Pro $149/mo (AUD, recurring)
+- 14-day free trial, no credit card required (payment_method_collection: if_required)
+- Webhook endpoint registered: https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/stripe-webhook
+- Webhook events: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.payment_failed
+- merchants.subscription jsonb column stores: tier, status, stripe_customer_id, stripe_subscription_id, trial_ends_at, current_period_ends_at
+- Tier values: free | starter | growth | pro
+- Status values: active | trialing | past_due | canceled
+- AuthContext: planTier reads from merchant.subscription.tier (defaults to 'free')
+- Billing page at /pricing — 4-plan pricing grid, upgrade buttons, current plan banner, manage billing portal link
+- BillingSuccess page at /billing/success — auto-redirects to dashboard after 4 seconds
+- Billing nav link on all pages (admin only)
+- STRIPE_SECRET_KEY: new key created (not the original sk_live — original couldn't be copied, new key created via "+ Create secret key")
+- Feature limits per tier: Free=1 carrier, Starter=3, Growth=10, Pro=unlimited. Rate Card Converter: Growth+ only. Team members: Free/Starter=1, Growth=3, Pro=unlimited.
+
 ### Resources page
 - Template Files section: 3 downloadable CSVs (rate-card-template.csv, zone-file-template.csv, surcharge-template.csv) served from /public/templates/
 - Getting Your Carrier Files: 3 accordion cards (Rate Card, Zone File, Surcharge Schedule) with plain-English guidance and copy-paste wording for merchants
@@ -231,6 +251,14 @@ npx supabase functions deploy remove-team-member --project-ref soaxvqkkecqzarwmb
 - PHP 8.2 compatible — explicit property declarations, no return type on WC method overrides
 - Allied Express tested end-to-end at WooCommerce checkout — correct rates confirmed
 
+## Supabase Edge Function Secrets
+STRIPE_SECRET_KEY — Stripe secret key (sk_live_...) — new key created May 2026
+STRIPE_WEBHOOK_SECRET — webhook signing secret (whsec_...)
+STRIPE_PRICE_STARTER — price_1TS5WDDdBlDgOLr37czglYF5
+STRIPE_PRICE_GROWTH — price_1TS5Y9DdBlDgOLr3o5x9ghiO
+STRIPE_PRICE_PRO — price_1TS5YPDdBlDgOLr3gKwaeT4j
+APP_URL — http://localhost:3000 (update to production URL before go-live)
+
 ## Current file structure
 src/pages/Dashboard.js + Dashboard.css
 src/pages/Carriers.js + Carriers.css
@@ -240,6 +268,8 @@ src/pages/Rules.js
 src/pages/Resources.js
 src/pages/Team.js + Team.css
 src/pages/PdfConverter.js + PdfConverter.css
+src/pages/Pricing.js
+src/pages/BillingSuccess.js
 src/pages/SignIn.js, SignUp.js, ForgotPassword.js, ResetPassword.js
 src/contexts/AuthContext.js
 src/components/auth/ProtectedRoute.js
@@ -250,6 +280,9 @@ supabase/functions/calculate-freight/index.ts
 supabase/functions/convert-pdf-to-csv/index.ts
 supabase/functions/invite-team-member/index.ts
 supabase/functions/remove-team-member/index.ts
+supabase/functions/create-checkout-session/index.ts
+supabase/functions/stripe-webhook/index.ts
+supabase/functions/create-portal-session/index.ts
 woocommerce-plugin/shippingiq/shippingiq.php
 woocommerce-plugin/shippingiq/includes/class-wc-shipping-shippingiq.php
 woocommerce-plugin/shippingiq/readme.txt
@@ -324,6 +357,15 @@ POST { postcode, items, merchant_id, orderValue? (default 0), hasExemptItem? (de
 - postcodeEntry uses `suburb || locality` fallback (old carriers used locality)
 - DO NOT break this interface — WooCommerce plugin depends on it
 
+### create-checkout-session
+POST { priceId, tier } — creates Stripe Checkout session with 14-day trial, no card required. Gets/creates Stripe customer linked to merchant. Returns { url } for redirect.
+
+### stripe-webhook
+Receives Stripe events, verifies signature with STRIPE_WEBHOOK_SECRET. Updates merchants.subscription jsonb on checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.payment_failed.
+
+### create-portal-session
+POST — creates Stripe Customer Portal session. Returns { url } for redirect. Requires existing stripe_customer_id on merchant.
+
 ## Freight calculation engine
 Lives in Quote.js (client-side) AND calculate-freight/index.ts (server-side)
 IMPORTANT: Keep both in sync — if engine logic changes, update both files
@@ -385,10 +427,12 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Production deployment prep — Supabase RLS enabled on all tables ✅ DONE
-2. Resources page surcharge section update — DONE
-3. Rate Card Converter dim factor detection — DONE
-4. Landing page — manual quote tool needs more prominent placement
+1. Feature gating — enforce tier limits in Carriers page (carrier count), Rate Card Converter (Growth+ only), Team page (member limits)
+2. Upgrade prompts — inline "Upgrade to X" when merchant hits a limit
+3. Landing page pricing section — update to match confirmed tier features and pricing
+4. Production deployment — Netlify, update APP_URL secret, update WooCommerce plugin API URL
+5. Terms of service + privacy policy pages
+6. Supabase RLS — add policy for merchants.subscription column (currently readable by merchant, writable only by service role)
 
 
 ## Logged for future build
