@@ -29,8 +29,17 @@ npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzar
 
 ## App access
 - Local: http://localhost:3000
+- Live (Netlify): https://neon-pie-9a1542.netlify.app
 - GitHub: github.com/loudman666-lang/shippingiq
 - Supabase: soaxvqkkecqzarwmbeip.supabase.co
+
+## Production deployment
+- Netlify: https://neon-pie-9a1542.netlify.app (deployed via Netlify Drop — drag build folder)
+- To redeploy: npm run build, then drag ~/Downloads/shippingiq/build folder to Netlify project
+- APP_URL secret set to Netlify URL in Supabase edge function secrets
+- Supabase Auth redirect URLs: https://neon-pie-9a1542.netlify.app/** and http://localhost:3000/**
+- Email confirmation: disabled (turn on before serious scale, requires proper email sender setup)
+- _redirects file in public/ folder handles React Router on Netlify
 
 ## Dave's working preferences — NEVER CHANGE
 - Dave is time-poor. Keep explanations short.
