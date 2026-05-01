@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import './Carriers.css'
+import { TIER_LIMITS } from '../lib/tierLimits'
 
 function RateTable({ carrier }) {
   const data = carrier.parsed_data
@@ -630,7 +631,7 @@ function buildModelCRatesFromCSV(rateText, structure) {
 }
 
 export default function Carriers() {
-  const { profile, merchant, isAdmin, signOut } = useAuth()
+  const { profile, merchant, isAdmin, planTier, signOut } = useAuth()
   const navigate = useNavigate()
   const [carriers, setCarriers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -658,6 +659,10 @@ export default function Carriers() {
   const [savingPostcodeRanges, setSavingPostcodeRanges] = useState(false)
   const [postcodeRangeError, setPostcodeRangeError] = useState(null)
   const [postcodeRangeSuccess, setPostcodeRangeSuccess] = useState(false)
+
+  const carrierLimit = TIER_LIMITS[planTier]?.carriers ?? 1
+  const activeCarrierCount = carriers.filter(c => c.status === 'active').length
+  const atCarrierLimit = activeCarrierCount >= carrierLimit
 
   async function handleSignOut() {
     await signOut()
@@ -1044,13 +1049,27 @@ export default function Carriers() {
             <h1 className="main-title">Carriers</h1>
             <p className="main-subtitle">Manage your freight carriers and rate cards</p>
           </div>
-          <button className="btn-primary" onClick={() => { setShowAdd(true); setEditingCarrierId(null); setParseResult(null); setError(null); setViewingCarrier(null); setFromCache(false) }}>
+          <button
+            className="btn-primary"
+            onClick={() => {
+              if (atCarrierLimit) {
+                alert(`Your ${planTier} plan includes ${carrierLimit} carrier${carrierLimit !== 1 ? 's' : ''}. Upgrade your plan to add more.`)
+                return
+              }
+              setShowAdd(true); setEditingCarrierId(null); setParseResult(null); setError(null); setViewingCarrier(null); setFromCache(false)
+            }}
+          >
             + Add Carrier
           </button>
         </div>
 
         {showAdd && (
           <div className="card" style={{ marginBottom: '24px' }}>
+            {atCarrierLimit && (
+              <div style={{ background: 'var(--accent-light)', borderLeft: '3px solid var(--accent)', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: '16px', fontSize: '13px', color: 'var(--ink)' }}>
+                You've reached the {carrierLimit}-carrier limit on your {planTier} plan. <a href="/pricing" style={{ color: 'var(--accent)', fontWeight: '500' }}>Upgrade to add more carriers →</a>
+              </div>
+            )}
             <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>
               {editingCarrierId ? `Update Carrier: ${form.name}` : 'Add New Carrier'}
             </h2>

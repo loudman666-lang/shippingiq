@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { TIER_LIMITS } from '../lib/tierLimits'
 import { supabase } from '../lib/supabase'
 import './Dashboard.css'
 import './PdfConverter.css'
@@ -15,7 +16,7 @@ function readFileAsBase64(file) {
 }
 
 export default function PdfConverter() {
-  const { profile, merchant, isAdmin, signOut } = useAuth()
+  const { profile, merchant, isAdmin, planTier, signOut } = useAuth()
   const navigate = useNavigate()
 
   const [carrierName, setCarrierName] = useState('')
@@ -27,6 +28,7 @@ export default function PdfConverter() {
   const [detectedCubicFactor, setDetectedCubicFactor] = useState(null)
   const [error, setError] = useState('')
 
+  const canUseConverter = TIER_LIMITS[planTier]?.converter ?? false
   const avatarInitial = profile?.full_name?.charAt(0) || merchant?.name?.charAt(0) || '?'
   const canConvert = carrierName.trim() && pdfFile && !step
 
@@ -159,7 +161,19 @@ export default function PdfConverter() {
             </div>
           </div>
 
-          <div className="card" style={{ maxWidth: '560px' }}>
+          {!canUseConverter ? (
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '40px', textAlign: 'center', maxWidth: '480px' }}>
+              <div style={{ fontSize: '32px', marginBottom: '16px' }}>🔒</div>
+              <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--ink)', marginBottom: '8px' }}>Rate Card Converter is a Growth feature</div>
+              <div style={{ fontSize: '14px', color: 'var(--ink-muted)', marginBottom: '24px', lineHeight: '1.6' }}>
+                Upload a PDF rate card and we'll convert it to CSV automatically. Available on Growth and Pro plans.
+              </div>
+              <a href="/pricing" style={{ display: 'inline-block', background: 'var(--accent)', color: 'white', padding: '10px 24px', borderRadius: 'var(--radius)', fontSize: '14px', fontWeight: '500', textDecoration: 'none' }}>
+                Upgrade to Growth →
+              </a>
+            </div>
+          ) : (
+            <div className="card" style={{ maxWidth: '560px' }}>
             <div style={{ padding: '12px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '13px', color: '#0369a1', lineHeight: '1.6', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <p style={{ margin: 0 }}>For the most accurate results, ask your carrier for a CSV or Excel rate sheet and upload it directly — no conversion needed.</p>
               <p style={{ margin: 0 }}>If your carrier only provides a PDF, upload it here and we'll convert it. Use the original PDF from your carrier — emailed directly or exported digitally. Scanned or photographed rate cards may produce errors.</p>
@@ -283,6 +297,7 @@ export default function PdfConverter() {
               </>
             )}
           </div>
+          )}
         </div>
       </main>
     </div>
