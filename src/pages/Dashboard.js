@@ -207,7 +207,7 @@ export default function Dashboard() {
                   })}
                 </div>
                 <div style={{ marginTop: '12px' }}>
-                  <a href="/quote?savedQuotes=open" style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '500', textDecoration: 'none' }}>View all saved quotes →</a>
+                  <a href="/saved-quotes" style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '500', textDecoration: 'none' }}>View all saved quotes →</a>
                 </div>
               </div>
             )}

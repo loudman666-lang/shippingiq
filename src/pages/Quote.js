@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import './Carriers.css'
@@ -224,6 +224,7 @@ const emptyItem = () => ({ id: Date.now() + Math.random(), qty: 1, desc: '', wei
 export default function Quote() {
   const { profile, merchant, isAdmin, signOut } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [carriers, setCarriers] = useState([])
   const [loading, setLoading] = useState(true)
   const [postcode, setPostcode] = useState('')
@@ -246,9 +247,13 @@ export default function Quote() {
 
   useEffect(() => {
     if (!merchant?.id) return
-    const openSaved = new URLSearchParams(window.location.search).get('savedQuotes') === 'open'
     fetchCarriers()
-    fetchSavedQuotes().then(() => { if (openSaved) setShowSaved(true) })
+    fetchSavedQuotes().then(() => {
+      if (location.state?.loadQuote) {
+        loadSavedQuote(location.state.loadQuote)
+        window.history.replaceState({}, '', '/quote')
+      }
+    })
   }, [merchant])
 
   async function fetchCarriers() {
@@ -345,6 +350,7 @@ export default function Quote() {
     { href: '/carriers', label: 'Carriers', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> },
     { href: '/rules', label: 'Rules', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> },
     { href: '/quote', label: 'Get a Quote', active: true, icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> },
+    { href: '/saved-quotes', label: 'Saved Quotes', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> },
     { href: '/resources', label: 'Resources', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> },
     { href: '/convert', label: 'Rate Card Converter', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg> },
   ]
@@ -381,46 +387,7 @@ export default function Quote() {
             <h1 className="main-title">Get a Quote</h1>
             <p className="main-subtitle">Calculate freight for a customer order — enter destination and all items</p>
           </div>
-          <button className="btn-secondary" onClick={() => setShowSaved(!showSaved)}>
-            {showSaved ? 'Hide Saved' : 'Saved Quotes'} {savedQuotes.length > 0 && '(' + savedQuotes.length + ')'}
-          </button>
         </div>
-
-        {showSaved && (
-          <div className="card" style={{ marginBottom: '32px' }}>
-            <div style={{ fontSize: '15px', fontWeight: '600', marginBottom: '16px', color: 'var(--ink)' }}>Saved Quotes</div>
-            {savedQuotes.length === 0 ? (
-              <p style={{ color: 'var(--ink-muted)', fontSize: '14px' }}>No saved quotes yet.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {savedQuotes.map((q, i) => (
-                  <div key={i} style={{ padding: '12px 16px', background: 'var(--surface-2)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: '500', fontSize: '14px' }}>Postcode {q.postcode} · {q.items?.length} item{q.items?.length !== 1 ? 's' : ''}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '2px' }}>{new Date(q.created_at).toLocaleString('en-AU')}</div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                      {q.results?.filter(r => !r.error).slice(0, 2).map((r, j) => (
-                        <div key={j} style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--accent)' }}>
-                            {r.freeShipping ? 'FREE' : r.totalCost != null ? `$${r.totalCost.toFixed(2)}` : `$${r.freightCost?.toFixed(2)}`}
-                          </div>
-                          <div style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>{r.carrier}</div>
-                        </div>
-                      ))}
-                      <button
-                        onClick={() => loadSavedQuote(q)}
-                        style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '6px', border: '1px solid var(--color-border-secondary)', background: 'var(--color-background-primary)', color: 'var(--color-text-primary)', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                      >
-                        Load
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '32px', alignItems: 'start' }}>
           <div>
