@@ -194,6 +194,14 @@ npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzar
 - STRIPE_SECRET_KEY: new key created (not the original sk_live — original couldn't be copied, new key created via "+ Create secret key")
 - Feature limits per tier: Free=1 carrier, Starter=3, Growth=10, Pro=unlimited. Rate Card Converter: Growth+ only. Team members: Free/Starter=1, Growth=3, Pro=unlimited.
 
+### Legal
+- Terms of Service, Privacy Policy, and Refund & Cancellation Policy modals
+- Component: src/components/LegalModals.js — TermsModal, PrivacyModal, RefundModal
+- Accessible from Landing page footer (3 buttons) and Settings page (Legal card)
+- Modals close on × button or clicking outside
+- Australian law compliant — Privacy Act 1988, Australian Consumer Law, Victorian jurisdiction
+- Support email: support@shippingiq.com.au (not yet set up)
+
 ### Resources page
 - Template Files section: 3 downloadable CSVs (rate-card-template.csv, zone-file-template.csv, surcharge-template.csv) served from /public/templates/
 - Getting Your Carrier Files: 3 accordion cards (Rate Card, Zone File, Surcharge Schedule) with plain-English guidance and copy-paste wording for merchants
@@ -427,12 +435,11 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Feature gating — enforce tier limits in Carriers page (carrier count), Rate Card Converter (Growth+ only), Team page (member limits)
-2. Upgrade prompts — inline "Upgrade to X" when merchant hits a limit
-3. Landing page pricing section — update to match confirmed tier features and pricing
-4. Production deployment — Netlify, update APP_URL secret, update WooCommerce plugin API URL
-5. Terms of service + privacy policy pages
-6. Supabase RLS — add policy for merchants.subscription column (currently readable by merchant, writable only by service role)
+1. Production deployment — Netlify, update APP_URL secret, update WooCommerce plugin API URL
+2. support@shippingiq.com.au email setup
+3. WooCommerce plugin download page — merchants need a way to download the plugin
+4. Onboarding flow — guided steps for new merchants: add carrier → upload files → install plugin → go live
+5. Savings calculator on landing page — high conversion tool (bigger build, post-launch)
 
 
 ## Logged for future build
