@@ -389,7 +389,7 @@ export default function Landing() {
                 </svg>
               </div>
               <div className="feat-title">Zone management</div>
-              <div className="feat-body">Upload your carrier's postcode-to-zone mapping file. ShippingIQ maps every postcode automatically — no manual entry.</div>
+              <div className="feat-body">Upload your carrier's postcode-to-zone file, or enter postcode ranges manually. Every Australian postcode mapped to the right zone automatically.</div>
             </div>
 
             <div>
@@ -400,7 +400,7 @@ export default function Landing() {
                 </svg>
               </div>
               <div className="feat-title">Free shipping rules</div>
-              <div className="feat-body">Threshold-based free shipping, zone-specific offers, time-bounded promotions that revert automatically. No manual cleanup.</div>
+              <div className="feat-body">Set a free shipping threshold, choose Smart or Always Free mode, and exempt bulky items with a product tag. Rules apply automatically at checkout.</div>
             </div>
 
             <div>
@@ -452,9 +452,9 @@ export default function Landing() {
               <div className="plan-divider"></div>
               <ul className="plan-features">
                 <li className="plan-feat"><CheckIcon />1 carrier</li>
-                <li className="plan-feat"><CheckIcon />10 orders per month</li>
-                <li className="plan-feat"><CheckIcon />Basic rate calculation</li>
-                <li className="plan-feat"><CheckIcon />Documentation</li>
+                <li className="plan-feat"><CheckIcon />3 uploads/day</li>
+                <li className="plan-feat"><CheckIcon />WooCommerce plugin</li>
+                <li className="plan-feat"><CheckIcon />Basic quote tool</li>
               </ul>
               <Link to="/signup" className="btn-plan btn-outline">Get started free</Link>
             </div>
@@ -469,11 +469,11 @@ export default function Landing() {
               <div className="plan-desc">For growing stores ready to get freight right.</div>
               <div className="plan-divider"></div>
               <ul className="plan-features">
-                <li className="plan-feat"><CheckIcon />2 carriers</li>
-                <li className="plan-feat"><CheckIcon />Unlimited orders</li>
-                <li className="plan-feat"><CheckIcon />Core rules engine</li>
-                <li className="plan-feat"><CheckIcon />Free shipping threshold</li>
-                <li className="plan-feat"><CheckIcon />Basic surcharges</li>
+                <li className="plan-feat"><CheckIcon />3 carriers</li>
+                <li className="plan-feat"><CheckIcon />10 uploads/day</li>
+                <li className="plan-feat"><CheckIcon />WooCommerce plugin</li>
+                <li className="plan-feat"><CheckIcon />Full quote tool</li>
+                <li className="plan-feat"><CheckIcon />Up to 100 saved quotes</li>
                 <li className="plan-feat"><CheckIcon />Email support</li>
               </ul>
               <Link to="/signup" className="btn-plan btn-outline">Start free trial</Link>
@@ -490,11 +490,14 @@ export default function Landing() {
               <div className="plan-desc">Full rules engine for serious ecommerce operations.</div>
               <div className="plan-divider"></div>
               <ul className="plan-features">
-                <li className="plan-feat"><CheckIcon />Unlimited carriers</li>
+                <li className="plan-feat"><CheckIcon />Up to 10 carriers</li>
+                <li className="plan-feat"><CheckIcon />10 uploads/day</li>
+                <li className="plan-feat"><CheckIcon />WooCommerce plugin</li>
                 <li className="plan-feat"><CheckIcon />Full rules engine</li>
-                <li className="plan-feat"><CheckIcon />All surcharge options</li>
-                <li className="plan-feat"><CheckIcon />Multi-carrier routing</li>
-                <li className="plan-feat"><CheckIcon />Email support</li>
+                <li className="plan-feat"><CheckIcon />Rate Card Converter</li>
+                <li className="plan-feat"><CheckIcon />Up to 3 team members</li>
+                <li className="plan-feat"><CheckIcon />Unlimited saved quotes</li>
+                <li className="plan-feat"><CheckIcon />Priority email support</li>
               </ul>
               <Link to="/signup" className="btn-plan btn-filled">Start free trial</Link>
             </div>
@@ -506,14 +509,17 @@ export default function Landing() {
                 <span className="price-amount">149</span>
                 <span className="price-period">/mo</span>
               </div>
-              <div className="plan-desc">For high-volume operations that want priority support and the full feature set.</div>
+              <div className="plan-desc">For high-volume operations that want the full feature set.</div>
               <div className="plan-divider"></div>
               <ul className="plan-features">
-                <li className="plan-feat"><CheckIcon />Everything in Growth</li>
+                <li className="plan-feat"><CheckIcon />Unlimited carriers</li>
+                <li className="plan-feat"><CheckIcon />10 uploads/day</li>
+                <li className="plan-feat"><CheckIcon />WooCommerce plugin</li>
+                <li className="plan-feat"><CheckIcon />Full rules engine</li>
+                <li className="plan-feat"><CheckIcon />Rate Card Converter</li>
+                <li className="plan-feat"><CheckIcon />Unlimited team members</li>
+                <li className="plan-feat"><CheckIcon />Unlimited saved quotes</li>
                 <li className="plan-feat"><CheckIcon />Priority email support</li>
-                <li className="plan-feat"><CheckIcon />Advanced analytics</li>
-                <li className="plan-feat"><CheckIcon />Automated carrier booking and label generation <span className="coming-soon-badge">Coming soon</span></li>
-                <li className="plan-feat"><CheckIcon />Custom carrier support</li>
               </ul>
               <Link to="/signup" className="btn-plan btn-outline">Start free trial</Link>
             </div>
