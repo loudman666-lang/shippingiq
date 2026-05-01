@@ -10,14 +10,16 @@ const PLANS = [
     name: 'Free',
     price: 0,
     priceId: null,
-    features: ['1 carrier', '100 quotes / month', 'Basic rate cards'],
+    description: 'Enough to prove it works. Not enough to run a real business on.',
+    features: ['1 carrier', '3 uploads/day', 'WooCommerce plugin', 'Basic quote tool'],
   },
   {
     id: 'starter',
     name: 'Starter',
     price: 39,
     priceId: process.env.REACT_APP_STRIPE_PRICE_STARTER,
-    features: ['Up to 3 carriers', '1,000 quotes / month', 'CSV rate cards', 'Postcode zones'],
+    description: 'For growing stores ready to get freight right.',
+    features: ['3 carriers', '10 uploads/day', 'WooCommerce plugin', 'Full quote tool', 'Up to 100 saved quotes', 'Email support'],
   },
   {
     id: 'growth',
@@ -25,14 +27,16 @@ const PLANS = [
     price: 79,
     priceId: process.env.REACT_APP_STRIPE_PRICE_GROWTH,
     popular: true,
-    features: ['Up to 10 carriers', '10,000 quotes / month', 'PDF rate card converter', 'Shipping rules', 'Team members'],
+    description: 'Full rules engine for serious ecommerce operations.',
+    features: ['10 carriers', '10 uploads/day', 'WooCommerce plugin', 'Full rules engine', 'Rate Card Converter', 'Up to 3 team members', 'Unlimited saved quotes', 'Priority email support'],
   },
   {
     id: 'pro',
     name: 'Pro',
     price: 149,
     priceId: process.env.REACT_APP_STRIPE_PRICE_PRO,
-    features: ['Unlimited carriers', 'Unlimited quotes', 'All features', 'Priority support'],
+    description: 'For high-volume operations that want the full feature set.',
+    features: ['Unlimited carriers', '10 uploads/day', 'WooCommerce plugin', 'Full rules engine', 'Rate Card Converter', 'Unlimited team members', 'Unlimited saved quotes', 'Priority email support'],
   },
 ]
 
