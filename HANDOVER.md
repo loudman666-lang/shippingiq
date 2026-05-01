@@ -444,28 +444,31 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Production deployment — Netlify, update APP_URL secret, update WooCommerce plugin API URL
-2. support@shippingiq.com.au email setup
-3. WooCommerce plugin download page — merchants need a way to download the plugin
-4. Onboarding flow — guided steps for new merchants: add carrier → upload files → install plugin → go live
-5. Savings calculator on landing page — high conversion tool (bigger build, post-launch)
 
+### Next session priorities (in order)
+1. Dashboard onboarding checklist — "Getting started" card with 4-5 steps (set store name, add carrier, configure rules, install plugin, get first quote). Persistent until all steps complete. Option A checklist style.
+2. Merchant ID visibility — surface Merchant ID prominently on Dashboard and Settings page so merchants can easily find it to configure the WooCommerce plugin
+3. Resources page — deeper help content:
+   - WooCommerce plugin installation guide (step by step)
+   - Where to find your Merchant ID
+   - Troubleshooting section: "rates not showing", "postcode not found", "carrier not appearing"
+4. Full live site testing on https://neon-pie-9a1542.netlify.app
+5. WooCommerce end-to-end test with production merchant account (new merchant ID, live Supabase)
+6. Custom domain setup (shippingiq.com.au) — after testing complete
+7. support@shippingiq.com.au email setup (Resend or similar)
+8. Email confirmation — turn back on with proper email sender before serious scale
 
-## Logged for future build
-- Address autocomplete to detect residential vs commercial (triggers residential surcharge)
-- Surcharge modal text overflow bug — radio card label/description text overflows modal width on some screen sizes. Styles look correct (flex:1, minWidth:0 on text container, width:100% on card) but issue persists. Needs fresh diagnosis — do not iterate blind on CSS again.
-- Multi-warehouse / multi-origin support
-- Delivery requirement flags for customers (e.g. tailgate notice at checkout)
-- Carrier rate editing without full delete and re-upload
-- Split shipment across carriers when no single carrier handles full cart
-- Carrier-per-product mapping (v2 of eligibility rules)
-- Shared engine module in supabase/functions/_shared/ so Quote.js and calculate-freight stay in sync automatically
-- Platform-agnostic product exemption flags: WooCommerce uses product tags (shippingiq-exempt etc). When Shopify/Magento plugins are built, design calculate-freight API to accept flags array per cart item (["exempt", "taillift", "2person"]) so the platform plugin handles translation.
-- PDF converter gated to Growth tier and above — requires billing/tier system to be built first.
-- Surcharge PDF reading improvement — rapid-api surcharges mode already accepts PDF document blocks and calls addPdfs, but the AI prompt could be tuned for better extraction from PDF surcharge schedules specifically.
-- Manual quote tool landing page prominence — currently shares a card in "Two ways to use it" section, deserves its own section.
-- StarTrack and Hunter Express — test with real carrier files once available.
-- Residential surcharge auto-detection via address lookup — parked, current merchant-configured trigger (B2B/B2C setting) is correct for both use cases.
+### Logged for future build
+- Savings calculator on landing page — "How much are you losing on freight?" interactive tool
+- Production deployment automation — connect GitHub to Netlify for auto-deploy on push
+- Shopify and Magento plugins
+- Full order management for saved quotes
+- Shared freight calculation engine module (Quote.js and calculate-freight stay in sync)
+- Multi-warehouse support
+- Address autocomplete for residential detection
+- Surcharge modal text overflow bug diagnosis
+- PDF converter gated to Growth tier (requires billing tier check)
+- Loom video walkthrough for onboarding
 
 ## Pre-launch testing checklist
 
