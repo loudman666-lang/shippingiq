@@ -114,7 +114,7 @@ export function AuthProvider({ children }) {
   }
 
   const isAdmin = profile?.role === 'admin'
-  const planTier = merchant?.plan ?? 'free'
+  const planTier = merchant?.subscription?.tier ?? 'free'
 
   return (
     <AuthContext.Provider value={{
