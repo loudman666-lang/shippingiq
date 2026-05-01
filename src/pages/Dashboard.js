@@ -27,7 +27,7 @@ function cheapestRateLabel(results) {
 }
 
 export default function Dashboard() {
-  const { profile, merchant, signOut, isAdmin } = useAuth()
+  const { profile, merchant, signOut, isAdmin, planTier } = useAuth()
   const navigate = useNavigate()
   const [carriers, setCarriers] = useState([])
   const [quoteCount, setQuoteCount] = useState(0)
@@ -59,6 +59,15 @@ export default function Dashboard() {
 
   const carriersNeedingPostcode = carriers.filter(c => !c.parsed_data?.postcodeMap?.length)
   const avatarInitial = profile?.full_name?.charAt(0) || merchant?.name?.charAt(0) || '?'
+
+  const trialDaysLeft = (() => {
+    if (merchant?.subscription?.status !== 'trialing') return null
+    if (!merchant?.subscription?.trial_ends_at) return null
+    const end = new Date(merchant.subscription.trial_ends_at)
+    const now = new Date()
+    const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
+    return days > 0 ? days : 0
+  })()
 
   return (
     <div className="dashboard">
@@ -165,6 +174,19 @@ export default function Dashboard() {
               <div style={{ marginBottom: '24px', padding: '12px 16px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '8px', fontSize: '13px', color: '#92400e', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
                 <span>⚠ {carriersNeedingPostcode.length} carrier{carriersNeedingPostcode.length !== 1 ? 's have' : ' has'} no postcode data — quotes will fail: <strong>{carriersNeedingPostcode.map(c => c.name).join(', ')}</strong></span>
                 <a href="/carriers" style={{ color: '#92400e', fontWeight: '600', textDecoration: 'underline', whiteSpace: 'nowrap', flexShrink: 0 }}>Go to Carriers →</a>
+              </div>
+            )}
+
+            {trialDaysLeft !== null && (
+              <div className="dashboard-banner" style={{ borderLeft: '3px solid var(--accent)', background: 'var(--accent-light)' }}>
+                <span>
+                  {trialDaysLeft === 0
+                    ? <>Your free trial has ended. <a href="/pricing" style={{ color: 'var(--accent)', fontWeight: '500' }}>Upgrade now to keep access →</a></>
+                    : trialDaysLeft <= 3
+                    ? <>⚠ Your free trial ends in <strong>{trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''}</strong> — <a href="/pricing" style={{ color: 'var(--accent)', fontWeight: '500' }}>add a payment method now to avoid losing access →</a></>
+                    : <>Your free trial ends in <strong>{trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''}</strong>. <a href="/pricing" style={{ color: 'var(--accent)', fontWeight: '500' }}>Add a payment method to continue after your trial →</a></>
+                  }
+                </span>
               </div>
             )}
 
