@@ -65,7 +65,7 @@ export default function Team() {
   async function handleInvite(e) {
     e.preventDefault()
     if (atMemberLimit) {
-      setInviteError(`Your ${planTier} plan supports up to ${memberLimit} team member${memberLimit !== 1 ? 's' : ''}. Upgrade your plan to invite more.`)
+      setInviteError(`Team members are limited to ${memberLimit} on the ${planTier} plan. Upgrade to Growth or Pro to invite more.`)
       return
     }
     setInviteError('')
@@ -211,7 +211,7 @@ export default function Team() {
             </div>
             {atMemberLimit && (
               <div style={{ background: 'var(--accent-light)', borderLeft: '3px solid var(--accent)', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: '16px', fontSize: '13px', color: 'var(--ink)' }}>
-                You've reached the {memberLimit}-member limit on your {planTier} plan. <a href="/pricing" style={{ color: 'var(--accent)', fontWeight: '500' }}>Upgrade to add more members →</a>
+                Team members are limited to {memberLimit} on the {planTier} plan. <a href="/pricing" style={{ color: 'var(--accent)', fontWeight: '500' }}>Upgrade to Growth to add up to 3 members, or Pro for unlimited →</a>
               </div>
             )}
             <form onSubmit={handleInvite}>
