@@ -217,6 +217,7 @@ export default function Pricing() {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '16px',
+                    minHeight: '420px',
                   }}
                 >
                   {isCurrent && (
@@ -245,14 +246,14 @@ export default function Pricing() {
                     ))}
                   </ul>
                   {isCurrent ? (
-                    <div style={{ padding: '9px', textAlign: 'center', fontSize: '13px', color: 'var(--ink-muted)', background: 'var(--surface)', borderRadius: 'var(--radius)' }}>
+                    <div style={{ marginTop: 'auto', padding: '9px', textAlign: 'center', fontSize: '13px', color: 'var(--ink-muted)', background: 'var(--surface)', borderRadius: 'var(--radius)' }}>
                       Current plan
                     </div>
                   ) : plan.priceId ? (
                     <button
                       onClick={() => handleUpgrade(plan)}
                       disabled={!!loading}
-                      style={{ padding: '9px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}
+                      style={{ marginTop: 'auto', padding: '9px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}
                     >
                       {loading === plan.id ? 'Loading…' : `Upgrade to ${plan.name}`}
                     </button>
