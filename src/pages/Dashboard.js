@@ -42,7 +42,7 @@ export default function Dashboard() {
     const [carriersRes, countRes, quotesRes] = await Promise.all([
       supabase.from('carriers').select('*').eq('merchant_id', merchant.id).eq('status', 'active').order('created_at', { ascending: false }),
       supabase.from('quotes').select('*', { count: 'exact', head: true }).eq('merchant_id', merchant.id),
-      supabase.from('quotes').select('postcode, items, results, created_at').eq('merchant_id', merchant.id).order('created_at', { ascending: false }).limit(5),
+      supabase.from('quotes').select('postcode, items, results, created_at, reference').eq('merchant_id', merchant.id).order('created_at', { ascending: false }).limit(5),
     ])
     setCarriers(carriersRes.data || [])
     setQuoteCount(countRes.count || 0)
@@ -202,9 +202,11 @@ export default function Dashboard() {
                     return (
                       <a key={i} href="/quote" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px 16px', textDecoration: 'none', cursor: 'pointer' }}>
                         <div>
-                          <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ink)', marginBottom: '2px' }}>Postcode {q.postcode}</div>
+                          <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ink)', marginBottom: '2px' }}>
+                            {q.reference || `Postcode ${q.postcode}`}
+                          </div>
                           <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
-                            {itemCount} item{itemCount !== 1 ? 's' : ''} · {new Date(q.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            {q.reference ? `Postcode ${q.postcode} · ` : ''}{itemCount} item{itemCount !== 1 ? 's' : ''} · {new Date(q.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </div>
                         </div>
                         {cheapestRateLabel(q.results)}

@@ -239,6 +239,9 @@ export default function Quote() {
   const [merchantRules, setMerchantRules] = useState({})
   const [selectedResultIdx, setSelectedResultIdx] = useState(0)
   const [loadedQuoteDate, setLoadedQuoteDate] = useState(null)
+  const [loadedQuoteReference, setLoadedQuoteReference] = useState(null)
+  const [quoteReference, setQuoteReference] = useState('')
+  const [showReferenceInput, setShowReferenceInput] = useState(false)
 
   async function handleSignOut() {
     await signOut()
@@ -282,8 +285,11 @@ export default function Quote() {
         postcode,
         items,
         results,
+        reference: quoteReference.trim() || null,
         created_at: new Date().toISOString()
       })
+      setQuoteReference('')
+      setShowReferenceInput(false)
       fetchSavedQuotes()
     } catch (err) { console.error(err) }
     setSaving(false)
@@ -300,6 +306,9 @@ export default function Quote() {
     setResults(q.results || null)
     setSelectedResultIdx(0)
     setLoadedQuoteDate(new Date(q.created_at).toLocaleString('en-AU'))
+    setLoadedQuoteReference(q.reference || null)
+    setQuoteReference('')
+    setShowReferenceInput(false)
     setShowSaved(false)
     window.scrollTo(0, 0)
   }
@@ -318,6 +327,7 @@ export default function Quote() {
   function getQuote() {
     setError(null)
     setLoadedQuoteDate(null)
+    setLoadedQuoteReference(null)
     setResults(null)
     if (!postcode || postcode.length < 4) { setError('Please enter a valid Australian postcode.'); return }
     if (carriers.length === 0) { setError('No active carriers found. Add a carrier first.'); return }
@@ -472,7 +482,10 @@ export default function Quote() {
           <div>
             {results && loadedQuoteDate && (
               <div style={{ background: 'var(--accent-light)', borderLeft: '3px solid var(--accent)', borderRadius: '8px', padding: '10px 14px', marginBottom: '12px', fontSize: '13px', color: 'var(--ink)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Loaded from saved quote ({loadedQuoteDate}). Rates may have changed — click Calculate Freight to refresh.</span>
+                <span>
+                  {loadedQuoteReference && <strong style={{ marginRight: '6px' }}>{loadedQuoteReference} —</strong>}
+                  Loaded from saved quote ({loadedQuoteDate}). Rates may have changed — click Calculate Freight to refresh.
+                </span>
                 <button onClick={() => setLoadedQuoteDate(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--accent)', padding: '0 0 0 12px' }}>×</button>
               </div>
             )}
@@ -484,9 +497,27 @@ export default function Quote() {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--ink)' }}>Results</div>
-                    <button className="btn-secondary" onClick={saveQuote} disabled={saving} style={{ fontSize: '13px' }}>
-                      {saving ? 'Saving...' : '+ Save Quote'}
-                    </button>
+                    {!showReferenceInput ? (
+                      <button className="btn-secondary" onClick={() => setShowReferenceInput(true)} disabled={saving} style={{ fontSize: '13px' }}>
+                        + Save Quote
+                      </button>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          placeholder="Reference (optional)"
+                          value={quoteReference}
+                          onChange={e => setQuoteReference(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && saveQuote()}
+                          style={{ fontSize: '13px', padding: '5px 10px', borderRadius: '6px', border: '1px solid var(--border-mid)', background: 'var(--surface)', color: 'var(--ink)', width: '180px' }}
+                          autoFocus
+                        />
+                        <button className="btn-secondary" onClick={saveQuote} disabled={saving} style={{ fontSize: '13px' }}>
+                          {saving ? 'Saving...' : 'Save'}
+                        </button>
+                        <button onClick={() => { setShowReferenceInput(false); setQuoteReference('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--ink-muted)', padding: '0 4px' }}>×</button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Compact carrier table */}

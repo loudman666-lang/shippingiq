@@ -136,12 +136,13 @@ export default function SavedQuotes() {
                 return (
                   <div key={q.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: '500', fontSize: '15px', color: 'var(--ink)', marginBottom: '3px' }}>
-                        Postcode {q.postcode} · {q.items?.length} item{q.items?.length !== 1 ? 's' : ''}
+                      <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--ink)', marginBottom: '3px' }}>
+                        {q.reference || `Postcode ${q.postcode} · ${q.items?.length} item${q.items?.length !== 1 ? 's' : ''}`}
                       </div>
                       <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
                         {new Date(q.created_at).toLocaleString('en-AU')}
-                        {q.items?.map(i => i.desc).filter(Boolean).join(', ') && (
+                        {q.reference && <span style={{ marginLeft: '6px' }}>· Postcode {q.postcode} · {q.items?.length} item{q.items?.length !== 1 ? 's' : ''}</span>}
+                        {!q.reference && q.items?.map(i => i.desc).filter(Boolean).join(', ') && (
                           <span style={{ marginLeft: '8px' }}>· {q.items.map(i => i.desc).filter(Boolean).join(', ')}</span>
                         )}
                       </div>
