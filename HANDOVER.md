@@ -161,8 +161,18 @@ npx supabase functions deploy remove-team-member --project-ref soaxvqkkecqzarwmb
   - FREE carrier detail panel: shows full merchant cost breakdown with "absorbed by you" note (uses originalRate preserved at calculation time; merchant cost shown in red)
   - Error rows show reason inline; selecting shows error card below
   - Price column header: "Total" with "inc GST"/"ex GST" sub-note below each price
-- Saved quotes panel: "Saved Quotes" button top-right; auto-opens when navigating from Dashboard via /quote?savedQuotes=open (opens after fetchSavedQuotes resolves — timing fixed)
-- Save Quote to Supabase quotes table
+- Save Quote to Supabase quotes table with optional reference/name field
+
+### Saved Quotes
+- Dedicated page at /saved-quotes — lists all saved quotes with Load and Delete buttons
+- Optional reference/name field when saving — shown as primary label on Saved Quotes page and Dashboard
+- Load button navigates to Get a Quote with form, items and results pre-populated
+- Yellow banner on Get a Quote shows reference name + date when a quote is loaded
+- Calculate Freight clears the banner and recalculates fresh rates
+- Dashboard "Recent Quotes" shows reference as primary label when set
+- "View all saved quotes" on Dashboard links to /saved-quotes
+- Saved Quotes nav link on all pages
+- quotes table: id, merchant_id, postcode, items (jsonb), results (jsonb), reference (text), created_at
 
 ### Resources page
 - Template Files section: 3 downloadable CSVs (rate-card-template.csv, zone-file-template.csv, surcharge-template.csv) served from /public/templates/
@@ -382,7 +392,6 @@ Model C: Depot-to-depot — Mainfreight style
 
 
 ## Logged for future build
-- Saved quotes: currently shows list (postcode, item count, date, cheapest rate + carrier) on Dashboard and Quote page. Needs full order management — click to reload all items/postcode/results into quote form, edit and re-quote, print/export as PDF.
 - Address autocomplete to detect residential vs commercial (triggers residential surcharge)
 - Surcharge modal text overflow bug — radio card label/description text overflows modal width on some screen sizes. Styles look correct (flex:1, minWidth:0 on text container, width:100% on card) but issue persists. Needs fresh diagnosis — do not iterate blind on CSS again.
 - Multi-warehouse / multi-origin support
