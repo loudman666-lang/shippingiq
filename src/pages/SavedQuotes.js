@@ -93,14 +93,14 @@ export default function SavedQuotes() {
             <a href="/quote" style={{ fontSize: '14px', color: 'var(--accent)', fontWeight: '500', textDecoration: 'none' }}>Get a Quote →</a>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
             {quotes.map((q) => {
               const cheapest = q.results?.filter(r => !r.error && !r.freeShipping).sort((a, b) => (a.totalCost ?? a.freightCost) - (b.totalCost ?? b.freightCost))[0]
               const free = q.results?.find(r => r.freeShipping)
               const displayResult = free || cheapest
               return (
                 <div key={q.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: '500', fontSize: '15px', color: 'var(--ink)', marginBottom: '3px' }}>
                       Postcode {q.postcode} · {q.items?.length} item{q.items?.length !== 1 ? 's' : ''}
                     </div>
