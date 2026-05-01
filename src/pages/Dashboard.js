@@ -56,6 +56,9 @@ export default function Dashboard() {
   }
 
   const [nameBannerDismissed, setNameBannerDismissed] = useState(false)
+  const [pluginInstalled, setPluginInstalled] = useState(() => localStorage.getItem('shippingiq_step_plugin') === 'true')
+  const [rulesConfigured, setRulesConfigured] = useState(() => localStorage.getItem('shippingiq_step_rules') === 'true')
+  const [copiedMerchantId, setCopiedMerchantId] = useState(false)
 
   const carriersNeedingPostcode = carriers.filter(c => !c.parsed_data?.postcodeMap?.length)
   const avatarInitial = profile?.full_name?.charAt(0) || merchant?.name?.charAt(0) || '?'
@@ -68,6 +71,18 @@ export default function Dashboard() {
     const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
     return days > 0 ? days : 0
   })()
+
+  const storeNameSet = merchant?.name && merchant.name !== 'My Store'
+  const hasCarrier = carriers.length > 0
+  const onboardingSteps = [
+    { label: 'Create your account', done: true, link: null },
+    { label: 'Set your store name', done: !!storeNameSet, link: '/settings', linkLabel: 'Go to Settings →' },
+    { label: 'Add your first carrier', done: hasCarrier, link: '/carriers', linkLabel: 'Add a carrier →' },
+    { label: 'Configure your rules', done: rulesConfigured, link: '/rules', linkLabel: 'Go to Rules →', manual: true, manualKey: 'shippingiq_step_rules', onTick: () => { localStorage.setItem('shippingiq_step_rules', 'true'); setRulesConfigured(true) } },
+    { label: 'Install the WooCommerce plugin', done: pluginInstalled, link: '/resources', linkLabel: 'View install guide →', manual: true, manualKey: 'shippingiq_step_plugin', onTick: () => { localStorage.setItem('shippingiq_step_plugin', 'true'); setPluginInstalled(true) } },
+  ]
+  const onboardingComplete = onboardingSteps.every(s => s.done)
+  const onboardingDoneCount = onboardingSteps.filter(s => s.done).length
 
   return (
     <div className="dashboard">
@@ -158,7 +173,51 @@ export default function Dashboard() {
           </div>
         )}
 
-        {loading ? null : carriers.length === 0 ? (
+        {loading ? null : (!hasCarrier && !onboardingComplete) ? (
+          <div className="card" style={{ maxWidth: '560px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Get set up</div>
+              <div style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '12px' }}>{onboardingDoneCount} of {onboardingSteps.length} steps completed</div>
+              <div style={{ height: '6px', background: 'var(--border)', borderRadius: '99px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${(onboardingDoneCount / onboardingSteps.length) * 100}%`, background: 'var(--accent)', borderRadius: '99px', transition: 'width 0.3s ease' }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {onboardingSteps.map((step, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 0', borderBottom: i < onboardingSteps.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  <div
+                    onClick={step.manual && !step.done ? step.onTick : undefined}
+                    style={{ width: '22px', height: '22px', borderRadius: '50%', border: '2px solid', borderColor: step.done ? 'var(--accent)' : 'var(--border-mid)', background: step.done ? 'var(--accent)' : 'transparent', flexShrink: 0, marginTop: '1px', cursor: step.manual && !step.done ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    {step.done && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    )}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '14px', fontWeight: step.done ? '400' : '500', color: step.done ? 'var(--ink-muted)' : 'var(--ink)', textDecoration: step.done ? 'line-through' : 'none' }}>{step.label}</div>
+                    {!step.done && step.link && (
+                      <a href={step.link} style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: '500', textDecoration: 'none', marginTop: '2px', display: 'inline-block' }}>{step.linkLabel}</a>
+                    )}
+                    {!step.done && step.manual && (
+                      <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '2px' }}>Click the circle to mark as done once complete</div>
+                    )}
+                    {i === 4 && (
+                      <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '8px 12px' }}>
+                        <code style={{ fontSize: '12px', color: 'var(--ink)', fontFamily: 'monospace', flex: 1 }}>{merchant?.id}</code>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(merchant?.id || ''); setCopiedMerchantId(true); setTimeout(() => setCopiedMerchantId(false), 2000) }}
+                          style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--border-mid)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+                        >
+                          {copiedMerchantId ? 'Copied!' : 'Copy ID'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : carriers.length === 0 && onboardingComplete ? (
           <div className="empty-state">
             <div className="empty-icon">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#E8521A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>

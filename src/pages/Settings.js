@@ -26,6 +26,7 @@ export default function Settings() {
   const [showTerms, setShowTerms] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [showRefund, setShowRefund] = useState(false)
+  const [copiedId, setCopiedId] = useState(false)
 
   useEffect(() => {
     if (profile?.full_name) setDisplayName(profile.full_name)
@@ -292,6 +293,21 @@ export default function Settings() {
             </button>
           </div>
         )}
+        <div className="settings-card">
+          <div className="settings-card-title">Merchant ID</div>
+          <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '12px' }}>
+            Your Merchant ID is required to configure the WooCommerce plugin. Keep it private.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px' }}>
+            <code style={{ fontSize: '13px', color: 'var(--ink)', fontFamily: 'monospace', flex: 1 }}>{merchant?.id}</code>
+            <button
+              onClick={() => { navigator.clipboard.writeText(merchant?.id || ''); setCopiedId(true); setTimeout(() => setCopiedId(false), 2000) }}
+              style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '4px', border: '1px solid var(--border-mid)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              {copiedId ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
         <div className="settings-card">
           <div className="settings-card-title">Legal</div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
