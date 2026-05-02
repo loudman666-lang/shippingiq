@@ -1,138 +1,127 @@
-ShippingIQ — WooCommerce Shipping Plugin
-=========================================
+=== ShippingIQ — Real-Time Freight Rates ===
+Contributors: shippingiq
+Tags: shipping, freight, woocommerce, australia, rates
+Requires at least: 6.0
+Tested up to: 6.7
+Requires PHP: 8.0
+Stable tag: 1.0.0
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Displays real-time freight rates at checkout using your ShippingIQ carrier rate cards
-and eligibility rules.
+Display accurate, real-time freight rates at checkout using your own contracted carrier rate cards — not ours.
 
+== Description ==
 
-REQUIREMENTS
-------------
-- WordPress 6.0+
-- WooCommerce 6.0+
-- PHP 8.0+
-- ShippingIQ account with at least one active carrier
+ShippingIQ connects your WooCommerce store to your actual carrier contracts. Instead of guessing at freight costs or using generic rate tables, ShippingIQ uploads your real rate cards and calculates the correct price at checkout every time.
 
+**How it works**
 
-INSTALLATION
-------------
-1. Copy the shippingiq/ folder into wp-content/plugins/
-2. In WordPress admin, go to Plugins → Installed Plugins
-3. Activate "ShippingIQ"
+1. Sign up at [shippingiq.com.au](https://shippingiq.com.au)
+2. Upload your carrier rate cards (CSV, Excel, or PDF — any format)
+3. Install this plugin and enter your Merchant ID
+4. Your contracted rates appear at checkout automatically
 
+**What makes ShippingIQ different**
 
-CONFIGURATION
--------------
-1. Go to WooCommerce → Settings → Shipping
-2. Add or edit a Shipping Zone (e.g. "Australia")
-3. Click "Add shipping method", select "ShippingIQ", click "Add shipping method"
-4. Click "Edit" next to ShippingIQ to open the settings panel
+Most shipping plugins use their own carrier accounts and add a margin. ShippingIQ uses *your* contracted rates — so your customers see exactly what you negotiated with your carrier, with no hidden markup unless you choose to add one.
 
-Settings:
+**Supported carriers**
 
-  Method Title
-    Label shown at checkout. Defaults to "Freight".
+Any Australian carrier. ShippingIQ's AI parser handles any rate card format — Allied Express, Mainfreight, StarTrack, Hunter Express, and more. If your carrier gives you a rate card, ShippingIQ can use it.
 
-  Merchant ID
-    Your ShippingIQ merchant UUID.
-    Find it in Supabase → Table Editor → merchants → id column.
+**Features**
 
-  Calculate Freight API URL
-    The calculate-freight edge function URL. Default is pre-filled:
-    https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/calculate-freight
+* Real-time freight calculation at checkout
+* Supports weight-break, basic charge + per kg, and depot-to-depot pricing models
+* Fuel levy applied automatically
+* Surcharge rules (tailgate, overlength, residential, etc.)
+* Free shipping threshold with smart surcharge voiding
+* Carrier eligibility rules — exclude carriers when cart items exceed weight or dimension limits
+* Product tag overrides — force or exclude specific carriers per product
+* Freight margin — add a flat or percentage margin to all rates
+* Cheapest-only or all-carriers display mode
+* 5-minute rate caching for performance
 
-  Supabase URL
-    Your Supabase project URL. Default is pre-filled:
-    https://soaxvqkkecqzarwmbeip.supabase.co
+**Requirements**
 
-  Supabase Anon Key
-    Your Supabase anon key. Used to fetch carrier eligibility rules.
-    Find it in Supabase → Project Settings → API → Project API keys → anon / public.
+* A ShippingIQ account — [sign up free at shippingiq.com.au](https://shippingiq.com.au)
+* At least one active carrier with an uploaded rate card
+* Products must have weight set in WooCommerce (kg)
 
-  Display Mode
-    All eligible carriers — shows every carrier that can handle the cart.
-    Cheapest carrier only — shows only the lowest-cost eligible option.
+== Installation ==
 
+1. Download the plugin zip from [shippingiq.com.au/resources](https://shippingiq.com.au/resources)
+2. In WordPress admin go to Plugins → Add New → Upload Plugin
+3. Upload the zip file and click Install Now
+4. Activate the plugin
+5. Go to WooCommerce → Settings → Shipping
+6. Add or edit a Shipping Zone (e.g. "Australia")
+7. Click Add shipping method → select ShippingIQ → Add shipping method
+8. Click Edit next to ShippingIQ and enter your settings
 
-PRODUCT WEIGHT AND DIMENSIONS
-------------------------------
-The plugin reads weight and dimensions from each WooCommerce product.
-For correct rate calculation:
+**Plugin settings**
 
-- Set WooCommerce weight unit to kg
-  (WooCommerce → Settings → General → Weight unit)
-- Set WooCommerce dimension unit to cm
-  (WooCommerce → Settings → General → Dimensions unit)
-- Add weight to every product — items with no weight are excluded from the
-  freight calculation. If all items have no weight, no rates will be shown.
-- Add length, width, height to products where dimensions matter (overlength
-  surcharges, eligibility rules).
+* **Method Title** — label shown at checkout, defaults to "Freight"
+* **Merchant ID** — your ShippingIQ merchant ID, found in ShippingIQ → Settings
+* **Supabase Anon Key** — found in ShippingIQ → Settings → API Key
+* **Display Mode** — show all eligible carriers or cheapest only
 
+== Frequently Asked Questions ==
 
-CARRIER ELIGIBILITY RULES
---------------------------
-Set per-carrier limits in ShippingIQ → Carriers → "Carrier Limits".
+= Do I need a ShippingIQ account? =
 
-  maxWeightKg   — exclude this carrier if any single item weighs more than this
-  maxLengthCm   — exclude this carrier if any single item is longer than this
-  maxWidthCm    — exclude this carrier if any single item is wider than this
-  maxHeightCm   — exclude this carrier if any single item is taller than this
+Yes. ShippingIQ is where you upload your carrier rate cards and configure your rules. The plugin connects to your account at checkout. Sign up free at shippingiq.com.au.
 
-Limits apply per item, not per cart total.
-Leave a field blank = no limit (carrier handles everything).
+= Which carriers are supported? =
 
+Any Australian carrier. ShippingIQ uses AI to parse your carrier's rate card — CSV, Excel, or PDF. If your carrier provides a rate card file, ShippingIQ can use it.
 
-PRODUCT TAG OVERRIDES
----------------------
-Add product tags in WooCommerce to override carrier selection for specific products.
+= Do products need weight set? =
 
-  shippingiq-only-[carrier-slug]
-    Only show this carrier when this product is in the cart.
-    Example tag: shippingiq-only-startrack
+Yes. WooCommerce products must have weight set in kg. Items with no weight are excluded from the freight calculation. If all cart items have no weight, no rates will be shown.
 
-  shippingiq-exclude-[carrier-slug]
-    Never show this carrier when this product is in the cart.
-    Example tag: shippingiq-exclude-allied-express
+= What dimension units should I use? =
 
-The carrier slug is the carrier name lowercased with spaces replaced by hyphens.
-  "Allied Express"  → allied-express
-  "StarTrack"       → startrack
-  "Mainfreight"     → mainfreight
+Set WooCommerce to kg for weight and cm for dimensions (WooCommerce → Settings → General). ShippingIQ uses these for cubic weight calculation and overlength surcharge detection.
 
-Tag rules take precedence over eligibility rules.
-If a cart contains an only-X tag, all other carriers are hidden regardless of
-their eligibility rules.
+= How does free shipping work? =
 
+Set a free shipping threshold in ShippingIQ → Rules. When the cart value meets the threshold, free shipping is shown. Smart mode voids free shipping if surcharges apply (e.g. tailgate delivery). True mode always shows free regardless of surcharges.
 
-HOW RATES ARE CALCULATED
--------------------------
-At checkout, the plugin:
+= Can I exclude certain carriers for oversized items? =
 
-1. Reads the destination postcode from the shipping address
-2. Builds an items list from the cart (qty, weight, L×W×H per product)
-3. Fetches carrier eligibility rules from Supabase
-4. Calls the calculate-freight edge function with postcode + items + merchant_id
-5. Filters out carriers that exceed eligibility limits or are excluded by tags
-6. Applies display mode (all or cheapest)
-7. Registers remaining carriers as shipping rate options at checkout
+Yes. Set carrier eligibility limits in ShippingIQ → Carriers → Carrier Limits. Set maximum weight, length, width, or height per carrier. If any cart item exceeds a limit, that carrier is hidden at checkout.
 
-The calculate-freight function handles:
-- Zone lookup and freight calculation (Models A, B, C)
-- Fuel levy
-- Surcharges (tailgate, overlength, etc.)
-- Handling margin
-- Free shipping threshold
+= Can I force a specific carrier for certain products? =
 
+Yes. Add a WooCommerce product tag in the format shippingiq-only-[carrier-slug] to restrict checkout to that carrier when the product is in the cart. Use shippingiq-exclude-[carrier-slug] to hide a carrier for that product.
 
-TROUBLESHOOTING
----------------
-No rates showing at checkout:
-  - Check Merchant ID is correct
-  - Check all products in cart have weight > 0
-  - Check postcode is entered and is a valid 4-digit Australian postcode
-  - Check the calculate-freight edge function is deployed in Supabase
-  - Check the Supabase anon key is correct if eligibility filtering is needed
+= Is there a free plan? =
 
-Rates showing for wrong carriers:
-  - Review Carrier Limits in ShippingIQ → Carriers
-  - Check product tags for shippingiq-only / shippingiq-exclude prefixes
-  - Verify carrier slugs match exactly (lowercase, hyphens)
+Yes. The free plan supports one carrier and includes full access to the quote tool, rules engine, and WooCommerce plugin.
+
+== Screenshots ==
+
+1. Freight rates displayed at WooCommerce checkout
+2. ShippingIQ carrier management — upload your rate cards
+3. Surcharge rules configuration
+4. Free shipping and margin settings
+5. Plugin settings in WooCommerce shipping zone
+
+== Changelog ==
+
+= 1.0.0 =
+* Initial release
+* Real-time freight calculation at checkout
+* Support for weight-break, basic charge + per kg, and depot-to-depot pricing models
+* Carrier eligibility rules (weight and dimension limits)
+* Product tag overrides (shippingiq-only, shippingiq-exclude)
+* Free shipping threshold with smart and true modes
+* Fuel levy, surcharges, and freight margin support
+* Cheapest-only and all-carriers display modes
+* 5-minute rate caching
+
+== Upgrade Notice ==
+
+= 1.0.0 =
+Initial release.
