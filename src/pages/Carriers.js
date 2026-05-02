@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import ReactDOM from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -1518,38 +1519,53 @@ export default function Carriers() {
         </div>
       )}
 
-      {showSurchargeModal && (
-        <>
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000 }} />
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1001, background: '#fff', borderRadius: '12px', padding: '32px', width: '480px', maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+      {showSurchargeModal && ReactDOM.createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '32px', width: '480px', maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>Carrier updated successfully</h3>
             <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}>Your rates and zones have been updated. What would you like to do with your surcharge rules?</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px', alignSelf: 'stretch', width: '100%', boxSizing: 'border-box' }}>
               {[
                 { value: 'keep', label: 'Keep existing surcharge rules', desc: 'Your current surcharge triggers and thresholds stay in place.' },
                 { value: 'reset', label: 'Reset to new surcharges from uploaded files', desc: "Clears all surcharge rules — you'll need to reconfigure them in Surcharge Rules." },
               ].map(({ value, label, desc }) => (
-                <label key={value} onClick={() => setSurchargeModalChoice(value)} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '14px 16px', border: '2px solid', borderColor: surchargeModalChoice === value ? '#E8521A' : '#e5e7eb', borderRadius: '8px', background: surchargeModalChoice === value ? '#fff5f0' : '#fff', cursor: 'pointer', boxSizing: 'border-box', width: '100%' }}>
+                <div
+                  key={value}
+                  onClick={() => setSurchargeModalChoice(value)}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '20px 1fr',
+                    gap: '12px',
+                    padding: '14px 16px',
+                    border: '2px solid',
+                    borderColor: surchargeModalChoice === value ? '#E8521A' : '#e5e7eb',
+                    borderRadius: '8px',
+                    background: surchargeModalChoice === value ? '#fff5f0' : '#fff',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box',
+                  }}
+                >
                   <input
                     type="radio"
                     name="surchargeChoice"
                     value={value}
                     checked={surchargeModalChoice === value}
                     onChange={() => setSurchargeModalChoice(value)}
-                    style={{ marginTop: '4px', accentColor: '#E8521A', flexShrink: 0 }}
+                    style={{ marginTop: '3px', accentColor: '#E8521A' }}
                   />
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div>
                     <div style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>{label}</div>
                     <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>{desc}</div>
                   </div>
-                </label>
+                </div>
               ))}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button className="btn-primary" onClick={handleSurchargeModalApply}>Apply</button>
             </div>
           </div>
-        </>
+        </div>,
+        document.body
       )}
 
       {postcodeRangesCarrier && (() => {
@@ -1564,7 +1580,13 @@ export default function Carriers() {
             <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000 }} onClick={() => setPostcodeRangesCarrier(null)} />
             <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1001, background: '#fff', borderRadius: '12px', padding: '32px', width: '620px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>Postcode Ranges</h3>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '20px' }}>{postcodeRangesCarrier.name}</p>
+              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>{postcodeRangesCarrier.name}</p>
+
+              {!postcodeRangesCarrier.parsed_data?.postcodeMap?.length && (
+                <div style={{ padding: '10px 12px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '6px', fontSize: '13px', color: '#92400e', marginBottom: '16px', lineHeight: '1.5' }}>
+                  <strong>No postcode data yet</strong> — your carrier can't calculate quotes until postcodes are mapped to zones. Upload a zone file, or enter ranges manually using the tab below.
+                </div>
+              )}
 
               <div style={{ display: 'flex', gap: '0', borderBottom: '2px solid #e5e7eb', marginBottom: '20px' }}>
                 <button disabled style={{ padding: '8px 16px', fontSize: '13px', fontWeight: '500', color: '#9ca3af', background: 'none', border: 'none', cursor: 'not-allowed', borderBottom: '2px solid transparent', marginBottom: '-2px' }}>
