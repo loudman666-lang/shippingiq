@@ -1,15 +1,16 @@
 <?php
 /**
  * Plugin Name:       ShippingIQ
- * Plugin URI:        https://shippingiq.com
+ * Plugin URI:        https://shippingiq.com.au
  * Description:       Real-time freight rates at WooCommerce checkout, powered by ShippingIQ.
  * Version:           1.0.0
  * Author:            ShippingIQ
+ * Author URI:       https://shippingiq.com.au
  * License:           GPL v2 or later
  * Text Domain:       shippingiq
  * Requires Plugins:  woocommerce
  * WC requires at least: 6.0
- * WC tested up to:   8.9
+ * WC tested up to:   10.7
  */
 
 defined( 'ABSPATH' ) || exit;
