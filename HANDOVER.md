@@ -61,7 +61,7 @@ npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzar
 ### Landing page
 - Live at / route (Landing.js + Landing.css)
 - Sections: Nav → Hero → Stats strip → Trust strip → Integrations → How the AI works → Two ways to use it → AI parser mockup → Features → Pricing → FAQ → CTA → Footer
-- Mobile responsive (breakpoints at 900px and 560px)
+- Mobile responsive (breakpoints at 900px and 560px) — fixed and deployed 3 May 2026: hero stays 2-column on iPad (stacks at 560px only), pricing grid forced to 1 column on iPhone via `!important` to override inline style
 - All CTAs link to /signup and /signin via React Router
 - Shopify/Magento/BigCommerce marked as coming soon
 - Pricing tiers reflect only built features
@@ -489,14 +489,23 @@ Model C: Depot-to-depot — Mainfreight style
 
 ### Split shipment — parked for v2
 
+## Mobile responsiveness — design decision
+- **Landing page**: fully responsive (900px + 560px breakpoints) — fixed and deployed 3 May 2026
+- **App pages (Dashboard, Carriers, Quote, Rules, etc)**: zero responsive CSS — desktop-first by design. Merchants use on desktop. Mobile app pages deferred until after Bradshaw goes live.
+- If mobile app is needed in future: Quote.js uses a fixed `3fr 2fr` two-column grid and a 7-column items input grid with fixed pixel widths — these are the main breakpoints to tackle first.
+
 ## What to build next
 ### Next session
-1. **Deploy to Netlify** — `npm run build`, then drag `~/Downloads/shippingiq/build` folder to Netlify Drop (https://app.netlify.com/drop). Rebuild needed: pricing simplification, Landing.js copy, Resources accordions, onboarding checklist all changed since last deploy.
-2. **Full live site testing** on https://neon-pie-9a1542.netlify.app — sign up, add carrier, get quote, test billing flow (Pro trial), check WooCommerce plugin config fields show correct Merchant ID + Anon Key in Settings.
-3. ~~**Zoho email setup**~~ — ✓ Done (3 May 2026). support@shippingiq.com.au is live. MX records added to GoDaddy, verified in Zoho, mailbox created in Zoho admin.
-4. **Custom domain** — register shippingiq.com.au, point to Netlify, update Supabase Auth redirect URLs and APP_URL secret.
-5. **WordPress.org plugin review** — submitted 2 May 2026, expect 1–2 weeks. Once approved, update Resources page download link to point to wordpress.org/plugins/shippingiq instead of GitHub raw URL.
-6. **Annual pricing option** — consider $39/mo AUD billed annually (saves ~20%). Add as second Pro option on Pricing and Landing pages. Requires new Stripe price + new STRIPE_PRICE_PRO_ANNUAL env var.
+1. **Custom domain** — register shippingiq.com.au, point to Netlify, update Supabase Auth redirect URLs and APP_URL secret.
+2. **WordPress.org plugin review** — submitted 2 May 2026, expect 1–2 weeks. Once approved, update Resources page download link to point to wordpress.org/plugins/shippingiq instead of GitHub raw URL.
+3. **Bradshaw onboarding** — get first real merchant live, support through carrier upload and WooCommerce setup.
+4. **Annual pricing option** — consider $39/mo AUD billed annually (saves ~20%). Add as second Pro option on Pricing and Landing pages. Requires new Stripe price + new STRIPE_PRICE_PRO_ANNUAL env var.
+
+### Already done (3 May 2026)
+- ✓ Netlify deployed (latest build live at https://neon-pie-9a1542.netlify.app)
+- ✓ Zoho email live (support@shippingiq.com.au)
+- ✓ Landing page mobile responsiveness fixed
+- ✓ WordPress.org submission sent (pending review)
 
 ## Pre-launch testing checklist
 
