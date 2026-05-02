@@ -82,6 +82,21 @@ npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzar
 - Merchant name shown as page subtitle via merchant.name (test merchant = "My Store")
 - Onboarding checklist — shown to new merchants (no carriers yet). 5 steps: Create account (auto-done), Set store name (auto-detects if name ≠ "My Store"), Add first carrier (auto-detects), Configure rules (manual tick → persisted to localStorage), Install WooCommerce plugin (manual tick → persisted to localStorage; shows Merchant ID with copy button inline). Progress bar. Hides when first carrier is added; fully hidden when all steps complete.
 
+### Onboarding checklist (May 2026)
+- Shown on Dashboard when merchant has no carriers. Replaces the empty-state card. Hides as soon as first carrier is added; fully hidden once all 5 steps complete.
+- 5 steps:
+  1. Create your account — always done (auto)
+  2. Set your store name — auto-detects if merchant.name ≠ "My Store" → links to /settings
+  3. Add your first carrier — auto-detects from carriers array → links to /carriers
+  4. Configure your rules — manual tick, persisted to localStorage key `shippingiq_step_rules` → links to /rules
+  5. Install the WooCommerce plugin — manual tick, persisted to localStorage key `shippingiq_step_plugin` → links to /resources; shows Merchant ID copy button inline
+- Progress bar above checklist (e.g. "3 of 5 completed")
+- State vars: `pluginInstalled`, `rulesConfigured`, `copiedMerchantId` (in Dashboard.js)
+- Manual steps have an unticked checkbox the merchant clicks to mark done — no server write, localStorage only
+- Settings page — Merchant ID card: shows merchant UUID with copy button
+- Settings page — API Key card: shows REACT_APP_SUPABASE_ANON_KEY truncated with copy button. Label: "Anon Key". Required for WooCommerce plugin config.
+- CSS classes `settings-card` and `settings-card-title` added to Carriers.css (border-radius 12px, 24px padding, used in Settings.js)
+
 ### Team page
 - Live at /team route (Team.js + Team.css)
 - Shows list of team members with avatar, name, join date, role badge (admin = orange, member = grey)
@@ -202,22 +217,26 @@ npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzar
 - Billing nav link on all pages (admin only)
 - STRIPE_SECRET_KEY: new key created (not the original sk_live — original couldn't be copied, new key created via "+ Create secret key")
 
-## Pricing (simplified May 2026)
-- Free: $0 — 1 carrier, WooCommerce plugin, full quote tool, rules engine, surcharge management
-- Pro: $49/mo AUD — unlimited carriers, everything in Free + Rate Card Converter (10/day), team members, priority support
+### Pricing (simplified May 2026)
+- Two plans only: **Free ($0/mo)** and **Pro ($49/mo AUD)**
+- Free: 1 carrier, WooCommerce plugin, full quote tool, rules engine, surcharge management, team members
+- Pro: unlimited carriers, everything in Free + Rate Card Converter (10/day), priority support
 - 14-day free trial on Pro, no credit card required
-- Annual option: not yet built (future: $39/mo paid annually)
+- Annual option: not yet built (future consideration: $39/mo paid annually)
+- Pricing page at /pricing, Landing.js pricing grid — both show 2 plans in 1fr 1fr grid, max-width 640–720px, centred
+- Footnote on both: "All prices in AUD · 14-day free trial on Pro · No credit card required · Cancel anytime"
+- Landing.js hero subtitle: "Unlike Shippit or StarShipIt, we use your contracted carrier rates — not ours."
 
 Stripe:
-- One active price: price_1TSRfXDdBlDgOLr3caF5T3GY (Pro $49/mo)
+- One active price: `price_1TSRfXDdBlDgOLr3caF5T3GY` (Pro $49/mo)
 - Old prices archived: Starter $39, Growth $79, Pro $149
-- STRIPE_PRICE_PRO secret updated in Supabase
+- STRIPE_PRICE_PRO secret updated in Supabase edge function secrets
+- `.env.local` updated: REACT_APP_STRIPE_PRICE_PRO=price_1TSRfXDdBlDgOLr3caF5T3GY
 
-Feature gating:
-- Carriers: Free=1, Pro=unlimited (Carriers.js)
+Feature gating (src/lib/tierLimits.js):
+- Carriers: Free=1, Pro=unlimited (enforced in Carriers.js)
 - Rate Card Converter: Free=locked, Pro=10/day (PdfConverter.js + convert-pdf-to-csv edge function)
-- Team members: unlimited on both plans (gating removed)
-- tierLimits.js: free and pro only
+- Team members: unlimited on all plans (gating removed entirely from Team.js)
 
 ### Legal
 - Terms of Service, Privacy Policy, and Refund & Cancellation Policy modals
@@ -227,12 +246,12 @@ Feature gating:
 - Australian law compliant — Privacy Act 1988, Australian Consumer Law, Victorian jurisdiction
 - Support email: support@shippingiq.com.au (not yet set up)
 
-### Resources page
+### Resources page (updated May 2026)
 - Template Files section: 3 downloadable CSVs (rate-card-template.csv, zone-file-template.csv, surcharge-template.csv) served from /public/templates/
-- Help & Guides section (renamed from "Getting Your Carrier Files"): 5 accordion cards (Rate Card, Zone File, Surcharge Schedule, WooCommerce Plugin Installation Guide, Troubleshooting)
+- **Help & Guides** section (renamed from "Getting Your Carrier Files"): 5 accordion cards (Rate Card, Zone File, Surcharge Schedule, WooCommerce Plugin Installation Guide, Troubleshooting)
   - Rate Card accordion includes: CSV/Excel preference, copy-paste wording for merchants, "Only have a PDF?" link to Rate Card Converter, key things to confirm
-  - WooCommerce Plugin Installation Guide — 5-step guide with download button (GitHub raw URL), WordPress install steps, plugin config fields (Merchant ID, API URL, Anon Key, Display Mode), test instructions, important callout
-  - Troubleshooting — 4 issue cards: no rates showing, postcode not found, carrier not appearing, rates wrong. Support email at bottom.
+  - **WooCommerce Plugin Installation Guide** — 5-step guide with Download Plugin button (GitHub raw URL), WordPress install steps, plugin config fields (Merchant ID, API URL, Anon Key, Display Mode), test instructions, important callout
+  - **Troubleshooting** — 4 bordered issue cards: no rates showing, postcode not found, carrier not appearing, rates wrong. Support email at bottom (support@shippingiq.com.au)
   - Plugin zip committed to GitHub repo (removed from .gitignore) — download URL: https://github.com/loudman666-lang/shippingiq/raw/main/woocommerce-plugin/shippingiq.zip
 - How ShippingIQ Works: 3-step visual (Upload → Configure → Go Live) with callout box
 - Nav order across all pages: Dashboard → Carriers → Rules → Get a Quote → Resources → Rate Card Converter → [divider] → Team → Settings (Team and Settings visible to admin only)
@@ -247,7 +266,7 @@ Feature gating:
 - Model B support: detects pricing model before extraction. Model B (zone-based) uses a single focused AI call. Model C (destination cities) uses the existing 4-call parallel flow. Detection runs in parallel with cubic factor detection.
 - Cubic factor detection: 5th parallel AI call reads the PDF for cubic/dim factor (250, 333, 200, 167). Returns as cubicFactor in response. PdfConverter.js shows a blue info box if detected.
 - Returns corrections array {original, corrected} — yellow warning box shown if any corrections applied
-- Rate limiting: 5 conversions/day per merchant via upload_logs (action='convert'); fails open if check errors
+- Rate limiting: 10 conversions/day per merchant via upload_logs (action='convert'); fails open if check errors
 - Info box warns: CSV/Excel preferred, PDF accepted, use original not scanned, AI not 100% accurate, verify before uploading
 - Action box on completion: "Before uploading this CSV, open it and compare destination names and rates against your original PDF"
 - Nav item "Rate Card Converter" on all pages (Dashboard, Carriers, Rules, Quote, Resources, Team, Settings, PdfConverter), positioned after Resources, before admin divider, visible to all authenticated users
@@ -293,9 +312,7 @@ Feature gating:
 ## Supabase Edge Function Secrets
 STRIPE_SECRET_KEY — Stripe secret key (sk_live_...) — new key created May 2026
 STRIPE_WEBHOOK_SECRET — webhook signing secret (whsec_...)
-STRIPE_PRICE_STARTER — price_1TS5WDDdBlDgOLr37czglYF5
-STRIPE_PRICE_GROWTH — price_1TS5Y9DdBlDgOLr3o5x9ghiO
-STRIPE_PRICE_PRO — price_1TS5YPDdBlDgOLr3gKwaeT4j
+STRIPE_PRICE_PRO — price_1TSRfXDdBlDgOLr3caF5T3GY (Pro $49/mo — updated May 2026)
 APP_URL — http://localhost:3000 (update to production URL before go-live)
 
 ## Current file structure
@@ -438,7 +455,7 @@ Model C: Depot-to-depot — Mainfreight style
 - Free shipping can be exempted per product/item
 
 ## Known decisions
-- WooCommerce plugin zip is gitignored — rebuild with: `cd ~/Downloads/shippingiq/woocommerce-plugin && zip -r shippingiq.zip shippingiq/`
+- WooCommerce plugin zip is committed to the repo and served from GitHub raw URL — do NOT re-add to .gitignore. If plugin PHP changes, rebuild with: `cd ~/Downloads/shippingiq/woocommerce-plugin && zip -r shippingiq.zip shippingiq/` then commit the new zip.
 - Supabase handle_new_user trigger: manually maintained in Supabase SQL editor — not in codebase. Must include email field in both INSERT statements.
 - profiles table has email NOT NULL column — handle_new_user trigger must always insert NEW.email
 - Zone name column detection: recognises 'ratinglocation', 'rating location', 'rating_location', 'depot', 'service area' as zone name headers in addition to standard 'zone', 'zone name' etc. Added to support Mainfreight MFT_Rating_Locations.xlsx (RatingLocation column).
@@ -466,11 +483,13 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Landing page — hero messaging needs strengthening around "your rates not ours" positioning
-2. Live site testing on https://neon-pie-9a1542.netlify.app (needs rebuild + deploy)
-3. WooCommerce end-to-end test with production merchant account
-4. Custom domain (shippingiq.com.au)
-5. support@shippingiq.com.au email setup
+### Next session — deploy and test
+1. **Deploy to Netlify** — `npm run build`, then drag `~/Downloads/shippingiq/build` folder to Netlify Drop (https://app.netlify.com/drop). Rebuild needed: pricing simplification, Landing.js copy, Resources accordions, onboarding checklist all changed since last deploy.
+2. **Full live site testing** on https://neon-pie-9a1542.netlify.app — sign up, add carrier, get quote, test billing flow (Pro trial), check WooCommerce plugin config fields show correct Merchant ID + Anon Key in Settings.
+3. **WooCommerce end-to-end test** with production merchant account — install plugin from Resources page download link, configure with live Merchant ID + Anon Key, verify rates at checkout.
+4. **Custom domain** — register shippingiq.com.au, point to Netlify, update Supabase Auth redirect URLs and APP_URL secret.
+5. **support@shippingiq.com.au email setup** — needed for legal modals, Resources troubleshooting card, and customer comms. Google Workspace or Zoho.
+6. **Annual pricing option** — consider $39/mo AUD billed annually (saves ~20%). Add as second Pro option on Pricing and Landing pages. Requires new Stripe price + new STRIPE_PRICE_PRO_ANNUAL env var.
 
 ## Pre-launch testing checklist
 
