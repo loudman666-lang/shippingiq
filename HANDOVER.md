@@ -80,6 +80,7 @@ npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzar
 - Your Carriers list: compact flex-row layout with inline active badge (not full-width bar)
 - Sidebar avatar + display name: dynamic from profile.full_name with merchant.name fallback
 - Merchant name shown as page subtitle via merchant.name (test merchant = "My Store")
+- Onboarding checklist — shown to new merchants (no carriers yet). 5 steps: Create account (auto-done), Set store name (auto-detects if name ≠ "My Store"), Add first carrier (auto-detects), Configure rules (manual tick → persisted to localStorage), Install WooCommerce plugin (manual tick → persisted to localStorage; shows Merchant ID with copy button inline). Progress bar. Hides when first carrier is added; fully hidden when all steps complete.
 
 ### Team page
 - Live at /team route (Team.js + Team.css)
@@ -213,8 +214,11 @@ npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzar
 
 ### Resources page
 - Template Files section: 3 downloadable CSVs (rate-card-template.csv, zone-file-template.csv, surcharge-template.csv) served from /public/templates/
-- Getting Your Carrier Files: 3 accordion cards (Rate Card, Zone File, Surcharge Schedule) with plain-English guidance and copy-paste wording for merchants
-- Rate Card accordion includes: CSV/Excel preference, copy-paste wording for merchants, "Only have a PDF?" link to Rate Card Converter, key things to confirm
+- Help & Guides section (renamed from "Getting Your Carrier Files"): 5 accordion cards (Rate Card, Zone File, Surcharge Schedule, WooCommerce Plugin Installation Guide, Troubleshooting)
+  - Rate Card accordion includes: CSV/Excel preference, copy-paste wording for merchants, "Only have a PDF?" link to Rate Card Converter, key things to confirm
+  - WooCommerce Plugin Installation Guide — 5-step guide with download button (GitHub raw URL), WordPress install steps, plugin config fields (Merchant ID, API URL, Anon Key, Display Mode), test instructions, important callout
+  - Troubleshooting — 4 issue cards: no rates showing, postcode not found, carrier not appearing, rates wrong. Support email at bottom.
+  - Plugin zip committed to GitHub repo (removed from .gitignore) — download URL: https://github.com/loudman666-lang/shippingiq/raw/main/woocommerce-plugin/shippingiq.zip
 - How ShippingIQ Works: 3-step visual (Upload → Configure → Go Live) with callout box
 - Nav order across all pages: Dashboard → Carriers → Rules → Get a Quote → Resources → Rate Card Converter → [divider] → Team → Settings (Team and Settings visible to admin only)
 - Sign out button (icon + "Sign out" text) is now consistent across all pages: Dashboard, Carriers, Rules, Quote, Resources, Team, Settings
@@ -242,6 +246,9 @@ npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzar
 - Note: GST applies to Get a Quote page only — WooCommerce handles GST via its own tax settings
 - Fixed silent settings-clobber bug: all settings saves (GST, Customer Type) now write { gstEnabled, customerType } together — previously GST save was overwriting the entire settings jsonb and wiping other fields.
 - Sign out button in sidebar footer (icon + "Sign out" text)
+- Merchant ID card — shows merchant UUID with copy button
+- API Key card — shows Supabase anon key (REACT_APP_SUPABASE_ANON_KEY) with copy button; required for WooCommerce plugin configuration
+- settings-card and settings-card-title CSS classes added to Carriers.css
 
 ### Rules page
 - Free shipping threshold with on/off toggle
@@ -444,31 +451,11 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-
-### Next session priorities (in order)
-1. Dashboard onboarding checklist — "Getting started" card with 4-5 steps (set store name, add carrier, configure rules, install plugin, get first quote). Persistent until all steps complete. Option A checklist style.
-2. Merchant ID visibility — surface Merchant ID prominently on Dashboard and Settings page so merchants can easily find it to configure the WooCommerce plugin
-3. Resources page — deeper help content:
-   - WooCommerce plugin installation guide (step by step)
-   - Where to find your Merchant ID
-   - Troubleshooting section: "rates not showing", "postcode not found", "carrier not appearing"
-4. Full live site testing on https://neon-pie-9a1542.netlify.app
-5. WooCommerce end-to-end test with production merchant account (new merchant ID, live Supabase)
-6. Custom domain setup (shippingiq.com.au) — after testing complete
-7. support@shippingiq.com.au email setup (Resend or similar)
-8. Email confirmation — turn back on with proper email sender before serious scale
-
-### Logged for future build
-- Savings calculator on landing page — "How much are you losing on freight?" interactive tool
-- Production deployment automation — connect GitHub to Netlify for auto-deploy on push
-- Shopify and Magento plugins
-- Full order management for saved quotes
-- Shared freight calculation engine module (Quote.js and calculate-freight stay in sync)
-- Multi-warehouse support
-- Address autocomplete for residential detection
-- Surcharge modal text overflow bug diagnosis
-- PDF converter gated to Growth tier (requires billing tier check)
-- Loom video walkthrough for onboarding
+1. Full live site testing on https://neon-pie-9a1542.netlify.app
+2. WooCommerce end-to-end test with production merchant account (new merchant ID, live Supabase)
+3. Custom domain setup (shippingiq.com.au)
+4. support@shippingiq.com.au email setup
+5. Production deployment — rebuild and redeploy to Netlify after all fixes confirmed
 
 ## Pre-launch testing checklist
 
