@@ -85,6 +85,151 @@ const ACCORDION = [
       </div>
     ),
   },
+  {
+    key: 'woocommerce',
+    title: 'WooCommerce Plugin — Installation Guide',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <path d="M8 21h8"/>
+        <path d="M12 17v4"/>
+      </svg>
+    ),
+    content: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <p style={{ fontSize: '14px', lineHeight: '1.65', color: 'var(--ink-mid)', margin: 0 }}>
+          The ShippingIQ WooCommerce plugin displays live freight rates at checkout, calculated from your uploaded carrier rate cards. Installation takes about 10 minutes.
+        </p>
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '6px' }}>Step 1 — Download the plugin</div>
+          <p style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.65', margin: '0 0 8px' }}>Download the ShippingIQ plugin zip file and save it to your computer.</p>
+          <a href="https://github.com/loudman666-lang/shippingiq/raw/main/woocommerce-plugin/shippingiq.zip" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: 'var(--accent)', color: '#fff', borderRadius: '7px', fontSize: '13px', fontWeight: '500', textDecoration: 'none' }}>
+            Download shippingiq.zip
+          </a>
+        </div>
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '6px' }}>Step 2 — Install in WordPress</div>
+          <ol style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.8', margin: 0, paddingLeft: '18px' }}>
+            <li>Log in to your WordPress admin panel</li>
+            <li>Go to <strong>Plugins → Add New → Upload Plugin</strong></li>
+            <li>Choose the <code>shippingiq.zip</code> file you downloaded</li>
+            <li>Click <strong>Install Now</strong>, then <strong>Activate Plugin</strong></li>
+          </ol>
+        </div>
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '6px' }}>Step 3 — Add to a shipping zone</div>
+          <ol style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.8', margin: 0, paddingLeft: '18px' }}>
+            <li>Go to <strong>WooCommerce → Settings → Shipping</strong></li>
+            <li>Click on your shipping zone (or create one for Australia)</li>
+            <li>Click <strong>Add shipping method</strong> and select <strong>ShippingIQ</strong></li>
+            <li>Click <strong>Edit</strong> on the ShippingIQ method</li>
+          </ol>
+        </div>
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '6px' }}>Step 4 — Configure the plugin</div>
+          <p style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.65', margin: '0 0 10px' }}>Enter these values in the plugin settings:</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Merchant ID</div>
+              <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Your unique ShippingIQ identifier. Find it in <a href="/settings" style={{ color: 'var(--accent)' }}>Settings → Merchant ID</a>.</div>
+            </div>
+            <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Calculate Freight API URL</div>
+              <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginBottom: '4px' }}>Pre-filled automatically — do not change.</div>
+              <code style={{ fontSize: '11px', color: 'var(--ink)', wordBreak: 'break-all' }}>https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/calculate-freight</code>
+            </div>
+            <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Supabase Anon Key</div>
+              <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Find it in <a href="/settings" style={{ color: 'var(--accent)' }}>Settings → API Keys</a>.</div>
+            </div>
+            <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Display Mode</div>
+              <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
+                <strong>All carriers</strong> — shows every eligible carrier at checkout<br/>
+                <strong>Cheapest only</strong> — shows the lowest rate only<br/>
+                <strong>Priority carrier</strong> — shows your top-ranked carrier that services the postcode
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '6px' }}>Step 5 — Test it</div>
+          <ol style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.8', margin: 0, paddingLeft: '18px' }}>
+            <li>Add a product to your cart</li>
+            <li>Proceed to checkout and enter an Australian postcode</li>
+            <li>ShippingIQ rates should appear in the shipping options</li>
+            <li>If no rates appear, check the Troubleshooting section below</li>
+          </ol>
+        </div>
+        <div style={{ padding: '12px 16px', background: 'var(--accent-light)', borderRadius: '8px', borderLeft: '3px solid var(--accent)', fontSize: '13px', color: 'var(--ink)', lineHeight: '1.6' }}>
+          <strong>Important:</strong> You must have at least one active carrier with a postcode zone file uploaded in ShippingIQ before rates will appear at checkout.
+        </div>
+      </div>
+    ),
+  },
+  {
+    key: 'troubleshooting',
+    title: 'Troubleshooting',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    ),
+    content: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', background: 'var(--surface-2)', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>No rates showing at checkout</div>
+          <div style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.7' }}>
+            <ul style={{ margin: 0, paddingLeft: '16px' }}>
+              <li>Check your Merchant ID is correctly entered in the plugin settings</li>
+              <li>Check your Supabase Anon Key is correctly entered</li>
+              <li>Make sure you have at least one active carrier in ShippingIQ</li>
+              <li>Make sure your carrier has a postcode zone file uploaded (check for the amber "No zone file" badge on the carrier card)</li>
+              <li>Check the postcode you're testing is covered by your carrier's zone file</li>
+            </ul>
+          </div>
+        </div>
+        <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', background: 'var(--surface-2)', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>Postcode not found / no quote returned</div>
+          <div style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.7' }}>
+            <ul style={{ margin: 0, paddingLeft: '16px' }}>
+              <li>The postcode is not in your carrier's zone file — check your zone file covers that postcode</li>
+              <li>If your carrier doesn't provide a zone file, use the manual postcode range entry on the carrier card</li>
+              <li>Some remote postcodes may not be serviced by your carrier — this is correct behaviour</li>
+            </ul>
+          </div>
+        </div>
+        <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', background: 'var(--surface-2)', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>A specific carrier is not appearing</div>
+          <div style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.7' }}>
+            <ul style={{ margin: 0, paddingLeft: '16px' }}>
+              <li>Check the carrier is set to Active in ShippingIQ → Carriers</li>
+              <li>Check the carrier has a postcode zone file (amber badge = no zone file)</li>
+              <li>Check the carrier's eligibility limits — if any cart item exceeds the weight or dimension limits, the carrier is excluded</li>
+              <li>Check if a product tag is restricting the carrier (shippingiq-only-[slug] or shippingiq-exclude-[slug])</li>
+            </ul>
+          </div>
+        </div>
+        <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', background: 'var(--surface-2)', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>Rates look wrong or too high/low</div>
+          <div style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.7' }}>
+            <ul style={{ margin: 0, paddingLeft: '16px' }}>
+              <li>Use ShippingIQ → Get a Quote to calculate the same order manually and compare</li>
+              <li>Check your fuel levy % is correctly set on the carrier card</li>
+              <li>Check your freight margin settings in Rules</li>
+              <li>If you used the Rate Card Converter (PDF), verify the extracted rates match your original PDF</li>
+              <li>Check your cubic factor — standard Australian road freight is 250. Change only if your carrier contract specifies otherwise</li>
+            </ul>
+          </div>
+        </div>
+        <p style={{ fontSize: '13px', color: 'var(--ink-muted)', margin: 0 }}>
+          Still stuck? Email <a href="mailto:support@shippingiq.com.au" style={{ color: 'var(--accent)' }}>support@shippingiq.com.au</a> and include your Merchant ID.
+        </p>
+      </div>
+    ),
+  },
 ]
 
 const STEPS = [
@@ -276,13 +421,13 @@ export default function Resources() {
           </div>
         </section>
 
-        {/* Getting Your Carrier Files */}
+        {/* Help & Guides */}
         <section style={{ marginBottom: '52px', maxWidth: '680px' }}>
           <h2 style={{ fontFamily: "'Instrument Serif', serif", fontSize: '22px', fontWeight: '400', color: 'var(--ink)', marginBottom: '6px' }}>
-            Getting Your Carrier Files
+            Help & Guides
           </h2>
           <p style={{ fontSize: '14px', color: 'var(--ink-muted)', marginBottom: '24px' }}>
-            Most carriers can provide rate cards and zone files on request. Here's how.
+            Carrier file guides, WooCommerce installation, and troubleshooting.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

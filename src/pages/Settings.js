@@ -27,6 +27,7 @@ export default function Settings() {
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [showRefund, setShowRefund] = useState(false)
   const [copiedId, setCopiedId] = useState(false)
+  const [copiedAnon, setCopiedAnon] = useState(false)
 
   useEffect(() => {
     if (profile?.full_name) setDisplayName(profile.full_name)
@@ -306,6 +307,24 @@ export default function Settings() {
             >
               {copiedId ? 'Copied!' : 'Copy'}
             </button>
+          </div>
+          <div style={{ marginTop: '16px' }}>
+            <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--ink)', marginBottom: '4px' }}>API Key</div>
+            <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '8px' }}>
+              Required for the WooCommerce plugin. Safe to share — read-only access protected by your account.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--ink-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>Anon Key</div>
+              <code style={{ fontSize: '11px', color: 'var(--ink)', fontFamily: 'monospace', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {process.env.REACT_APP_SUPABASE_ANON_KEY}
+              </code>
+              <button
+                onClick={() => { navigator.clipboard.writeText(process.env.REACT_APP_SUPABASE_ANON_KEY || ''); setCopiedAnon(true); setTimeout(() => setCopiedAnon(false), 2000) }}
+                style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '4px', border: '1px solid var(--border-mid)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+              >
+                {copiedAnon ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
           </div>
         </div>
         <div className="settings-card">
