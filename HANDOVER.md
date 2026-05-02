@@ -190,19 +190,34 @@ npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzar
 ### Billing (Stripe)
 - Stripe account: acct_1T9F7lDdBlDgOLr3 (shared with ImporterIQ and MarginIQ)
 - Three edge functions deployed: create-checkout-session, stripe-webhook, create-portal-session
-- Stripe products: Starter $39/mo, Growth $79/mo, Pro $149/mo (AUD, recurring)
-- 14-day free trial, no credit card required (payment_method_collection: if_required)
+- 14-day free trial on Pro, no credit card required (payment_method_collection: if_required)
 - Webhook endpoint registered: https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/stripe-webhook
 - Webhook events: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.payment_failed
 - merchants.subscription jsonb column stores: tier, status, stripe_customer_id, stripe_subscription_id, trial_ends_at, current_period_ends_at
-- Tier values: free | starter | growth | pro
+- Tier values: free | pro
 - Status values: active | trialing | past_due | canceled
 - AuthContext: planTier reads from merchant.subscription.tier (defaults to 'free')
-- Billing page at /pricing — 4-plan pricing grid, upgrade buttons, current plan banner, manage billing portal link
+- Billing page at /pricing — 2-plan pricing grid (Free + Pro), upgrade button, current plan indicator, manage billing portal link
 - BillingSuccess page at /billing/success — auto-redirects to dashboard after 4 seconds
 - Billing nav link on all pages (admin only)
 - STRIPE_SECRET_KEY: new key created (not the original sk_live — original couldn't be copied, new key created via "+ Create secret key")
-- Feature limits per tier: Free=1 carrier, Starter=3, Growth=10, Pro=unlimited. Rate Card Converter: Growth+ only. Team members: Free/Starter=1, Growth=3, Pro=unlimited.
+
+## Pricing (simplified May 2026)
+- Free: $0 — 1 carrier, WooCommerce plugin, full quote tool, rules engine, surcharge management
+- Pro: $49/mo AUD — unlimited carriers, everything in Free + Rate Card Converter (10/day), team members, priority support
+- 14-day free trial on Pro, no credit card required
+- Annual option: not yet built (future: $39/mo paid annually)
+
+Stripe:
+- One active price: price_1TSRfXDdBlDgOLr3caF5T3GY (Pro $49/mo)
+- Old prices archived: Starter $39, Growth $79, Pro $149
+- STRIPE_PRICE_PRO secret updated in Supabase
+
+Feature gating:
+- Carriers: Free=1, Pro=unlimited (Carriers.js)
+- Rate Card Converter: Free=locked, Pro=10/day (PdfConverter.js + convert-pdf-to-csv edge function)
+- Team members: unlimited on both plans (gating removed)
+- tierLimits.js: free and pro only
 
 ### Legal
 - Terms of Service, Privacy Policy, and Refund & Cancellation Policy modals
@@ -451,11 +466,11 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-1. Full live site testing on https://neon-pie-9a1542.netlify.app
-2. WooCommerce end-to-end test with production merchant account (new merchant ID, live Supabase)
-3. Custom domain setup (shippingiq.com.au)
-4. support@shippingiq.com.au email setup
-5. Production deployment — rebuild and redeploy to Netlify after all fixes confirmed
+1. Landing page — hero messaging needs strengthening around "your rates not ours" positioning
+2. Live site testing on https://neon-pie-9a1542.netlify.app (needs rebuild + deploy)
+3. WooCommerce end-to-end test with production merchant account
+4. Custom domain (shippingiq.com.au)
+5. support@shippingiq.com.au email setup
 
 ## Pre-launch testing checklist
 
