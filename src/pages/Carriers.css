@@ -201,3 +201,18 @@
 .rate-table tr:hover td {
   background: #f9fafb;
 }
+
+.settings-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.settings-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin-bottom: 12px;
+}
