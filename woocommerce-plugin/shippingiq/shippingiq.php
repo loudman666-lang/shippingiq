@@ -5,7 +5,6 @@
  * Description:       Real-time freight rates at WooCommerce checkout, powered by ShippingIQ.
  * Version:           1.0.0
  * Author:            ShippingIQ
- * Author URI:       https://shippingiq.com.au
  * License:           GPL v2 or later
  * Text Domain:       shippingiq
  * Requires Plugins:  woocommerce
