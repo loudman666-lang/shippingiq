@@ -244,7 +244,7 @@ Feature gating (src/lib/tierLimits.js):
 - Accessible from Landing page footer (3 buttons) and Settings page (Legal card)
 - Modals close on × button or clicking outside
 - Australian law compliant — Privacy Act 1988, Australian Consumer Law, Victorian jurisdiction
-- Support email: support@shippingiq.com.au (not yet set up)
+- Support email: support@shippingiq.com.au — live (Zoho, MX on GoDaddy, set up 3 May 2026)
 
 ### Resources page (updated May 2026)
 - Template Files section: 3 downloadable CSVs (rate-card-template.csv, zone-file-template.csv, surcharge-template.csv) served from /public/templates/
@@ -493,7 +493,7 @@ Model C: Depot-to-depot — Mainfreight style
 ### Next session
 1. **Deploy to Netlify** — `npm run build`, then drag `~/Downloads/shippingiq/build` folder to Netlify Drop (https://app.netlify.com/drop). Rebuild needed: pricing simplification, Landing.js copy, Resources accordions, onboarding checklist all changed since last deploy.
 2. **Full live site testing** on https://neon-pie-9a1542.netlify.app — sign up, add carrier, get quote, test billing flow (Pro trial), check WooCommerce plugin config fields show correct Merchant ID + Anon Key in Settings.
-3. **Zoho email setup** — support@shippingiq.com.au needs setting up in Trident. Required for legal modals, Resources troubleshooting card, and customer comms.
+3. ~~**Zoho email setup**~~ — ✓ Done (3 May 2026). support@shippingiq.com.au is live. MX records added to GoDaddy, verified in Zoho, mailbox created in Zoho admin.
 4. **Custom domain** — register shippingiq.com.au, point to Netlify, update Supabase Auth redirect URLs and APP_URL secret.
 5. **WordPress.org plugin review** — submitted 2 May 2026, expect 1–2 weeks. Once approved, update Resources page download link to point to wordpress.org/plugins/shippingiq instead of GitHub raw URL.
 6. **Annual pricing option** — consider $39/mo AUD billed annually (saves ~20%). Add as second Pro option on Pricing and Landing pages. Requires new Stripe price + new STRIPE_PRICE_PRO_ANNUAL env var.
