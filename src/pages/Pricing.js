@@ -6,39 +6,44 @@ import './Dashboard.css'
 
 const PLANS = [
   {
-    id: 'free',
+    tier: 'free',
     name: 'Free',
     price: 0,
+    description: 'One carrier. Prove it works before you commit.',
+    features: [
+      '1 carrier',
+      'WooCommerce plugin',
+      'Full quote tool',
+      'Saved quotes',
+      'Freight rules engine',
+      'Surcharge management',
+    ],
+    cta: 'Current plan',
     priceId: null,
-    description: 'Enough to prove it works. Not enough to run a real business on.',
-    features: ['1 carrier', '3 uploads/day', 'WooCommerce plugin', 'Basic quote tool'],
   },
   {
-    id: 'starter',
-    name: 'Starter',
-    price: 39,
-    priceId: process.env.REACT_APP_STRIPE_PRICE_STARTER,
-    description: 'For growing stores ready to get freight right.',
-    features: ['3 carriers', '10 uploads/day', 'WooCommerce plugin', 'Full quote tool', 'Up to 100 saved quotes', 'Email support'],
-  },
-  {
-    id: 'growth',
-    name: 'Growth',
-    price: 79,
-    priceId: process.env.REACT_APP_STRIPE_PRICE_GROWTH,
-    popular: true,
-    description: 'Full rules engine for serious ecommerce operations.',
-    features: ['10 carriers', '10 uploads/day', 'WooCommerce plugin', 'Full rules engine', 'Rate Card Converter', 'Up to 3 team members', 'Unlimited saved quotes', 'Priority email support'],
-  },
-  {
-    id: 'pro',
+    tier: 'pro',
     name: 'Pro',
-    price: 149,
+    price: 49,
+    description: 'Unlimited carriers. Your rates. Live at checkout.',
+    features: [
+      'Unlimited carriers',
+      'WooCommerce plugin',
+      'Full quote tool',
+      'Saved quotes',
+      'Freight rules engine',
+      'Surcharge management',
+      'Rate Card Converter (PDF → CSV)',
+      'Team members',
+      'Priority email support',
+    ],
+    cta: 'Start free trial',
     priceId: process.env.REACT_APP_STRIPE_PRICE_PRO,
-    description: 'For high-volume operations that want the full feature set.',
-    features: ['Unlimited carriers', '10 uploads/day', 'WooCommerce plugin', 'Full rules engine', 'Rate Card Converter', 'Unlimited team members', 'Unlimited saved quotes', 'Priority email support'],
+    popular: true,
   },
 ]
+
+const TIER_ORDER = ['free', 'pro']
 
 export default function Pricing() {
   const { profile, merchant, isAdmin, signOut, planTier } = useAuth()
@@ -52,7 +57,7 @@ export default function Pricing() {
 
   async function handleUpgrade(plan) {
     if (!plan.priceId) return
-    setLoading(plan.id)
+    setLoading(plan.tier)
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/create-checkout-session`, {
@@ -62,7 +67,7 @@ export default function Pricing() {
           Authorization: `Bearer ${session.access_token}`,
           apikey: process.env.REACT_APP_SUPABASE_ANON_KEY,
         },
-        body: JSON.stringify({ priceId: plan.priceId, tier: plan.id }),
+        body: JSON.stringify({ priceId: plan.priceId, tier: plan.tier }),
       })
       const data = await res.json()
       if (data.url) window.location.href = data.url
@@ -202,66 +207,61 @@ export default function Pricing() {
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginTop: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', maxWidth: '720px', margin: '0 auto' }}>
             {PLANS.map(plan => {
-              const isCurrent = planTier === plan.id
+              const isCurrent = planTier === plan.tier
+              const isDowngrade = TIER_ORDER.indexOf(plan.tier) < TIER_ORDER.indexOf(planTier)
               return (
-                <div
-                  key={plan.id}
-                  style={{
-                    position: 'relative',
-                    background: '#fff',
-                    border: isCurrent || plan.popular ? '2px solid var(--accent)' : '1px solid var(--border)',
-                    borderRadius: '12px',
-                    padding: '24px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '16px',
-                    minHeight: '420px',
-                  }}
-                >
-                  {isCurrent && (
-                    <div style={{ position: 'absolute', top: '-1px', right: '16px', background: 'var(--accent)', color: '#fff', fontSize: '11px', fontWeight: '600', padding: '3px 10px', borderRadius: '0 0 6px 6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Current plan
-                    </div>
-                  )}
-                  {!isCurrent && plan.popular && (
-                    <div style={{ position: 'absolute', top: '-1px', right: '16px', background: 'var(--accent)', color: '#fff', fontSize: '11px', fontWeight: '600', padding: '3px 10px', borderRadius: '0 0 6px 6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div key={plan.tier} style={{
+                  background: 'var(--surface)',
+                  border: plan.popular ? '2px solid var(--accent)' : '1px solid var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '28px',
+                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}>
+                  {plan.popular && (
+                    <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: 'var(--accent)', color: 'white', fontSize: '11px', fontWeight: '600', padding: '3px 14px', borderRadius: '20px', whiteSpace: 'nowrap' }}>
                       Most popular
                     </div>
                   )}
-                  <div>
-                    <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>{plan.name}</div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                      <span style={{ fontSize: '28px', fontWeight: '700', color: 'var(--ink)' }}>${plan.price}</span>
-                      {plan.price > 0 && <span style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>/mo</span>}
-                    </div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>{plan.name}</div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <span style={{ fontSize: '36px', fontWeight: '700', color: 'var(--ink)' }}>${plan.price}</span>
+                    {plan.price > 0 && <span style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>/mo AUD</span>}
                   </div>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                  <div style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '24px', lineHeight: '1.5' }}>{plan.description}</div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', flex: 1 }}>
                     {plan.features.map((f, i) => (
-                      <li key={i} style={{ fontSize: '13px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <li key={i} style={{ fontSize: '13px', color: 'var(--ink-mid)', padding: '5px 0', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}><polyline points="20 6 9 17 4 12"/></svg>
                         {f}
                       </li>
                     ))}
                   </ul>
                   {isCurrent ? (
-                    <div style={{ marginTop: 'auto', padding: '9px', textAlign: 'center', fontSize: '13px', color: 'var(--ink-muted)', background: 'var(--surface)', borderRadius: 'var(--radius)' }}>
+                    <button disabled style={{ fontSize: '13px', padding: '11px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--ink-muted)', cursor: 'default', width: '100%', marginTop: 'auto' }}>
                       Current plan
-                    </div>
-                  ) : plan.priceId ? (
+                    </button>
+                  ) : isDowngrade ? (
+                    <button disabled style={{ fontSize: '13px', padding: '11px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--ink-muted)', cursor: 'default', width: '100%', marginTop: 'auto' }}>
+                      Contact us to downgrade
+                    </button>
+                  ) : (
                     <button
                       onClick={() => handleUpgrade(plan)}
                       disabled={!!loading}
-                      style={{ marginTop: 'auto', padding: '9px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}
+                      style={{ fontSize: '13px', padding: '11px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer', width: '100%', fontWeight: '500', marginTop: 'auto' }}
                     >
-                      {loading === plan.id ? 'Loading…' : `Upgrade to ${plan.name}`}
+                      {loading === plan.tier ? 'Loading...' : plan.cta}
                     </button>
-                  ) : null}
+                  )}
                 </div>
               )
             })}
           </div>
+          <p className="pricing-footnote">All prices in AUD · 14-day free trial on Pro · No credit card required · Cancel anytime</p>
         </div>
       </main>
     </div>

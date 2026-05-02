@@ -69,7 +69,7 @@ export function TermsModal({ onClose }) {
           <p style={pStyle}>You are responsible for maintaining the confidentiality of your login details and for all activity that occurs under your account. You must not share your login credentials with others unless your subscription plan allows multiple users. We reserve the right to suspend or terminate accounts that violate these Terms or misuse the Service.</p>
 
           <h2 style={h2Style}>3. Subscription and Payment</h2>
-          <p style={pStyle}>ShippingIQ is offered on a subscription basis with the following plans: Free ($0/mo), Starter ($39/mo), Growth ($79/mo), and Pro ($149/mo) unless otherwise stated. Subscriptions are billed monthly in advance and continue until cancelled. All prices are in Australian Dollars and inclusive of GST where applicable.</p>
+          <p style={pStyle}>ShippingIQ is offered on a subscription basis with the following plans: Free ($0/mo) and Pro ($49/mo) unless otherwise stated. Subscriptions are billed monthly in advance and continue until cancelled. All prices are in Australian Dollars and inclusive of GST where applicable.</p>
 
           <h2 style={h2Style}>4. Free Trial</h2>
           <p style={pStyle}>New accounts on paid plans receive a 14-day free trial. No credit card is required to start the trial. At the end of the trial period, you must add a payment method to continue using paid features. We reserve the right to change or remove the free trial at any time.</p>

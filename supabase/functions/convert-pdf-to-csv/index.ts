@@ -68,9 +68,9 @@ serve(async (req) => {
       console.log('[rate-limit] convert count:', count, '| error:', countError?.message ?? 'none')
       if (countError) throw countError
 
-      if ((count ?? 0) >= 5) {
+      if ((count ?? 0) >= 10) {
         return new Response(
-          JSON.stringify({ error: 'Daily conversion limit reached (5/day). Please try again tomorrow.' }),
+          JSON.stringify({ error: 'Daily conversion limit reached (10/day). Please try again tomorrow.' }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }

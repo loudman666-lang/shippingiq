@@ -446,7 +446,7 @@ export default function Landing() {
           <h2>Transparent pricing.<br />No surprises.</h2>
           <p className="sec-sub">Start free. Upgrade when you're ready. 14-day free trial on all paid plans — no credit card required to start.</p>
 
-          <div className="pricing-grid">
+          <div className="pricing-grid" style={{ maxWidth: '640px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
 
             <div className="pricing-card">
               <div className="plan-name">Free</div>
@@ -454,85 +454,44 @@ export default function Landing() {
                 <span className="price-dollar">$</span>
                 <span className="price-amount">0</span>
               </div>
-              <div className="plan-desc">Enough to prove it works. Not enough to run a real business on.</div>
+              <div className="plan-desc">One carrier. Prove it works before you commit.</div>
               <div className="plan-divider"></div>
               <ul className="plan-features">
                 <li className="plan-feat"><CheckIcon />1 carrier</li>
-                <li className="plan-feat"><CheckIcon />3 uploads/day</li>
                 <li className="plan-feat"><CheckIcon />WooCommerce plugin</li>
-                <li className="plan-feat"><CheckIcon />Basic quote tool</li>
+                <li className="plan-feat"><CheckIcon />Full quote tool</li>
+                <li className="plan-feat"><CheckIcon />Freight rules engine</li>
+                <li className="plan-feat"><CheckIcon />Surcharge management</li>
               </ul>
               <Link to="/signup" className="btn-plan btn-outline">Get started free</Link>
             </div>
 
-            <div className="pricing-card">
-              <div className="plan-name">Starter</div>
-              <div className="plan-price">
-                <span className="price-dollar">$</span>
-                <span className="price-amount">39</span>
-                <span className="price-period">/mo</span>
-              </div>
-              <div className="plan-desc">For growing stores ready to get freight right.</div>
-              <div className="plan-divider"></div>
-              <ul className="plan-features">
-                <li className="plan-feat"><CheckIcon />3 carriers</li>
-                <li className="plan-feat"><CheckIcon />10 uploads/day</li>
-                <li className="plan-feat"><CheckIcon />WooCommerce plugin</li>
-                <li className="plan-feat"><CheckIcon />Full quote tool</li>
-                <li className="plan-feat"><CheckIcon />Up to 100 saved quotes</li>
-                <li className="plan-feat"><CheckIcon />Email support</li>
-              </ul>
-              <Link to="/signup" className="btn-plan btn-outline">Start free trial</Link>
-            </div>
-
             <div className="pricing-card popular">
               <div className="popular-badge">Most popular</div>
-              <div className="plan-name">Growth</div>
+              <div className="plan-name">Pro</div>
               <div className="plan-price">
                 <span className="price-dollar">$</span>
-                <span className="price-amount">79</span>
+                <span className="price-amount">49</span>
                 <span className="price-period">/mo</span>
               </div>
-              <div className="plan-desc">Full rules engine for serious ecommerce operations.</div>
+              <div className="plan-desc">Unlimited carriers. Your rates. Live at checkout.</div>
               <div className="plan-divider"></div>
               <ul className="plan-features">
-                <li className="plan-feat"><CheckIcon />Up to 10 carriers</li>
-                <li className="plan-feat"><CheckIcon />10 uploads/day</li>
+                <li className="plan-feat"><CheckIcon />Unlimited carriers</li>
                 <li className="plan-feat"><CheckIcon />WooCommerce plugin</li>
-                <li className="plan-feat"><CheckIcon />Full rules engine</li>
+                <li className="plan-feat"><CheckIcon />Full quote tool</li>
+                <li className="plan-feat"><CheckIcon />Freight rules engine</li>
+                <li className="plan-feat"><CheckIcon />Surcharge management</li>
                 <li className="plan-feat"><CheckIcon />Rate Card Converter</li>
-                <li className="plan-feat"><CheckIcon />Up to 3 team members</li>
-                <li className="plan-feat"><CheckIcon />Unlimited saved quotes</li>
+                <li className="plan-feat"><CheckIcon />Team members</li>
                 <li className="plan-feat"><CheckIcon />Priority email support</li>
               </ul>
               <Link to="/signup" className="btn-plan btn-filled">Start free trial</Link>
             </div>
 
-            <div className="pricing-card">
-              <div className="plan-name">Pro</div>
-              <div className="plan-price">
-                <span className="price-dollar">$</span>
-                <span className="price-amount">149</span>
-                <span className="price-period">/mo</span>
-              </div>
-              <div className="plan-desc">For high-volume operations that want the full feature set.</div>
-              <div className="plan-divider"></div>
-              <ul className="plan-features">
-                <li className="plan-feat"><CheckIcon />Unlimited carriers</li>
-                <li className="plan-feat"><CheckIcon />10 uploads/day</li>
-                <li className="plan-feat"><CheckIcon />WooCommerce plugin</li>
-                <li className="plan-feat"><CheckIcon />Full rules engine</li>
-                <li className="plan-feat"><CheckIcon />Rate Card Converter</li>
-                <li className="plan-feat"><CheckIcon />Unlimited team members</li>
-                <li className="plan-feat"><CheckIcon />Unlimited saved quotes</li>
-                <li className="plan-feat"><CheckIcon />Priority email support</li>
-              </ul>
-              <Link to="/signup" className="btn-plan btn-outline">Start free trial</Link>
-            </div>
-
           </div>
 
-          <p className="pricing-footnote">All prices in AUD · 14-day free trial on all paid plans · Cancel anytime</p>
+          <p className="pricing-footnote">All prices in AUD · 14-day free trial on Pro · No credit card required · Cancel anytime</p>
         </div>
       </section>
 

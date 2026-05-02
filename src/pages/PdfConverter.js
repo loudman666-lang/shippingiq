@@ -164,12 +164,12 @@ export default function PdfConverter() {
           {!canUseConverter ? (
             <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '40px', textAlign: 'center', maxWidth: '480px' }}>
               <div style={{ fontSize: '32px', marginBottom: '16px' }}>🔒</div>
-              <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--ink)', marginBottom: '8px' }}>Rate Card Converter is a Growth feature</div>
+              <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--ink)', marginBottom: '8px' }}>Rate Card Converter is a Pro feature</div>
               <div style={{ fontSize: '14px', color: 'var(--ink-muted)', marginBottom: '24px', lineHeight: '1.6' }}>
-                Upload a PDF rate card and we'll convert it to CSV automatically. Available on Growth and Pro plans.
+                Upload a PDF rate card and we'll convert it to CSV automatically. Available on the Pro plan.
               </div>
               <a href="/pricing" style={{ display: 'inline-block', background: 'var(--accent)', color: 'white', padding: '10px 24px', borderRadius: 'var(--radius)', fontSize: '14px', fontWeight: '500', textDecoration: 'none' }}>
-                Upgrade to Growth →
+                Upgrade to Pro →
               </a>
             </div>
           ) : (
@@ -239,6 +239,9 @@ export default function PdfConverter() {
                 >
                   {converting ? 'Converting…' : 'Convert to CSV'}
                 </button>
+                <p style={{ fontSize: '12px', color: 'var(--ink-muted)', margin: '8px 0 0', textAlign: 'center' }}>
+                  10 conversions per day included on Pro.
+                </p>
 
                 {converting && (
                   <p style={{ marginTop: '12px', fontSize: '13px', color: 'var(--ink-muted)', lineHeight: '1.5' }}>

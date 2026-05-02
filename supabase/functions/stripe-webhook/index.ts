@@ -47,8 +47,6 @@ serve(async (req) => {
 
   function getTierFromPriceId(priceId: string): string {
     const priceMap: Record<string, string> = {
-      [Deno.env.get('STRIPE_PRICE_STARTER') ?? '']: 'starter',
-      [Deno.env.get('STRIPE_PRICE_GROWTH') ?? '']: 'growth',
       [Deno.env.get('STRIPE_PRICE_PRO') ?? '']: 'pro',
     }
     return priceMap[priceId] ?? 'free'

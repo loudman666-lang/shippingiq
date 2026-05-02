@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { TIER_LIMITS } from '../lib/tierLimits'
 import './Team.css'
 
 const TEAM_SVG = (
@@ -23,9 +22,6 @@ export default function Team() {
   const [inviteError, setInviteError] = useState('')
   const [removingId, setRemovingId] = useState(null)
   const [removeError, setRemoveError] = useState('')
-
-  const memberLimit = TIER_LIMITS[planTier]?.teamMembers ?? 1
-  const atMemberLimit = teamMembers.length >= memberLimit
 
   useEffect(() => {
     if (isAdmin === false) navigate('/dashboard')
@@ -64,10 +60,6 @@ export default function Team() {
 
   async function handleInvite(e) {
     e.preventDefault()
-    if (atMemberLimit) {
-      setInviteError(`Team members are limited to ${memberLimit} on the ${planTier} plan. Upgrade to Growth or Pro to invite more.`)
-      return
-    }
     setInviteError('')
     setInviteSuccess('')
     setInviting(true)
@@ -209,11 +201,6 @@ export default function Team() {
             <div style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '20px' }}>
               They'll receive an email with a link to set up their account.
             </div>
-            {atMemberLimit && (
-              <div style={{ background: 'var(--accent-light)', borderLeft: '3px solid var(--accent)', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: '16px', fontSize: '13px', color: 'var(--ink)' }}>
-                Team members are limited to {memberLimit} on the {planTier} plan. <a href="/pricing" style={{ color: 'var(--accent)', fontWeight: '500' }}>Upgrade to Growth to add up to 3 members, or Pro for unlimited →</a>
-              </div>
-            )}
             <form onSubmit={handleInvite}>
               <div className="team-invite-row">
                 <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>

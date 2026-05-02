@@ -1053,7 +1053,7 @@ export default function Carriers() {
             className="btn-primary"
             onClick={() => {
               if (atCarrierLimit) {
-                alert(`Your ${planTier} plan includes ${carrierLimit} carrier${carrierLimit !== 1 ? 's' : ''}. Upgrade your plan to add more.`)
+                alert(`The Free plan includes 1 carrier. Upgrade to Pro for unlimited carriers.`)
                 return
               }
               setShowAdd(true); setEditingCarrierId(null); setParseResult(null); setError(null); setViewingCarrier(null); setFromCache(false)
@@ -1067,7 +1067,7 @@ export default function Carriers() {
           <div className="card" style={{ marginBottom: '24px' }}>
             {atCarrierLimit && (
               <div style={{ background: 'var(--accent-light)', borderLeft: '3px solid var(--accent)', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: '16px', fontSize: '13px', color: 'var(--ink)' }}>
-                You've reached the {carrierLimit}-carrier limit on your {planTier} plan. <a href="/pricing" style={{ color: 'var(--accent)', fontWeight: '500' }}>Upgrade to add more carriers →</a>
+                The Free plan includes 1 carrier. <a href="/pricing" style={{ color: 'var(--accent)', fontWeight: '500' }}>Upgrade to Pro for unlimited carriers →</a>
               </div>
             )}
             <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>
