@@ -659,6 +659,7 @@ export default function Carriers() {
   const [savingPostcodeRanges, setSavingPostcodeRanges] = useState(false)
   const [postcodeRangeError, setPostcodeRangeError] = useState(null)
   const [postcodeRangeSuccess, setPostcodeRangeSuccess] = useState(false)
+  const [addFormKey, setAddFormKey] = useState(0)
 
   const carrierLimit = TIER_LIMITS[planTier]?.carriers ?? 1
   const activeCarrierCount = carriers.filter(c => c.status === 'active').length
@@ -1079,7 +1080,7 @@ export default function Carriers() {
             </div>
             <div className="form-group">
               <label className="form-label">Rate Card <span style={{ color: '#6b7280', fontWeight: 400 }}>(required — CSV, Excel or PDF)</span></label>
-              <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, rateCard: e.target.files[0] })} disabled={!!parseResult || parsing} />
+              <input key={`rateCard-${addFormKey}`} className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, rateCard: e.target.files[0] })} disabled={!!parseResult || parsing} />
               {form.rateCard && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.rateCard.name}</div>}
               <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '4px' }}>
                 Only have a PDF? <a href="/convert" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '500' }}>Convert it to CSV first →</a>
@@ -1087,12 +1088,12 @@ export default function Carriers() {
             </div>
             <div className="form-group">
               <label className="form-label">Zone File <span style={{ color: '#6b7280', fontWeight: 400 }}>(optional — CSV or Excel; or enter postcode ranges manually after saving)</span></label>
-              <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, zoneFile: e.target.files[0] })} disabled={!!parseResult || parsing} />
+              <input key={`zoneFile-${addFormKey}`} className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, zoneFile: e.target.files[0] })} disabled={!!parseResult || parsing} />
               {form.zoneFile && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.zoneFile.name}</div>}
             </div>
             <div className="form-group">
               <label className="form-label">Additional Charges Schedule <span style={{ color: '#6b7280', fontWeight: 400 }}>(optional — CSV, Excel or PDF)</span></label>
-              <input className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, surchargeDoc: e.target.files[0] })} disabled={!!parseResult || parsing} />
+              <input key={`surchargeDoc-${addFormKey}`} className="form-input" type="file" accept=".csv,.xlsx,.xls,.pdf" onChange={e => setForm({ ...form, surchargeDoc: e.target.files[0] })} disabled={!!parseResult || parsing} />
               {form.surchargeDoc && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>✓ {form.surchargeDoc.name}</div>}
             </div>
 
@@ -1198,7 +1199,18 @@ export default function Carriers() {
             )}
 
             <div className="form-actions">
-              <button className="btn-secondary" onClick={() => { setShowAdd(false); setEditingCarrierId(null); setParseResult(null); setError(null); setSelectedOrigin(''); setFromCache(false) }}>Cancel</button>
+              <button className="btn-secondary" onClick={() => {
+                setShowAdd(false)
+                setEditingCarrierId(null)
+                setForm({ name: '', rateCard: null, zoneFile: null, surchargeDoc: null })
+                setAddFormKey(k => k + 1)
+                setParseResult(null)
+                setSelectedOrigin('')
+                setParsing(false)
+                setParsingStep('')
+                setError(null)
+                setFromCache(false)
+              }}>Cancel</button>
               {!parseResult ? (
                 <button className="btn-primary" onClick={parseFiles} disabled={parsing}>
                   {parsing ? 'Analysing...' : 'Analyse Files'}
