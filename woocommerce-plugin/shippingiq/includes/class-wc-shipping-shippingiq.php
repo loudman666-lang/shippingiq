@@ -171,8 +171,6 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 
 			$response_code = (int) wp_remote_retrieve_response_code( $response );
 			$response_body = wp_remote_retrieve_body( $response );
-			error_log( '[ShippingIQ] Response code: ' . $response_code );
-			error_log( '[ShippingIQ] Response body: ' . $response_body );
 
 			if ( 200 !== $response_code ) {
 				return;

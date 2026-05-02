@@ -8,7 +8,7 @@ Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Display accurate, real-time freight rates at checkout using your own contracted carrier rate cards — not ours.
+Real-time freight rates at checkout using your own contracted carrier rate cards. Any Australian carrier supported.
 
 == Description ==
 
