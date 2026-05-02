@@ -54,7 +54,7 @@ npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzar
 - Supabase anon key: in .env.local (not in GitHub)
 - Anthropic API key: in Supabase Edge Function secrets
 - GitHub: loudman666-lang/shippingiq
-- Test merchant ID: 176a2ac8-0085-457b-a042-a51e7708873c (merchant name: "My Store")
+- Live/test merchant ID: 176a2ac8-0085-457b-a042-a51e7708873c (the merchant with carriers — confirmed live 2 May 2026)
 
 ## What's built and working
 
@@ -308,11 +308,18 @@ Feature gating (src/lib/tierLimits.js):
 - Free shipping display order fixed: free filtering runs before cheapest/priority display mode, so free rates always take precedence.
 - PHP 8.2 compatible — explicit property declarations, no return type on WC method overrides
 - Allied Express tested end-to-end at WooCommerce checkout — correct rates confirmed
+- **Submitted to WordPress.org plugin directory** (2 May 2026) — slug: `shippingiq`, awaiting human review (1–2 weeks). Automated scan passed. Plugin cleaned up before submission: readme.txt rewritten to WP.org standard, error_log calls removed, Tested up to set to 6.9, Author URI removed, plugin name matched between readme.txt and PHP header. Screenshots 1–5 added to plugin folder.
+
+### calculate-freight edge function — RLS fix (2 May 2026)
+- **Root cause of go-live failure:** calculate-freight was using the anon key with RLS enabled — blocked carrier and merchant queries for WooCommerce requests (no user JWT in context)
+- **Fix:** switched calculate-freight to use SUPABASE_SERVICE_ROLE_KEY for its Supabase client, bypassing RLS. Redeployed — confirmed working.
+- Live production merchant ID: `176a2ac8-0085-457b-a042-a51e7708873c` (the one with carriers). The ID `4394ec94-...` had no carriers and was a red herring during debugging.
 
 ## Supabase Edge Function Secrets
 STRIPE_SECRET_KEY — Stripe secret key (sk_live_...) — new key created May 2026
 STRIPE_WEBHOOK_SECRET — webhook signing secret (whsec_...)
 STRIPE_PRICE_PRO — price_1TSRfXDdBlDgOLr3caF5T3GY (Pro $49/mo — updated May 2026)
+SUPABASE_SERVICE_ROLE_KEY — used by calculate-freight to bypass RLS (added 2 May 2026)
 APP_URL — http://localhost:3000 (update to production URL before go-live)
 
 ## Current file structure
@@ -483,12 +490,12 @@ Model C: Depot-to-depot — Mainfreight style
 ### Split shipment — parked for v2
 
 ## What to build next
-### Next session — deploy and test
+### Next session
 1. **Deploy to Netlify** — `npm run build`, then drag `~/Downloads/shippingiq/build` folder to Netlify Drop (https://app.netlify.com/drop). Rebuild needed: pricing simplification, Landing.js copy, Resources accordions, onboarding checklist all changed since last deploy.
 2. **Full live site testing** on https://neon-pie-9a1542.netlify.app — sign up, add carrier, get quote, test billing flow (Pro trial), check WooCommerce plugin config fields show correct Merchant ID + Anon Key in Settings.
-3. **WooCommerce end-to-end test** with production merchant account — install plugin from Resources page download link, configure with live Merchant ID + Anon Key, verify rates at checkout.
+3. **Zoho email setup** — support@shippingiq.com.au needs setting up in Trident. Required for legal modals, Resources troubleshooting card, and customer comms.
 4. **Custom domain** — register shippingiq.com.au, point to Netlify, update Supabase Auth redirect URLs and APP_URL secret.
-5. **support@shippingiq.com.au email setup** — needed for legal modals, Resources troubleshooting card, and customer comms. Google Workspace or Zoho.
+5. **WordPress.org plugin review** — submitted 2 May 2026, expect 1–2 weeks. Once approved, update Resources page download link to point to wordpress.org/plugins/shippingiq instead of GitHub raw URL.
 6. **Annual pricing option** — consider $39/mo AUD billed annually (saves ~20%). Add as second Pro option on Pricing and Landing pages. Requires new Stripe price + new STRIPE_PRICE_PRO_ANNUAL env var.
 
 ## Pre-launch testing checklist
