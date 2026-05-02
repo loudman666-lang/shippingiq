@@ -47,7 +47,7 @@ export default function Landing() {
 
             <h1>Your carrier rates.<br />Live at checkout.<br /><em>In under an hour.</em></h1>
 
-            <p className="hero-sub">ShippingIQ's AI reads your carrier rate card — any format, any carrier — and turns it into accurate freight quotes at WooCommerce checkout. No developer. No manual data entry. No platform markup.</p>
+            <p className="hero-sub">ShippingIQ's AI reads your carrier rate card — any format, any carrier — and turns it into accurate freight quotes at WooCommerce checkout. No developer. No manual data entry. No platform markup. Unlike Shippit or StarShipIt, we use your contracted carrier rates — not ours.</p>
 
             <div className="hero-cta">
               <Link to="/signup" className="btn-primary-lg">Start for free</Link>
@@ -444,7 +444,7 @@ export default function Landing() {
         <div className="section">
           <div className="sec-label">Pricing</div>
           <h2>Transparent pricing.<br />No surprises.</h2>
-          <p className="sec-sub">Start free. Upgrade when you're ready. 14-day free trial on all paid plans — no credit card required to start.</p>
+          <p className="sec-sub">Start free. Upgrade when you're ready. 14-day free trial on Pro — no credit card required.</p>
 
           <div className="pricing-grid" style={{ maxWidth: '640px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
 
