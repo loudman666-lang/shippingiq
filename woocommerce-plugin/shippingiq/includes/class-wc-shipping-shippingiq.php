@@ -142,6 +142,15 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 		$body      = get_transient( $cache_key );
 
 		if ( false === $body ) {
+			$request_payload = array(
+				'postcode'      => $postcode,
+				'items'         => $items,
+				'merchant_id'   => $this->merchant_id,
+				'orderValue'    => $order_value,
+				'hasExemptItem' => $has_exempt_item,
+			);
+			error_log( '[ShippingIQ] Request body: ' . json_encode( $request_payload ) );
+
 			$response = wp_remote_post(
 				esc_url_raw( $this->api_url ),
 				array(
@@ -150,26 +159,26 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 						'apikey'        => $this->supabase_anon_key,
 						'Authorization' => 'Bearer ' . $this->supabase_anon_key,
 					),
-					'body'    => wp_json_encode( array(
-						'postcode'      => $postcode,
-						'items'         => $items,
-						'merchant_id'   => $this->merchant_id,
-						'orderValue'    => $order_value,
-						'hasExemptItem' => $has_exempt_item,
-					) ),
+					'body'    => wp_json_encode( $request_payload ),
 					'timeout' => 20,
 				)
 			);
 
 			if ( is_wp_error( $response ) ) {
+				error_log( '[ShippingIQ] WP_Error: ' . $response->get_error_message() );
 				return;
 			}
 
-			if ( 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			$response_code = (int) wp_remote_retrieve_response_code( $response );
+			$response_body = wp_remote_retrieve_body( $response );
+			error_log( '[ShippingIQ] Response code: ' . $response_code );
+			error_log( '[ShippingIQ] Response body: ' . $response_body );
+
+			if ( 200 !== $response_code ) {
 				return;
 			}
 
-			$body = json_decode( wp_remote_retrieve_body( $response ), true );
+			$body = json_decode( $response_body, true );
 			set_transient( $cache_key, $body, 300 );
 		}
 

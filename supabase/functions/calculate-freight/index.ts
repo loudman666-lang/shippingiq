@@ -241,11 +241,9 @@ serve(async (req) => {
 
     // Forward the caller's JWT so Supabase RLS applies — a user can only
     // fetch carriers and merchant rules for their own merchant.
-    const authHeader = req.headers.get('Authorization') ?? ''
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
     const [carriersRes, merchantRes] = await Promise.all([

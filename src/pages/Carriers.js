@@ -739,6 +739,7 @@ export default function Carriers() {
     setSelectedOrigin('')
     try {
       setParsingStep('Reading files...')
+      await new Promise(r => setTimeout(r, 50))
       const XLSX = await import('https://esm.sh/xlsx@0.18.5')
 
       const allPostcodeRows = []
@@ -786,6 +787,7 @@ export default function Carriers() {
       }
 
       setParsingStep('Building postcode map...')
+      await new Promise(r => setTimeout(r, 50))
       const postcodeMap = deduplicatePostcodeMap(allPostcodeRows)
       console.log('[parseFiles] postcodeMap entries:', postcodeMap.length)
 
@@ -794,6 +796,7 @@ export default function Carriers() {
       }
 
       setParsingStep('Analysing rates — this takes 20–40 seconds...')
+      await new Promise(r => setTimeout(r, 50))
       const combinedRateText = allRateTexts.join('\n\n---\n\n')
       const ratePayload = { mode: 'rates', carrierName: form.name, rateText: combinedRateText, pdfs: pdfPayloads }
       console.log('[payload size]', JSON.stringify(ratePayload).length, '| rateText length:', combinedRateText.length, '| pdfs:', pdfPayloads.length)
@@ -812,6 +815,7 @@ export default function Carriers() {
       let surchargeData = null
       if (allSurchargeTexts.length > 0 || surchargeDocPdfs.length > 0) {
         setParsingStep('Extracting surcharges...')
+        await new Promise(r => setTimeout(r, 50))
         const { data: sd } = await supabase.functions.invoke('rapid-api', {
           body: { mode: 'surcharges', carrierName: form.name, surchargeText: allSurchargeTexts.join('\n\n---\n\n'), pdfs: surchargeDocPdfs }
         })
