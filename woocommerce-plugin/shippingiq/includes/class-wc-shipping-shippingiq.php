@@ -149,7 +149,6 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 				'orderValue'    => $order_value,
 				'hasExemptItem' => $has_exempt_item,
 			);
-			error_log( '[ShippingIQ] Request body: ' . json_encode( $request_payload ) );
 
 			$response = wp_remote_post(
 				esc_url_raw( $this->api_url ),
@@ -165,7 +164,6 @@ class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
 			);
 
 			if ( is_wp_error( $response ) ) {
-				error_log( '[ShippingIQ] WP_Error: ' . $response->get_error_message() );
 				return;
 			}
 
