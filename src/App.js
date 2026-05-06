@@ -18,6 +18,8 @@ import PdfConverter from './pages/PdfConverter'
 import SavedQuotes from './pages/SavedQuotes'
 import Pricing from './pages/Pricing'
 import BillingSuccess from './pages/BillingSuccess'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
 
 export default function App() {
   // Supabase invite links land at "/". Redirect to /reset-password preserving
@@ -50,6 +52,8 @@ export default function App() {
           <Route path="/pricing" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
           <Route path="/billing/success" element={<ProtectedRoute><BillingSuccess /></ProtectedRoute>} />
           <Route path="/" element={<Landing />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </AuthProvider>

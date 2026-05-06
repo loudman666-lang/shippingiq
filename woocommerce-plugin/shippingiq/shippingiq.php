@@ -6,7 +6,7 @@
  * Version:           1.0.0
  * Author:            ShippingIQ
  * License:           GPL v2 or later
- * Text Domain:       shippingiq
+ * Text Domain:       shippingiq-freight-rates-for-woocommerce
  * Requires Plugins:  woocommerce
  * WC requires at least: 6.0
  * WC tested up to:   10.7

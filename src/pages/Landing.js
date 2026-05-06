@@ -564,8 +564,8 @@ export default function Landing() {
           <p style={{ marginTop: '6px' }}><a href="mailto:support@shippingiq.com.au" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>support@shippingiq.com.au</a></p>
         </div>
         <div className="footer-links">
-          <a href="#" onClick={e => { e.preventDefault(); setShowTerms(true) }}>Terms of Service</a>
-          <a href="#" onClick={e => { e.preventDefault(); setShowPrivacy(true) }}>Privacy Policy</a>
+          <Link to="/terms">Terms of Service</Link>
+          <Link to="/privacy">Privacy Policy</Link>
           <a href="#" onClick={e => { e.preventDefault(); setShowRefund(true) }}>Refund Policy</a>
         </div>
       </footer>
