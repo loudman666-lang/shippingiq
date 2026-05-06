@@ -309,6 +309,7 @@ Feature gating (src/lib/tierLimits.js):
 - PHP 8.2 compatible — explicit property declarations, no return type on WC method overrides
 - Allied Express tested end-to-end at WooCommerce checkout — correct rates confirmed
 - **Submitted to WordPress.org plugin directory** (2 May 2026) — slug: `shippingiq`, awaiting human review (1–2 weeks). Automated scan passed. Plugin cleaned up before submission: readme.txt rewritten to WP.org standard, error_log calls removed, Tested up to set to 6.9, Author URI removed, plugin name matched between readme.txt and PHP header. Screenshots 1–5 added to plugin folder.
+- **WordPress.org review feedback received and addressed** (6 May 2026): reviewer requested changes — all addressed: plugin renamed to `ShippingIQ — Freight Rates for WooCommerce` (readme.txt line 1 + PHP Plugin Name header), WordPress.org contact email updated to support@shippingiq.com.au, `loudman666` added to Contributors in readme.txt, External Services section added to readme.txt (data sent, when, service provider, ToS + Privacy Policy links), class renamed from `WC_Shipping_ShippingIQ` to `ShippingIQ_Shipping_Method` in both class file and shippingiq.php. New slug requested: `shippingiq-freight-rates-for-woocommerce`. Awaiting reviewer response.
 
 ### calculate-freight edge function — RLS fix (2 May 2026)
 - **Root cause of go-live failure:** calculate-freight was using the anon key with RLS enabled — blocked carrier and merchant queries for WooCommerce requests (no user JWT in context)
@@ -497,7 +498,7 @@ Model C: Depot-to-depot — Mainfreight style
 ## What to build next
 ### Next session
 1. **Custom domain** — register shippingiq.com.au, point to Netlify, update Supabase Auth redirect URLs and APP_URL secret.
-2. **WordPress.org plugin review** — submitted 2 May 2026, expect 1–2 weeks. Once approved, update Resources page download link to point to wordpress.org/plugins/shippingiq instead of GitHub raw URL.
+2. **WordPress.org plugin review** — submitted 2 May 2026, review feedback addressed 6 May 2026, awaiting reviewer response on updated submission. New slug will be `shippingiq-freight-rates-for-woocommerce`. Once approved, update Resources page download link to point to wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce instead of GitHub raw URL.
 3. **Bradshaw onboarding** — get first real merchant live, support through carrier upload and WooCommerce setup.
 4. **Annual pricing option** — consider $39/mo AUD billed annually (saves ~20%). Add as second Pro option on Pricing and Landing pages. Requires new Stripe price + new STRIPE_PRICE_PRO_ANNUAL env var.
 
@@ -506,6 +507,9 @@ Model C: Depot-to-depot — Mainfreight style
 - ✓ Zoho email live (support@shippingiq.com.au)
 - ✓ Landing page mobile responsiveness fixed
 - ✓ WordPress.org submission sent (pending review)
+
+### Already done (6 May 2026)
+- ✓ WordPress.org review feedback addressed: plugin renamed, External Services section added, class renamed, loudman666 added to contributors, new slug requested
 
 ## Pre-launch testing checklist
 
