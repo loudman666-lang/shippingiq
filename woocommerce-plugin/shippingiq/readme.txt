@@ -1,5 +1,5 @@
-=== ShippingIQ ===
-Contributors: shippingiq
+=== ShippingIQ — Freight Rates for WooCommerce ===
+Contributors: shippingiq, loudman666
 Tags: shipping, freight, woocommerce, australia, rates
 Requires at least: 6.0
 Tested up to: 6.9
@@ -107,6 +107,20 @@ Yes. The free plan supports one carrier and includes full access to the quote to
 3. Surcharge rules configuration
 4. Free shipping and margin settings
 5. Plugin settings in WooCommerce shipping zone
+
+== External Services ==
+
+This plugin connects to the ShippingIQ API to calculate real-time freight rates at checkout.
+
+**ShippingIQ Freight Calculation API**
+- What it does: Calculates freight rates based on cart items, destination postcode, and the merchant's uploaded carrier rate cards.
+- What data is sent: Destination postcode, cart item weights and dimensions, quantity, and the merchant's ShippingIQ Merchant ID.
+- When data is sent: Every time a customer reaches the checkout page and a shipping rate is requested.
+- Service provider: ShippingIQ (shippingiq.com.au)
+- Terms of Service: https://shippingiq.com.au (see Terms of Service in footer)
+- Privacy Policy: https://shippingiq.com.au (see Privacy Policy in footer)
+
+A ShippingIQ account is required to use this plugin. Sign up at https://shippingiq.com.au
 
 == Changelog ==
 

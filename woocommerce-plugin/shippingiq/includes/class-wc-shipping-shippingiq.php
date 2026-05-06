@@ -1,7 +1,7 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
-class WC_Shipping_ShippingIQ extends WC_Shipping_Method {
+class ShippingIQ_Shipping_Method extends WC_Shipping_Method {
 
 	/** @var string */
 	public $api_url = '';
