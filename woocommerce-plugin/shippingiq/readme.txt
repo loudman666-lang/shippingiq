@@ -112,13 +112,13 @@ Yes. The free plan supports one carrier and includes full access to the quote to
 
 This plugin connects to the ShippingIQ API to calculate real-time freight rates at checkout.
 
-**ShippingIQ Freight Calculation API (shippingiq.com.au)**
+**ShippingIQ Freight Calculation API**
 - What it does: Calculates freight rates based on cart items, destination postcode, and the merchant's uploaded carrier rate cards.
 - What data is sent: Destination postcode, cart item weights and dimensions, quantity, and the merchant's ShippingIQ Merchant ID.
 - When data is sent: Every time a customer reaches the checkout page and a shipping rate is requested.
-- API endpoint: https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/calculate-freight
-- Terms of Service: https://shippingiq.com.au/terms
-- Privacy Policy: https://shippingiq.com.au/privacy
+- Service provider: ShippingIQ (shippingiq.com.au)
+- Terms of Service: https://shippingiq.com.au (see Terms of Service in footer)
+- Privacy Policy: https://shippingiq.com.au (see Privacy Policy in footer)
 
 A ShippingIQ account is required to use this plugin. Sign up at https://shippingiq.com.au
 
