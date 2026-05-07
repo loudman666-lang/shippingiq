@@ -21,8 +21,8 @@ class ShippingIQ_Shipping_Method extends WC_Shipping_Method {
 	public function __construct( $instance_id = 0 ) {
 		$this->id                 = 'shippingiq';
 		$this->instance_id        = absint( $instance_id );
-		$this->method_title       = __( 'ShippingIQ', 'shippingiq' );
-		$this->method_description = __( 'Real-time freight rates calculated live at checkout based on your carrier rate cards and eligibility rules.', 'shippingiq' );
+		$this->method_title       = __( 'ShippingIQ', 'shippingiq-freight-rates-for-woocommerce' );
+		$this->method_description = __( 'Real-time freight rates calculated live at checkout based on your carrier rate cards and eligibility rules.', 'shippingiq-freight-rates-for-woocommerce' );
 		$this->supports           = array(
 			'shipping-zones',
 			'instance-settings',
@@ -48,48 +48,48 @@ class ShippingIQ_Shipping_Method extends WC_Shipping_Method {
 	public function init_form_fields() {
 		$this->instance_form_fields = array(
 			'title'            => array(
-				'title'       => __( 'Method Title', 'shippingiq' ),
+				'title'       => __( 'Method Title', 'shippingiq-freight-rates-for-woocommerce' ),
 				'type'        => 'text',
-				'description' => __( 'Label shown to customers at checkout (e.g. "Freight").', 'shippingiq' ),
+				'description' => __( 'Label shown to customers at checkout (e.g. "Freight").', 'shippingiq-freight-rates-for-woocommerce' ),
 				'default'     => 'Freight',
 				'desc_tip'    => true,
 			),
 			'merchant_id'      => array(
-				'title'       => __( 'Merchant ID', 'shippingiq' ),
+				'title'       => __( 'Merchant ID', 'shippingiq-freight-rates-for-woocommerce' ),
 				'type'        => 'text',
-				'description' => __( 'Your ShippingIQ merchant UUID. Find it in Supabase → Table Editor → merchants.', 'shippingiq' ),
+				'description' => __( 'Your ShippingIQ merchant UUID. Find it in Supabase → Table Editor → merchants.', 'shippingiq-freight-rates-for-woocommerce' ),
 				'default'     => '',
 				'desc_tip'    => true,
 			),
 			'api_url'          => array(
-				'title'       => __( 'Calculate Freight API URL', 'shippingiq' ),
+				'title'       => __( 'Calculate Freight API URL', 'shippingiq-freight-rates-for-woocommerce' ),
 				'type'        => 'text',
-				'description' => __( 'The ShippingIQ calculate-freight edge function URL.', 'shippingiq' ),
+				'description' => __( 'The ShippingIQ calculate-freight edge function URL.', 'shippingiq-freight-rates-for-woocommerce' ),
 				'default'     => 'https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/calculate-freight',
 				'desc_tip'    => true,
 			),
 			'supabase_url'     => array(
-				'title'       => __( 'Supabase URL', 'shippingiq' ),
+				'title'       => __( 'Supabase URL', 'shippingiq-freight-rates-for-woocommerce' ),
 				'type'        => 'text',
-				'description' => __( 'Your Supabase project URL, used to fetch carrier eligibility rules.', 'shippingiq' ),
+				'description' => __( 'Your Supabase project URL, used to fetch carrier eligibility rules.', 'shippingiq-freight-rates-for-woocommerce' ),
 				'default'     => 'https://soaxvqkkecqzarwmbeip.supabase.co',
 				'desc_tip'    => true,
 			),
 			'supabase_anon_key' => array(
-				'title'       => __( 'Supabase Anon Key', 'shippingiq' ),
+				'title'       => __( 'Supabase Anon Key', 'shippingiq-freight-rates-for-woocommerce' ),
 				'type'        => 'password',
-				'description' => __( 'Your Supabase anon key, used to fetch carrier eligibility rules. Found in Supabase → Project Settings → API.', 'shippingiq' ),
+				'description' => __( 'Your Supabase anon key, used to fetch carrier eligibility rules. Found in Supabase → Project Settings → API.', 'shippingiq-freight-rates-for-woocommerce' ),
 				'default'     => '',
 				'desc_tip'    => true,
 			),
 			'display_mode'     => array(
-				'title'       => __( 'Display Mode', 'shippingiq' ),
+				'title'       => __( 'Display Mode', 'shippingiq-freight-rates-for-woocommerce' ),
 				'type'        => 'select',
-				'description' => __( 'Controls which carriers are shown at checkout. Priority order is set in ShippingIQ → Rules.', 'shippingiq' ),
+				'description' => __( 'Controls which carriers are shown at checkout. Priority order is set in ShippingIQ → Rules.', 'shippingiq-freight-rates-for-woocommerce' ),
 				'options'     => array(
-					'all'      => __( 'All eligible carriers (sorted by preference)', 'shippingiq' ),
-					'cheapest' => __( 'Cheapest carrier only', 'shippingiq' ),
-					'priority' => __( 'Preferred carrier only (your top-ranked carrier that services this postcode)', 'shippingiq' ),
+					'all'      => __( 'All eligible carriers (sorted by preference)', 'shippingiq-freight-rates-for-woocommerce' ),
+					'cheapest' => __( 'Cheapest carrier only', 'shippingiq-freight-rates-for-woocommerce' ),
+					'priority' => __( 'Preferred carrier only (your top-ranked carrier that services this postcode)', 'shippingiq-freight-rates-for-woocommerce' ),
 				),
 				'default'     => 'all',
 				'desc_tip'    => true,
