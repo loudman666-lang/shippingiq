@@ -102,10 +102,17 @@ const ACCORDION = [
         </p>
         <div>
           <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '6px' }}>Step 1 — Download the plugin</div>
-          <p style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.65', margin: '0 0 8px' }}>Download the ShippingIQ plugin zip file and save it to your computer.</p>
-          <a href="https://github.com/loudman666-lang/shippingiq/raw/main/woocommerce-plugin/shippingiq.zip" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: 'var(--accent)', color: '#fff', borderRadius: '7px', fontSize: '13px', fontWeight: '500', textDecoration: 'none' }}>
-            Download shippingiq.zip
-          </a>
+          <p style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.65', margin: '0 0 8px' }}>
+            Install directly from WordPress.org, or download the zip file manually.
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+            <a href="https://wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce" target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: 'var(--accent)', color: '#fff', borderRadius: '7px', fontSize: '13px', fontWeight: '500', textDecoration: 'none' }}>
+              Install from WordPress.org →
+            </a>
+            <a href="https://github.com/loudman666-lang/shippingiq/raw/main/woocommerce-plugin/shippingiq.zip" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: 'var(--surface-2)', border: '1px solid var(--border-mid)', borderRadius: '7px', fontSize: '13px', fontWeight: '500', color: 'var(--ink)', textDecoration: 'none' }}>
+              Download shippingiq.zip
+            </a>
+          </div>
         </div>
         <div>
           <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '6px' }}>Step 2 — Install in WordPress</div>
@@ -418,6 +425,20 @@ export default function Resources() {
                 </a>
               </div>
             ))}
+            <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: 'var(--accent-light)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>WooCommerce Plugin</div>
+                <div style={{ fontSize: '13px', color: 'var(--ink-muted)', lineHeight: '1.5' }}>Install ShippingIQ directly from the WordPress.org plugin directory</div>
+              </div>
+              <a href="https://wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce" target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: 'var(--accent)', color: '#fff', borderRadius: '7px', fontSize: '13px', fontWeight: '500', textDecoration: 'none', alignSelf: 'flex-start' }}>
+                View on WordPress.org →
+              </a>
+            </div>
           </div>
         </section>
 
