@@ -1,5 +1,41 @@
 [
   {
+    "slug": "why-woocommerce-shipping-costs-kill-conversion",
+    "title": "Why Your WooCommerce Shipping Costs Are Killing Your Conversion Rate",
+    "date": "2026-04-14",
+    "description": "Unexpected freight costs at checkout are the number one reason shoppers abandon their cart. Here's what's happening — and what you can do about it."
+  },
+  {
+    "slug": "flat-rate-vs-live-carrier-rates",
+    "title": "Flat Rate vs Live Carrier Rates: Which Is Right for Your Store?",
+    "date": "2026-04-21",
+    "description": "Flat rates are simple. Live rates are accurate. Here's how to decide which approach is right for your WooCommerce store — and when it's worth making the switch."
+  },
+  {
+    "slug": "how-to-read-a-carrier-rate-card",
+    "title": "How to Read a Carrier Rate Card (And What All Those Numbers Mean)",
+    "date": "2026-04-28",
+    "description": "Weight breaks, zones, base charges, per-kg rates — your carrier rate card is full of numbers. Here's what they all mean and how they translate to a freight quote."
+  },
+  {
+    "slug": "hidden-cost-of-free-shipping",
+    "title": "The Hidden Cost of Free Shipping (And How to Offer It Without Losing Money)",
+    "date": "2026-05-02",
+    "description": "Free shipping is a powerful conversion tool — but offered the wrong way, it erodes your margin on every order. Here's how to do it properly."
+  },
+  {
+    "slug": "allied-express-startrack-hunter-express-comparison",
+    "title": "Allied Express, StarTrack, Hunter Express: Which Carrier Is Right for Your Store?",
+    "date": "2026-05-06",
+    "description": "A practical comparison of three major Australian freight carriers — what they're good at, where they fall short, and how to choose."
+  },
+  {
+    "slug": "freight-surcharges-explained",
+    "title": "What Are Freight Surcharges — And Should You Pass Them On to Customers?",
+    "date": "2026-05-09",
+    "description": "Fuel levies, tailgate fees, residential surcharges, overlength charges — freight surcharges can add 30–50% to your base rate. Here's how to handle them."
+  },
+  {
     "slug": "woocommerce-shipping-setup-guide",
     "title": "How to Set Up Accurate Shipping Rates in WooCommerce (Without a Developer)",
     "date": "2026-05-11",
