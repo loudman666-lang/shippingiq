@@ -517,6 +517,91 @@ Model C: Depot-to-depot — Mainfreight style
 - If mobile app is needed in future: Quote.js uses a fixed `3fr 2fr` two-column grid and a 7-column items input grid with fixed pixel widths — these are the main breakpoints to tackle first.
 
 ## What to build next
+- Ask first merchant to leave a WordPress.org review
+- Monitor WordPress.org search visibility (allow 2–4 weeks)
+- Continue adding blog posts (zero-deploy — GitHub only)
+- ImporterIQ and MarginIQ — move to GitHub/Claude Code workflow
+- Shopify and Magento plugins
+- Shared freight calculation module (logic duplicated between Quote.js and calculate-freight)
+- Annual pricing option (logged, not building yet)
+
+## Pre-launch testing checklist
+
+### Upload guardrails
+- [ ] Hash check: delete a carrier, re-upload same files, click Analyse — should show "Files unchanged — using existing analysis." with no AI call
+- [ ] Rate limit: upload 11 carriers within 24h — 11th blocked with "Daily upload limit reached (10/day)..."
+- [ ] Admin override: `UPDATE merchants SET upload_limit_exempt = true WHERE id = '[id]'` — 11th upload should succeed
+- [ ] Re-upload confirm: enter same carrier name as existing active carrier, upload files, click Analyse — confirmation modal appears
+- [ ] Disable after analysis: carrier name + file inputs greyed out after analysis completes until Save or Cancel
+
+### Freight calculation
+- [ ] Quote with postcode in zone file returns correct rate (Model B: verify basic + per-kg formula)
+- [ ] Quote with unknown postcode returns clear error, not crash
+- [ ] Fuel levy % applies correctly
+- [ ] Surcharge auto-triggers fire correctly (weight threshold, length range)
+- [ ] item_weight trigger fires when single item exceeds threshold
+- [ ] consignment_weight trigger fires when total weight exceeds threshold
+- [ ] Smart free shipping: surcharge voids free shipping
+- [ ] True free shipping: always $0 regardless of surcharges
+- [ ] GST toggle: ex-GST vs inc-GST totals correct
+- [ ] FREE carrier detail shows merchant cost, not $0
+
+### WooCommerce plugin
+- [ ] Rates appear at checkout for a real cart
+- [ ] Carrier eligibility filtering excludes carriers where item exceeds maxWeightKg/maxLengthCm
+- [ ] Product tag shippingiq-only-[slug] restricts to that carrier
+- [ ] Product tag shippingiq-exclude-[slug] removes that carrier
+- [ ] Cheapest-only display mode shows single lowest rate
+- [ ] Priority display mode shows top-ranked carrier only
+
+## Test files available
+- test_rate_card.csv / .xlsx / .pdf
+- test_zone_file.csv / .xlsx
+- test_surcharges.csv / .pdf
+These simulate Allied/Mainfreight/StarTrack style files.
+
+## Real carrier file structures (AI handles any format)
+Allied Express: Excel, Model B, origin depots across top columns, zones down side
+Mainfreight: Excel zone file 15,976 rows (MFT_Rating_Locations.xlsx), Model C depot-to-depot — confirmed working end to end
+StarTrack: PDF rate card, mix of Model A and Model B services
+Hunter Express: PDF, Model B, single origin Melbourne
+
+### Mainfreight confirmed working pipeline
+- Rate card: PDF → Rate Card Converter → CSV with standard OriginDepot,Destination,... header
+- Zone file: Excel (MFT_Rating_Locations.xlsx) — columns: Suburb, Post Code, State, RatingLocation
+- Surcharge schedule: PDF — read as base64 document block by rapid-api surcharges mode
+- Model C browser parsing: buildModelCRatesFromCSV detects standard header, extracts all 261 rows
+- RatingLocation column correctly mapped to zone field after zone parser fix (see Known Decisions)
+- Carrier card shows "261 destinations" (not "1 zones") to standard 'zone', 'zone name' etc. Added to support Mainfreight MFT_Rating_Locations.xlsx (RatingLocation column).
+- Model C carrier card shows destination count ("261 destinations") not zone count — zones.length was always 1 for Model C (single origin depot). Carrier card now checks pricingModel === 'C' and uses modelCRates.length instead.
+
+## Known merchant education points
+- Postcode zone file is optional in the upload form — but without postcode data the carrier cannot calculate any quotes. Merchants either upload a zone file OR use the "Postcode Ranges" button after saving to enter ranges manually. App shows a "No zone file" amber badge on carrier cards and a Dashboard banner warning when postcodeMap is empty.
+- Some carriers (including StarTrack) don't publish postcode zone files publicly. Merchants must contact their account manager and ask specifically for a postcode-to-zone mapping file (CSV or Excel), or use the manual postcode range entry feature.
+- StarTrack Fixed Price Premium is Model A (weight break flat rate), not Model B. AI correctly detects this. Both services can coexist in the same carrier.
+
+## WooCommerce Plugin — design decisions
+### Carrier eligibility at checkout
+1. Weight/dimension limits (carriers.eligibility_rules): maxWeightKg, maxLengthCm, maxWidthCm, maxHeightCm — if any cart item exceeds limit, carrier excluded. 0 = no limit.
+2. Product tags (WooCommerce): shippingiq-only-[slug] and shippingiq-exclude-[slug]
+3. Logic: passes dim/weight check AND no exclusion tag
+
+### Plugin settings (WooCommerce admin)
+- API URL (calculate-freight endpoint), Merchant ID, Display mode (all/cheapest/priority)
+
+### Philosophy
+- Simple by default: add carrier, upload files, done
+- Rules only for exceptions
+- "My carriers handle everything unless I say otherwise"
+
+### Split shipment — parked for v2
+
+## Mobile responsiveness — design decision
+- **Landing page**: fully responsive (900px + 560px breakpoints) — fixed and deployed 3 May 2026
+- **App pages (Dashboard, Carriers, Quote, Rules, etc)**: zero responsive CSS — desktop-first by design. Merchants use on desktop. Mobile app pages deferred until after Bradshaw goes live.
+- If mobile app is needed in future: Quote.js uses a fixed `3fr 2fr` two-column grid and a 7-column items input grid with fixed pixel widths — these are the main breakpoints to tackle first.
+
+## What to build next
 ### Next session
 1. **Custom domain** — register shippingiq.com.au, point to Netlify, update Supabase Auth redirect URLs and APP_URL secret.
 2. **WordPress.org plugin review** — second round of feedback addressed 7 May 2026 (text domain + explicit API domain in External Services). Submitted as shippingiq-submit-v4.zip, awaiting reviewer response. WP.org slug: `shippingiq-freight-rates-for-woocommerce`. Once approved, update Resources page download link to point to wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce instead of GitHub raw URL.
