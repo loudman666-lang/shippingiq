@@ -1,5 +1,24 @@
 # ShippingIQ — Handover Document
 
+## Session — 9 May 2026
+
+### Completed
+- WordPress.org plugin published and live at wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce
+- SVN set up, trunk committed (revision 3526027), tagged 1.0.0 (revision 3526029)
+- Banner image (1544×500px) and icon (256×256px) created and uploaded to SVN /assets/ (revision 3526946)
+- Resources page updated — WooCommerce Plugin card added to template grid, Step 1 now shows Install from WordPress.org + Download zip buttons
+- Deployed to Netlify
+
+### Content/promotion strategy discussed
+- NexusIQ blog to be primary content hub targeting Australian importer search terms
+- ShippingIQ blog to be secondary, targeting WooCommerce store owners
+- Moving blog planning to NexusIQ project folder
+
+### Next todos (ShippingIQ)
+- Ask first merchant to leave a WordPress.org review
+- Monitor WordPress.org search visibility (allow 2-4 weeks)
+- ShippingIQ blog — build when NexusIQ blog is underway
+
 ## How to start the next session
 1. Go to github.com/loudman666-lang/shippingiq
 2. Click HANDOVER.md -> Raw -> Select all -> Copy
