@@ -29,6 +29,7 @@ export default function Landing() {
           <li><a href="#how-it-works">How it works</a></li>
           <li><a href="#features">Features</a></li>
           <li><a href="#pricing">Pricing</a></li>
+          <li><Link to="/blog">Blog</Link></li>
         </ul>
         <div className="nav-actions">
           <Link to="/signin" className="btn-ghost">Sign in</Link>

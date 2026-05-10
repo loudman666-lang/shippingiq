@@ -13,6 +13,8 @@ import Settings from './pages/Settings'
 import Rules from './pages/Rules'
 import Resources from './pages/Resources'
 import Landing from './pages/Landing'
+import Blog from './pages/Blog'
+import BlogPost from './pages/BlogPost'
 import Team from './pages/Team'
 import PdfConverter from './pages/PdfConverter'
 import SavedQuotes from './pages/SavedQuotes'
@@ -52,6 +54,8 @@ export default function App() {
           <Route path="/pricing" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
           <Route path="/billing/success" element={<ProtectedRoute><BillingSuccess /></ProtectedRoute>} />
           <Route path="/" element={<Landing />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
