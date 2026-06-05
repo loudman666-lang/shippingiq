@@ -472,7 +472,7 @@ export default function Landing() {
               <div className="plan-name">Pro</div>
               <div className="plan-price">
                 <span className="price-dollar">$</span>
-                <span className="price-amount">49</span>
+                <span className="price-amount">29</span>
                 <span className="price-period">/mo</span>
               </div>
               <div className="plan-desc">Unlimited carriers. Your rates. Live at checkout.</div>

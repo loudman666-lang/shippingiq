@@ -24,7 +24,7 @@ const PLANS = [
   {
     tier: 'pro',
     name: 'Pro',
-    price: 49,
+    price: 29,
     description: 'Unlimited carriers. Your rates. Live at checkout.',
     features: [
       'Unlimited carriers',

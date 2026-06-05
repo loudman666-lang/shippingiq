@@ -1,5 +1,5 @@
 === ShippingIQ — Freight Rates for WooCommerce ===
-Contributors: shippingiq, loudman666
+Contributors: loudman666
 Tags: shipping, freight, woocommerce, australia, rates
 Requires at least: 6.0
 Tested up to: 6.9
