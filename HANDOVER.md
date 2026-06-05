@@ -237,7 +237,7 @@ npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzar
 - STRIPE_SECRET_KEY: new key created (not the original sk_live — original couldn't be copied, new key created via "+ Create secret key")
 
 ### Pricing (simplified May 2026)
-- Two plans only: **Free ($0/mo)** and **Pro ($49/mo AUD)**
+- Two plans only: **Free ($0/mo)** and **Pro ($29/mo AUD)**
 - Free: 1 carrier, WooCommerce plugin, full quote tool, rules engine, surcharge management, team members
 - Pro: unlimited carriers, everything in Free + Rate Card Converter (10/day), priority support
 - 14-day free trial on Pro, no credit card required
@@ -247,10 +247,10 @@ npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzar
 - Landing.js hero subtitle: "Unlike Shippit or StarShipIt, we use your contracted carrier rates — not ours."
 
 Stripe:
-- One active price: `price_1TSRfXDdBlDgOLr3caF5T3GY` (Pro $49/mo)
+- One active price: `price_1TeoVPDdBlDgOLr389bLt8Kw` (Pro $29/mo)
 - Old prices archived: Starter $39, Growth $79, Pro $149
 - STRIPE_PRICE_PRO secret updated in Supabase edge function secrets
-- `.env.local` updated: REACT_APP_STRIPE_PRICE_PRO=price_1TSRfXDdBlDgOLr3caF5T3GY
+- `.env.local` updated: REACT_APP_STRIPE_PRICE_PRO=price_1TeoVPDdBlDgOLr389bLt8Kw
 
 Feature gating (src/lib/tierLimits.js):
 - Carriers: Free=1, Pro=unlimited (enforced in Carriers.js)
@@ -339,7 +339,7 @@ Feature gating (src/lib/tierLimits.js):
 ## Supabase Edge Function Secrets
 STRIPE_SECRET_KEY — Stripe secret key (sk_live_...) — new key created May 2026
 STRIPE_WEBHOOK_SECRET — webhook signing secret (whsec_...)
-STRIPE_PRICE_PRO — price_1TSRfXDdBlDgOLr3caF5T3GY (Pro $49/mo — updated May 2026)
+STRIPE_PRICE_PRO — price_1TeoVPDdBlDgOLr389bLt8Kw (Pro $29/mo — updated May 2026)
 SUPABASE_SERVICE_ROLE_KEY — used by calculate-freight to bypass RLS (added 2 May 2026)
 APP_URL — http://localhost:3000 (update to production URL before go-live)
 

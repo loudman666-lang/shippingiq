@@ -50,20 +50,26 @@ Any Australian carrier. ShippingIQ's AI parser handles any rate card format — 
 
 == Installation ==
 
-1. Download the plugin zip from [shippingiq.com.au/resources](https://shippingiq.com.au/resources)
-2. In WordPress admin go to Plugins → Add New → Upload Plugin
-3. Upload the zip file and click Install Now
-4. Activate the plugin
-5. Go to WooCommerce → Settings → Shipping
-6. Add or edit a Shipping Zone (e.g. "Australia")
-7. Click Add shipping method → select ShippingIQ → Add shipping method
-8. Click Edit next to ShippingIQ and enter your settings
+**Before you begin**
+
+ShippingIQ requires a free account at shippingiq.com.au. Sign up first, upload at least one carrier rate card, then install this plugin.
+
+1. In WordPress admin go to Plugins → Add New
+2. Search for "ShippingIQ" and click Install Now
+3. Activate the plugin
+4. Go to WooCommerce → Settings → Shipping
+5. Add or edit a Shipping Zone (e.g. "Australia")
+6. Click Add shipping method → select ShippingIQ → Add shipping method
+7. Click Edit next to ShippingIQ
+8. Enter your Merchant ID (found in ShippingIQ → Settings)
+9. Enter your API Key (found in ShippingIQ → Settings → API Key)
+10. Save — your contracted rates will now appear at checkout
 
 **Plugin settings**
 
 * **Method Title** — label shown at checkout, defaults to "Freight"
 * **Merchant ID** — your ShippingIQ merchant ID, found in ShippingIQ → Settings
-* **Supabase Anon Key** — found in ShippingIQ → Settings → API Key
+* **API Key** — found in ShippingIQ → Settings → API Key
 * **Display Mode** — show all eligible carriers or cheapest only
 
 == Frequently Asked Questions ==
