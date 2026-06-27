@@ -16,6 +16,11 @@
 11. admin-get-merchants Supabase edge function deployed — GET returns all merchants joined with admin email and carrier count; POST action=deactivate sets subscription.status=inactive; POST action=delete cascades delete (profiles → carriers → quotes → upload_logs → merchant)
 12. Merchants nav item added to all page sidebars (Dashboard, Carriers, Rules, Quote, SavedQuotes, Team, PdfConverter, Settings) — visible only to loudman666@gmail.com, links to /admin/merchants
 13. Deployed to Netlify
+14. Resources.js updated — removed all manual Merchant ID and API Key configuration references; Step 4 rewritten to "Connect your account"; troubleshooting updated
+15. Landing.js updated — removed stale "enter your Merchant ID" copy
+16. Settings.js updated — Merchant ID and API Key descriptions now reflect automatic connection via plugin sign-in
+17. Shopify embedded app logged as future build in HANDOVER.md
+18. Type A free vs Pro split logged in HANDOVER.md
 
 ### Deployment note — Local by Flywheel
 **cp is more reliable than unzip** when deploying plugin updates. Unzip can extract to the wrong directory or leave stale files:
@@ -24,12 +29,11 @@ cp -r ~/Downloads/shippingiq/woocommerce-plugin/shippingiq /path/to/local-site/w
 ```
 
 ### Next steps
-- Delete test merchant accounts (test-merchant3@example.com, test-signup@example.com) via /admin/merchants
-- Plugin-in-WordPress full flow: spec out uploading rate cards from inside WP plugin (future build)
+- NEXT BUILD: Type A plugin-first merchant — rate card upload, carrier management and basic rules inside WP plugin (see Future Build section in HANDOVER for full spec)
+- Delete test accounts (test-merchant3@example.com, test-signup@example.com) via /admin/merchants
 - Ask first real merchant for WordPress.org review
-- Update shippingiq.com.au/resources to reflect in-plugin signup (no longer need to visit site first to create account)
-- Take new screenshot-5.png showing the WooCommerce → ShippingIQ account connection page and push to SVN /assets/
-- Remove debug error_log line from process_login in class-shippingiq-admin.php once login confirmed working in production
+- Update shippingiq.com.au/resources to reflect in-plugin signup
+- Shopify app (after Type A complete)
 
 ## Future Build — Shopify App
 
