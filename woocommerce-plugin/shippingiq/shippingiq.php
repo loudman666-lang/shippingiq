@@ -21,6 +21,12 @@ add_action( 'before_woocommerce_init', function () {
 	}
 } );
 
+// Load the admin account page (always, so the menu registers on every admin request).
+if ( is_admin() ) {
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-shippingiq-admin.php';
+	new ShippingIQ_Admin();
+}
+
 // Load the shipping method class once WooCommerce is ready.
 add_action( 'woocommerce_shipping_init', 'shippingiq_load_shipping_method' );
 function shippingiq_load_shipping_method() {

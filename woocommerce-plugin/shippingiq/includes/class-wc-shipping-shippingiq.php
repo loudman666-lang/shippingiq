@@ -6,7 +6,7 @@ class ShippingIQ_Shipping_Method extends WC_Shipping_Method {
 	/** @var string */
 	public $api_url = '';
 
-	/** @var string */
+	/** @var string Read from wp_options via ShippingIQ_Admin::OPTION_KEY — not stored per-instance. */
 	public $merchant_id = '';
 
 	/** @var string */
@@ -37,10 +37,12 @@ class ShippingIQ_Shipping_Method extends WC_Shipping_Method {
 
 		$this->title             = $this->get_option( 'title', 'Freight' );
 		$this->api_url           = $this->get_option( 'api_url', 'https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/calculate-freight' );
-		$this->merchant_id       = $this->get_option( 'merchant_id', '' );
 		$this->supabase_url      = $this->get_option( 'supabase_url', 'https://soaxvqkkecqzarwmbeip.supabase.co' );
 		$this->supabase_anon_key = $this->get_option( 'supabase_anon_key', '' );
 		$this->display_mode      = $this->get_option( 'display_mode', 'all' );
+
+		// merchant_id comes from the account connection page, not per-instance settings.
+		$this->merchant_id = (string) get_option( 'shippingiq_merchant_id', '' );
 
 		add_action( 'woocommerce_update_options_shipping_' . $this->id, array( $this, 'process_admin_options' ) );
 	}
@@ -52,13 +54,6 @@ class ShippingIQ_Shipping_Method extends WC_Shipping_Method {
 				'type'        => 'text',
 				'description' => __( 'Label shown to customers at checkout (e.g. "Freight").', 'shippingiq-freight-rates-for-woocommerce' ),
 				'default'     => 'Freight',
-				'desc_tip'    => true,
-			),
-			'merchant_id'      => array(
-				'title'       => __( 'Merchant ID', 'shippingiq-freight-rates-for-woocommerce' ),
-				'type'        => 'text',
-				'description' => __( 'Your ShippingIQ merchant UUID. Find it in Supabase → Table Editor → merchants.', 'shippingiq-freight-rates-for-woocommerce' ),
-				'default'     => '',
 				'desc_tip'    => true,
 			),
 			'api_url'          => array(
