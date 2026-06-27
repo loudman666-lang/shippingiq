@@ -304,7 +304,7 @@ export default function Settings() {
         <div className="settings-card">
           <div className="settings-card-title">Merchant ID</div>
           <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '12px' }}>
-            Your Merchant ID is required to configure the WooCommerce plugin. Keep it private.
+            Your ShippingIQ Merchant ID — used to connect the WooCommerce plugin to your account. The plugin saves this automatically when you sign in.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px' }}>
             <code style={{ fontSize: '13px', color: 'var(--ink)', fontFamily: 'monospace', flex: 1 }}>{merchant?.id}</code>
@@ -318,7 +318,7 @@ export default function Settings() {
           <div style={{ marginTop: '16px' }}>
             <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--ink)', marginBottom: '4px' }}>API Key</div>
             <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '8px' }}>
-              Required for the WooCommerce plugin. Safe to share — read-only access protected by your account.
+              Your ShippingIQ API key — used to connect the WooCommerce plugin to your account. The plugin saves this automatically when you sign in.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px' }}>
               <div style={{ fontSize: '11px', color: 'var(--ink-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>Anon Key</div>

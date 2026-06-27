@@ -54,6 +54,23 @@ Two merchant types sharing the same Supabase backend:
 - Plugin makes direct calls to existing edge functions (rapid-api, calculate-freight)
 - No new backend work needed — just PHP admin pages in the plugin
 
+### Free vs Pro split
+Free (in the plugin):
+- 1 carrier
+- Basic rules: free shipping threshold and display mode only
+- Checkout rate calculation
+
+Pro (React app at app.shippingiq.com.au):
+- Unlimited carriers
+- Advanced surcharge rules
+- Quote tool
+- Team members
+- Saved quotes
+- PDF converter
+
+### Growth strategy
+The plugin is the acquisition channel — merchant installs, gets rates working for free with 1 carrier, hits the 1-carrier limit and upgrades to Pro for unlimited carriers and advanced features. Clean, honest upgrade path. Plugin sells itself.
+
 ### Not started — log only, do not build yet
 
 ### Key credentials and IDs (also in .env.local)
