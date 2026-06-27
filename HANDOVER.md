@@ -3,48 +3,27 @@
 ## Session 27 June 2026 — In-plugin signup + notification email build
 
 ### Completed this session
-1. Supabase upload_logs grants fixed (October 30 compliant)
-2. WordPress.org Contributors warning fixed — SVN r3561766
-3. Installation section rewritten on WordPress.org — SVN r3561791
-4. Price dropped to $29/mo — live on shippingiq.com.au, all files updated
-5. WordPress tested up to updated to 7.0 — SVN r3562791
-6. Resend domain verified for shippingiq.com.au (region: Tokyo ap-northeast-1)
-7. Resend API key created and stored:
-   - In .env.local as RESEND_API_KEY
-   - In Supabase secrets via CLI
-8. notify-new-signup edge function built and deployed — sends email to support@shippingiq.com.au when called with {email, merchant_id, created_at}. Handles both direct JSON and Supabase webhook payload formats. TESTED AND WORKING.
-9. register-merchant edge function written (81 lines) at supabase/functions/register-merchant/index.ts — NOT YET DEPLOYED
-
-### In-plugin signup build — status
-Building in-plugin signup (Option 3) — three phases:
-- ✓ Phase 1: register-merchant edge function — deployed and tested
-- ✓ Phase 2: notify-new-signup — called directly from register-merchant (Supabase webhook not available on current plan)
-- ✓ Phase 3: Plugin PHP changes — complete (see below)
-
-### Phase 3 — what was built
-- `woocommerce-plugin/shippingiq/includes/class-shippingiq-admin.php` — new admin class:
-  - Registers WooCommerce → ShippingIQ submenu
-  - Sign Up tab: POSTs to register-merchant edge function, saves returned merchant_id to wp_options
-  - Log In tab: POSTs to Supabase Auth, gets access_token, POSTs to get-merchant-id edge function, saves merchant_id to wp_options
-  - Connected state: shows Merchant ID + Disconnect button
-  - All forms use WordPress nonces; errors redirect back with notice
-- `woocommerce-plugin/shippingiq/shippingiq.php` — loads ShippingIQ_Admin on is_admin()
-- `woocommerce-plugin/shippingiq/includes/class-wc-shipping-shippingiq.php` — merchant_id now read from get_option('shippingiq_merchant_id') automatically; manual Merchant ID field removed from instance settings
-- `supabase/functions/get-merchant-id/index.ts` — new edge function: accepts user JWT, validates via supabase.auth.getUser(), fetches merchant_id from profiles table using service role client, returns { merchant_id }. Used by login flow to avoid direct REST API query against profiles (RLS requires authenticated JWT as Bearer, which works, but edge function approach is cleaner and more reliable).
+1. register-merchant edge function deployed and tested
+2. get-merchant-id edge function built and deployed — accepts user JWT, validates via supabase.auth.getUser(), fetches merchant_id from profiles using service role client, returns { merchant_id }
+3. notify-new-signup confirmed working — called directly from register-merchant (Supabase webhook not available on current plan)
+4. In-plugin signup flow — working and tested
+5. In-plugin login flow — working and tested (POSTs to Supabase Auth → gets access_token → POSTs to get-merchant-id edge function)
+6. `woocommerce-plugin/shippingiq/includes/class-shippingiq-admin.php` created — registers WooCommerce → ShippingIQ submenu, Sign Up + Log In tabs, Connected state with Disconnect button, WP nonces throughout
+7. `woocommerce-plugin/shippingiq/includes/class-wc-shipping-shippingiq.php` updated — merchant_id now read from get_option('shippingiq_merchant_id') automatically; manual Merchant ID field removed from instance settings
+8. `readme.txt` fully updated for v1.1.0 — in-plugin signup reflected throughout (description, how it works, requirements, installation, FAQ, screenshots, external services)
+9. Plugin bumped to v1.1.0 in both shippingiq.php and readme.txt — SVN trunk r3587821, tagged r3587823, readme update r3587831
 
 ### Deployment note — Local by Flywheel
-- **cp is more reliable than unzip** for deploying plugin updates to Local by Flywheel:
-  ```bash
-  cp -r ~/Downloads/shippingiq/woocommerce-plugin/shippingiq /path/to/local-site/wp-content/plugins/
-  ```
-  Unzip can fail silently or leave stale files. Use cp to overwrite the plugin folder directly.
+**cp is more reliable than unzip** when deploying plugin updates. Unzip can extract to the wrong directory or leave stale files:
+```bash
+cp -r ~/Downloads/shippingiq/woocommerce-plugin/shippingiq /path/to/local-site/wp-content/plugins/
+```
 
 ### Next steps
-1. Remove the temporary debug `error_log( print_r( $auth_body, true ) )` line from `process_login` in `class-shippingiq-admin.php` once login is confirmed working
-2. Test the full signup and login flows in Local by Flywheel
-3. Rebuild zip: `cd ~/Downloads/shippingiq/woocommerce-plugin && zip -r shippingiq.zip shippingiq/`
-4. Commit all changes and push to GitHub
-5. Build basic admin user management view in React app (deferred)
+- Take new screenshot-5.png showing the WooCommerce → ShippingIQ account connection page and push to SVN /assets/
+- Build basic admin user management view in React app
+- Ask first merchant to leave a WordPress.org review
+- Update shippingiq.com.au/resources page to reflect in-plugin signup (no longer need to visit site first)
 
 ### Key credentials and IDs (also in .env.local)
 - Supabase project ref: soaxvqkkecqzarwmbeip
