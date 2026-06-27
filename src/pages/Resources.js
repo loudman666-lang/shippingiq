@@ -134,7 +134,7 @@ const ACCORDION = [
         </div>
         <div>
           <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '6px' }}>Step 4 — Connect your account</div>
-          <p style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.65', margin: '0 0 10px' }}>Go to <strong>WooCommerce → ShippingIQ</strong> and sign in. Your Merchant ID and API key are saved automatically — no manual entry required.</p>
+          <p style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.65', margin: '0 0 10px' }}>Go to <strong>WooCommerce → ShippingIQ</strong> and sign in. Your account credentials are saved automatically — no manual entry required.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px' }}>
               <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Display Mode</div>

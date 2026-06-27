@@ -297,7 +297,7 @@ export default function Landing() {
             <div className="use-case-card featured">
               <div className="use-case-tag accent">WooCommerce ready</div>
               <div className="use-case-title">Live rates at checkout</div>
-              <p className="use-case-body">Install the ShippingIQ plugin, enter your Merchant ID, and every customer sees real carrier rates at checkout — calculated from your own contracted prices, not industry averages.</p>
+              <p className="use-case-body">Install the ShippingIQ plugin, connect your account in one click, and every customer sees real carrier rates at checkout — calculated from your own contracted prices, not industry averages.</p>
               <ul className="use-case-feats">
                 <li className="use-case-feat"><CheckIcon />Automatic rate calculation</li>
                 <li className="use-case-feat"><CheckIcon />Multi-carrier display at checkout</li>
