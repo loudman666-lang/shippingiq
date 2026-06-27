@@ -4,7 +4,7 @@ Tags: shipping, freight, woocommerce, australia, rates
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,7 +18,7 @@ ShippingIQ connects your WooCommerce store to your actual carrier contracts. Ins
 
 1. Sign up at [shippingiq.com.au](https://shippingiq.com.au)
 2. Upload your carrier rate cards (CSV, Excel, or PDF — any format)
-3. Install this plugin and enter your Merchant ID
+3. Install this plugin and connect your ShippingIQ account
 4. Your contracted rates appear at checkout automatically
 
 **What makes ShippingIQ different**
@@ -128,6 +128,10 @@ Privacy Policy: https://shippingiq.com.au/privacy
 A ShippingIQ account is required to use this plugin. Sign up at https://shippingiq.com.au
 
 == Changelog ==
+
+= 1.1.0 =
+* Added in-plugin account signup and login — merchants can now connect their ShippingIQ account directly from WooCommerce without visiting shippingiq.com.au
+* Merchant ID is now saved automatically on signup or login — no manual entry required
 
 = 1.0.0 =
 * Initial release
