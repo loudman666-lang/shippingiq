@@ -133,21 +133,16 @@ const ACCORDION = [
           </ol>
         </div>
         <div>
-          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '6px' }}>Step 4 — Configure the plugin</div>
-          <p style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.65', margin: '0 0 10px' }}>Enter these values in the plugin settings:</p>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '6px' }}>Step 4 — Connect your account</div>
+          <p style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.65', margin: '0 0 10px' }}>Go to <strong>WooCommerce → ShippingIQ</strong> and sign in. Your Merchant ID and API key are saved automatically — no manual entry required.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px' }}>
-              <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Merchant ID</div>
-              <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Your unique ShippingIQ identifier. Find it in <a href="/settings" style={{ color: 'var(--accent)' }}>Settings → Merchant ID</a>.</div>
-            </div>
-            <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px' }}>
-              <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Calculate Freight API URL</div>
-              <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginBottom: '4px' }}>Pre-filled automatically — do not change.</div>
-              <code style={{ fontSize: '11px', color: 'var(--ink)', wordBreak: 'break-all' }}>https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/calculate-freight</code>
-            </div>
-            <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px' }}>
-              <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Supabase Anon Key</div>
-              <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Find it in <a href="/settings" style={{ color: 'var(--accent)' }}>Settings → API Keys</a>.</div>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Display Mode</div>
+              <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
+                <strong>All carriers</strong> — shows every eligible carrier at checkout<br/>
+                <strong>Cheapest only</strong> — shows the lowest rate only<br/>
+                <strong>Priority carrier</strong> — shows your top-ranked carrier that services the postcode
+              </div>
             </div>
             <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px' }}>
               <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Display Mode</div>
@@ -190,8 +185,7 @@ const ACCORDION = [
           <div style={{ padding: '12px 16px', background: 'var(--surface-2)', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>No rates showing at checkout</div>
           <div style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.7' }}>
             <ul style={{ margin: 0, paddingLeft: '16px' }}>
-              <li>Check your Merchant ID is correctly entered in the plugin settings</li>
-              <li>Check your Supabase Anon Key is correctly entered</li>
+              <li>Go to WooCommerce → ShippingIQ and confirm your account is connected</li>
               <li>Make sure you have at least one active carrier in ShippingIQ</li>
               <li>Make sure your carrier has a postcode zone file uploaded (check for the amber "No zone file" badge on the carrier card)</li>
               <li>Check the postcode you're testing is covered by your carrier's zone file</li>
@@ -279,7 +273,7 @@ const STEPS = [
       </svg>
     ),
     title: 'Accurate Rates at Checkout',
-    body: 'Install the WooCommerce plugin, enter your Merchant ID, and your customers see real carrier rates — calculated from your own contracted prices.',
+    body: 'Install the WooCommerce plugin, sign in to connect your account, and your customers see real carrier rates — calculated from your own contracted prices.',
   },
 ]
 
