@@ -1,5 +1,51 @@
 # ShippingIQ — Handover Document
 
+## Session 27 June 2026 — In-plugin signup + notification email build
+
+### Completed this session
+1. Supabase upload_logs grants fixed (October 30 compliant)
+2. WordPress.org Contributors warning fixed — SVN r3561766
+3. Installation section rewritten on WordPress.org — SVN r3561791
+4. Price dropped to $29/mo — live on shippingiq.com.au, all files updated
+5. WordPress tested up to updated to 7.0 — SVN r3562791
+6. Resend domain verified for shippingiq.com.au (region: Tokyo ap-northeast-1)
+7. Resend API key created and stored:
+   - In .env.local as RESEND_API_KEY
+   - In Supabase secrets via CLI
+8. notify-new-signup edge function built and deployed — sends email to support@shippingiq.com.au when called with {email, merchant_id, created_at}. Handles both direct JSON and Supabase webhook payload formats. TESTED AND WORKING.
+9. register-merchant edge function written (81 lines) at supabase/functions/register-merchant/index.ts — NOT YET DEPLOYED
+
+### In progress — stopped here due to restart
+Building in-plugin signup (Option 3) — three phases:
+- Phase 1: register-merchant edge function (written, not deployed)
+- Phase 2: notify-new-signup webhook trigger (Supabase webhook not available on current plan — solved by calling notify from within register-merchant directly)
+- Phase 3: Plugin PHP changes for in-plugin signup/login form
+
+### Next steps to complete on restart
+1. Get Supabase service role key from:
+   supabase.com/dashboard/project/soaxvqkkecqzarwmbeip/settings/api
+2. Add it to Supabase secrets:
+   SUPABASE_ACCESS_TOKEN=sbp_0435879d2351fe33f0e75f6d9ae2d88b0ee80441 npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your_service_role_key --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
+3. Deploy register-merchant:
+   SUPABASE_ACCESS_TOKEN=sbp_0435879d2351fe33f0e75f6d9ae2d88b0ee80441 npx supabase functions deploy register-merchant --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
+4. Test register-merchant with a curl command
+5. Build plugin PHP changes for in-plugin signup/login form
+6. Build basic admin user management view in React app
+
+### Key credentials and IDs (also in .env.local)
+- Supabase project ref: soaxvqkkecqzarwmbeip
+- Supabase anon key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvYXh2cWtrZWNxemFyd21iZWlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNjU1NTEsImV4cCI6MjA5Mjc0MTU1MX0.dWydniFxo4a7T1TkBO6Hrj3ZfO7khjygvHegf3-3Jjw
+- Stripe Pro price ID: price_1TeoVPDdBlDgOLr389bLt8Kw (Pro $29/mo AUD)
+- Resend API key: re_DCWpMyFo_PweA8M4NpnXgSY3MR4H5hc7n
+- Supabase access token (CLI): sbp_0435879d2351fe33f0e75f6d9ae2d88b0ee80441
+- SVN password: stored at profiles.wordpress.org/loudman666/edit/group/1/
+
+### Design decisions made
+- Email confirmation is OFF (email_confirm: true in register-merchant sets user as verified immediately — no confirmation email sent)
+- notify-new-signup failure is fire-and-forget — won't fail registration if email notification fails
+- Supabase webhook not available on current plan — notification triggered directly from register-merchant instead
+- register-merchant relies on handle_new_user trigger for merchant/profile row creation (does not duplicate trigger logic)
+
 ## Session — 9 May 2026
 
 ### Completed
