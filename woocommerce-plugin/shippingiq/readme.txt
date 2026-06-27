@@ -12,14 +12,13 @@ Real-time freight rates at checkout using your own contracted carrier rate cards
 
 == Description ==
 
-ShippingIQ connects your WooCommerce store to your actual carrier contracts. Instead of guessing at freight costs or using generic rate tables, ShippingIQ uploads your real rate cards and calculates the correct price at checkout every time.
+ShippingIQ connects your WooCommerce store to your actual carrier contracts. Install the plugin, create your free account inside WordPress, upload your carrier rate cards, and your real contracted rates appear at checkout automatically — no separate sign-up step, no manual configuration.
 
 **How it works**
 
-1. Sign up at [shippingiq.com.au](https://shippingiq.com.au)
+1. Install this plugin and go to WooCommerce → ShippingIQ to create your free account
 2. Upload your carrier rate cards (CSV, Excel, or PDF — any format)
-3. Install this plugin and connect your ShippingIQ account
-4. Your contracted rates appear at checkout automatically
+3. Your contracted rates appear at checkout automatically
 
 **What makes ShippingIQ different**
 
@@ -44,31 +43,26 @@ Any Australian carrier. ShippingIQ's AI parser handles any rate card format — 
 
 **Requirements**
 
-* A ShippingIQ account — [sign up free at shippingiq.com.au](https://shippingiq.com.au)
+* A ShippingIQ account — create one free inside the plugin after installing
 * At least one active carrier with an uploaded rate card
 * Products must have weight set in WooCommerce (kg)
 
 == Installation ==
 
-**Before you begin**
-
-ShippingIQ requires a free account at shippingiq.com.au. Sign up first, upload at least one carrier rate card, then install this plugin.
-
 1. In WordPress admin go to Plugins → Add New
 2. Search for "ShippingIQ" and click Install Now
 3. Activate the plugin
-4. Go to WooCommerce → Settings → Shipping
-5. Add or edit a Shipping Zone (e.g. "Australia")
-6. Click Add shipping method → select ShippingIQ → Add shipping method
-7. Click Edit next to ShippingIQ
-8. Enter your Merchant ID (found in ShippingIQ → Settings)
-9. Enter your API Key (found in ShippingIQ → Settings → API Key)
+4. Go to WooCommerce → ShippingIQ and create your free account (or log in if you already have one)
+5. Upload your carrier rate cards at shippingiq.com.au → Carriers
+6. Go to WooCommerce → Settings → Shipping
+7. Add or edit a Shipping Zone (e.g. "Australia")
+8. Click Add shipping method → select ShippingIQ → Add shipping method
+9. Click Edit next to ShippingIQ and enter your API Key (found in ShippingIQ → Settings → API Key)
 10. Save — your contracted rates will now appear at checkout
 
 **Plugin settings**
 
 * **Method Title** — label shown at checkout, defaults to "Freight"
-* **Merchant ID** — your ShippingIQ merchant ID, found in ShippingIQ → Settings
 * **API Key** — found in ShippingIQ → Settings → API Key
 * **Display Mode** — show all eligible carriers or cheapest only
 
@@ -76,7 +70,7 @@ ShippingIQ requires a free account at shippingiq.com.au. Sign up first, upload a
 
 = Do I need a ShippingIQ account? =
 
-Yes. ShippingIQ is where you upload your carrier rate cards and configure your rules. The plugin connects to your account at checkout. Sign up free at shippingiq.com.au.
+Yes. After installing the plugin, go to WooCommerce → ShippingIQ to create your free account directly inside WordPress — no need to visit shippingiq.com.au first. Once connected, upload your carrier rate cards and configure your rules at app.shippingiq.com.au, and the plugin handles the rest at checkout.
 
 = Which carriers are supported? =
 
@@ -112,20 +106,27 @@ Yes. The free plan supports one carrier and includes full access to the quote to
 2. ShippingIQ carrier management — upload your rate cards
 3. Surcharge rules configuration
 4. Free shipping and margin settings
-5. Plugin settings in WooCommerce shipping zone
+5. WooCommerce → ShippingIQ account connection page — sign up or log in directly from WordPress
 
 == External Services ==
-This plugin connects to the ShippingIQ API to calculate real-time freight rates at checkout.
-ShippingIQ Freight Calculation API
+This plugin connects to the ShippingIQ API for freight rate calculation, and to Supabase Auth for account creation and login.
 
+ShippingIQ Freight Calculation API
 What it does: Calculates freight rates based on cart items, destination postcode, and the merchant's uploaded carrier rate cards.
 What data is sent: Destination postcode, cart item weights and dimensions, quantity, and the merchant's ShippingIQ Merchant ID.
 When data is sent: Every time a customer reaches the checkout page and a shipping rate is requested.
 API endpoint: https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/calculate-freight
+
+ShippingIQ Account API (Supabase Auth)
+What it does: Creates a new ShippingIQ merchant account or authenticates an existing one directly from the WooCommerce admin.
+What data is sent: Email address and password (signup or login only — entered once by the store owner in WooCommerce → ShippingIQ).
+When data is sent: Only when the store owner submits the signup or login form in the plugin settings page.
+API endpoints: https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/register-merchant and https://soaxvqkkecqzarwmbeip.supabase.co/auth/v1/token
+
 Terms of Service: https://shippingiq.com.au/terms
 Privacy Policy: https://shippingiq.com.au/privacy
 
-A ShippingIQ account is required to use this plugin. Sign up at https://shippingiq.com.au
+A ShippingIQ account is required to use this plugin. Create one free inside the plugin after installing.
 
 == Changelog ==
 
