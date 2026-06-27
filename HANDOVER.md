@@ -91,8 +91,9 @@ The plugin is the acquisition channel — merchant installs, gets rates working 
 - Supabase project ref: soaxvqkkecqzarwmbeip
 - Supabase anon key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvYXh2cWtrZWNxemFyd21iZWlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNjU1NTEsImV4cCI6MjA5Mjc0MTU1MX0.dWydniFxo4a7T1TkBO6Hrj3ZfO7khjygvHegf3-3Jjw
 - Stripe Pro price ID: price_1TeoVPDdBlDgOLr389bLt8Kw (Pro $29/mo AUD)
-- Resend API key: re_DCWpMyFo_PweA8M4NpnXgSY3MR4H5hc7n
-- Supabase access token (CLI): sbp_0435879d2351fe33f0e75f6d9ae2d88b0ee80441
+- Resend API key: retrieve from Resend dashboard
+- Supabase access token (CLI): retrieve from Supabase account tokens page
+- Note: keys rotated 27 June 2026 — do not store actual values in HANDOVER.md
 - SVN password: stored at profiles.wordpress.org/loudman666/edit/group/1/
 
 ### Design decisions made
