@@ -12,6 +12,10 @@
 7. `woocommerce-plugin/shippingiq/includes/class-wc-shipping-shippingiq.php` updated — merchant_id now read from get_option('shippingiq_merchant_id') automatically; manual Merchant ID field removed from instance settings
 8. `readme.txt` fully updated for v1.1.0 — in-plugin signup reflected throughout (description, how it works, requirements, installation, FAQ, screenshots, external services)
 9. Plugin bumped to v1.1.0 in both shippingiq.php and readme.txt — SVN trunk r3587821, tagged r3587823, readme update r3587831
+10. Admin merchants page built at /admin/merchants — shows all merchants with email, store name, plan badge, signed up date, carrier count, deactivate/delete actions, search by email. Guarded by user.email === 'loudman666@gmail.com'
+11. admin-get-merchants Supabase edge function deployed — GET returns all merchants joined with admin email and carrier count; POST action=deactivate sets subscription.status=inactive; POST action=delete cascades delete (profiles → carriers → quotes → upload_logs → merchant)
+12. Merchants nav item added to all page sidebars (Dashboard, Carriers, Rules, Quote, SavedQuotes, Team, PdfConverter, Settings) — visible only to loudman666@gmail.com, links to /admin/merchants
+13. Deployed to Netlify
 
 ### Deployment note — Local by Flywheel
 **cp is more reliable than unzip** when deploying plugin updates. Unzip can extract to the wrong directory or leave stale files:
@@ -20,10 +24,37 @@ cp -r ~/Downloads/shippingiq/woocommerce-plugin/shippingiq /path/to/local-site/w
 ```
 
 ### Next steps
+- Delete test merchant accounts (test-merchant3@example.com, test-signup@example.com) via /admin/merchants
+- Plugin-in-WordPress full flow: spec out uploading rate cards from inside WP plugin (future build)
+- Ask first real merchant for WordPress.org review
+- Update shippingiq.com.au/resources to reflect in-plugin signup (no longer need to visit site first to create account)
 - Take new screenshot-5.png showing the WooCommerce → ShippingIQ account connection page and push to SVN /assets/
-- Build basic admin user management view in React app
-- Ask first merchant to leave a WordPress.org review
-- Update shippingiq.com.au/resources page to reflect in-plugin signup (no longer need to visit site first)
+- Remove debug error_log line from process_login in class-shippingiq-admin.php once login confirmed working in production
+
+## Future Build — Plugin-First Merchant (Type A)
+
+### Concept
+Two merchant types sharing the same Supabase backend:
+- Type A — Plugin-first: does everything inside the WP plugin, never visits shippingiq.com.au
+- Type B — Power user: uses the full React app at app.shippingiq.com.au
+
+### What the plugin would need for Type A
+1. File upload UI inside WP admin → calls rapid-api edge function to parse rate card
+2. Basic carrier management (list carriers, activate/deactivate)
+3. Basic rules (free shipping threshold, display mode, margin)
+4. That covers ~80% of what small merchants need
+
+### Pricing angle
+- Plugin-only (Type A) = Free plan
+- React app access (Type B) = Pro trigger
+- Cleaner value proposition than current model
+
+### Technical approach
+- Same Supabase backend, same merchant ID, same carriers table
+- Plugin makes direct calls to existing edge functions (rapid-api, calculate-freight)
+- No new backend work needed — just PHP admin pages in the plugin
+
+### Not started — log only, do not build yet
 
 ### Key credentials and IDs (also in .env.local)
 - Supabase project ref: soaxvqkkecqzarwmbeip
