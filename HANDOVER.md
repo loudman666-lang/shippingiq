@@ -31,6 +31,16 @@ cp -r ~/Downloads/shippingiq/woocommerce-plugin/shippingiq /path/to/local-site/w
 - Take new screenshot-5.png showing the WooCommerce → ShippingIQ account connection page and push to SVN /assets/
 - Remove debug error_log line from process_login in class-shippingiq-admin.php once login confirmed working in production
 
+## Future Build — Shopify App
+
+- Embedded Shopify app using App Bridge — merchant never leaves Shopify admin
+- Auth via Shopify OAuth — no ShippingIQ account creation needed, merchant record created automatically in Supabase
+- Carrier service API endpoint to return rates at checkout
+- Full carrier management, rate card upload, rules — all inside Shopify admin
+- Shopify App Store listing = major distribution channel in Australia
+- Priority: after Type A WooCommerce plugin-first build
+- Estimated effort: 4–6 sessions
+
 ## Future Build — Plugin-First Merchant (Type A)
 
 ### Concept
