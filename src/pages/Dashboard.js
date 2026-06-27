@@ -27,7 +27,7 @@ function cheapestRateLabel(results) {
 }
 
 export default function Dashboard() {
-  const { profile, merchant, signOut, isAdmin, planTier } = useAuth()
+  const { user, profile, merchant, signOut, isAdmin, planTier } = useAuth()
   const navigate = useNavigate()
   const [carriers, setCarriers] = useState([])
   const [quoteCount, setQuoteCount] = useState(0)
@@ -140,6 +140,13 @@ export default function Dashboard() {
               </a>
             </>
           )}
+          {user?.email === 'loudman666@gmail.com' && (<>
+            <div className="nav-divider" />
+            <a href="/admin/merchants" className="nav-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Merchants
+            </a>
+          </>)}
         </nav>
 
         <div className="sidebar-footer">

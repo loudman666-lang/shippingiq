@@ -22,6 +22,7 @@ import Pricing from './pages/Pricing'
 import BillingSuccess from './pages/BillingSuccess'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
+import Admin from './pages/Admin'
 
 export default function App() {
   // Supabase invite links land at "/". Redirect to /reset-password preserving
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="/saved-quotes" element={<ProtectedRoute><SavedQuotes /></ProtectedRoute>} />
           <Route path="/pricing" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
           <Route path="/billing/success" element={<ProtectedRoute><BillingSuccess /></ProtectedRoute>} />
+          <Route path="/admin/merchants" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="/" element={<Landing />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
