@@ -15,22 +15,36 @@
 8. notify-new-signup edge function built and deployed — sends email to support@shippingiq.com.au when called with {email, merchant_id, created_at}. Handles both direct JSON and Supabase webhook payload formats. TESTED AND WORKING.
 9. register-merchant edge function written (81 lines) at supabase/functions/register-merchant/index.ts — NOT YET DEPLOYED
 
-### In progress — stopped here due to restart
+### In-plugin signup build — status
 Building in-plugin signup (Option 3) — three phases:
-- Phase 1: register-merchant edge function (written, not deployed)
-- Phase 2: notify-new-signup webhook trigger (Supabase webhook not available on current plan — solved by calling notify from within register-merchant directly)
-- Phase 3: Plugin PHP changes for in-plugin signup/login form
+- ✓ Phase 1: register-merchant edge function — deployed and tested
+- ✓ Phase 2: notify-new-signup — called directly from register-merchant (Supabase webhook not available on current plan)
+- ✓ Phase 3: Plugin PHP changes — complete (see below)
 
-### Next steps to complete on restart
-1. Get Supabase service role key from:
-   supabase.com/dashboard/project/soaxvqkkecqzarwmbeip/settings/api
-2. Add it to Supabase secrets:
-   SUPABASE_ACCESS_TOKEN=sbp_0435879d2351fe33f0e75f6d9ae2d88b0ee80441 npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your_service_role_key --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
-3. Deploy register-merchant:
-   SUPABASE_ACCESS_TOKEN=sbp_0435879d2351fe33f0e75f6d9ae2d88b0ee80441 npx supabase functions deploy register-merchant --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
-4. Test register-merchant with a curl command
-5. Build plugin PHP changes for in-plugin signup/login form
-6. Build basic admin user management view in React app
+### Phase 3 — what was built
+- `woocommerce-plugin/shippingiq/includes/class-shippingiq-admin.php` — new admin class:
+  - Registers WooCommerce → ShippingIQ submenu
+  - Sign Up tab: POSTs to register-merchant edge function, saves returned merchant_id to wp_options
+  - Log In tab: POSTs to Supabase Auth, gets access_token, POSTs to get-merchant-id edge function, saves merchant_id to wp_options
+  - Connected state: shows Merchant ID + Disconnect button
+  - All forms use WordPress nonces; errors redirect back with notice
+- `woocommerce-plugin/shippingiq/shippingiq.php` — loads ShippingIQ_Admin on is_admin()
+- `woocommerce-plugin/shippingiq/includes/class-wc-shipping-shippingiq.php` — merchant_id now read from get_option('shippingiq_merchant_id') automatically; manual Merchant ID field removed from instance settings
+- `supabase/functions/get-merchant-id/index.ts` — new edge function: accepts user JWT, validates via supabase.auth.getUser(), fetches merchant_id from profiles table using service role client, returns { merchant_id }. Used by login flow to avoid direct REST API query against profiles (RLS requires authenticated JWT as Bearer, which works, but edge function approach is cleaner and more reliable).
+
+### Deployment note — Local by Flywheel
+- **cp is more reliable than unzip** for deploying plugin updates to Local by Flywheel:
+  ```bash
+  cp -r ~/Downloads/shippingiq/woocommerce-plugin/shippingiq /path/to/local-site/wp-content/plugins/
+  ```
+  Unzip can fail silently or leave stale files. Use cp to overwrite the plugin folder directly.
+
+### Next steps
+1. Remove the temporary debug `error_log( print_r( $auth_body, true ) )` line from `process_login` in `class-shippingiq-admin.php` once login is confirmed working
+2. Test the full signup and login flows in Local by Flywheel
+3. Rebuild zip: `cd ~/Downloads/shippingiq/woocommerce-plugin && zip -r shippingiq.zip shippingiq/`
+4. Commit all changes and push to GitHub
+5. Build basic admin user management view in React app (deferred)
 
 ### Key credentials and IDs (also in .env.local)
 - Supabase project ref: soaxvqkkecqzarwmbeip
@@ -86,6 +100,8 @@ npx supabase functions deploy remove-team-member --project-ref soaxvqkkecqzarwmb
 npx supabase functions deploy create-checkout-session --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 npx supabase functions deploy stripe-webhook --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 npx supabase functions deploy create-portal-session --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
+npx supabase functions deploy register-merchant --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
+npx supabase functions deploy get-merchant-id --project-ref soaxvqkkecqzarwmbeip --workdir ~/Downloads/shippingiq
 
 ## Tool preference — ALWAYS USE CLAUDE CODE
 - Use Claude Code (claude command in terminal) for all file changes
@@ -415,7 +431,10 @@ supabase/functions/stripe-webhook/index.ts
 supabase/functions/create-portal-session/index.ts
 woocommerce-plugin/shippingiq/shippingiq.php
 woocommerce-plugin/shippingiq/includes/class-wc-shipping-shippingiq.php
+woocommerce-plugin/shippingiq/includes/class-shippingiq-admin.php
 woocommerce-plugin/shippingiq/readme.txt
+supabase/functions/register-merchant/index.ts
+supabase/functions/get-merchant-id/index.ts
 
 ## Database (Supabase)
 Tables: profiles, merchants, carriers, quotes, upload_logs
