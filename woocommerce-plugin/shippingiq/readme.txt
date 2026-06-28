@@ -4,7 +4,7 @@ Tags: shipping, freight, woocommerce, australia, rates
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -151,6 +151,14 @@ A ShippingIQ account is required to use this plugin. Create one free inside the 
 
 == Changelog ==
 
+= 1.2.2 =
+* Renamed to ShippingIQ - Freight Calculator for WooCommerce for clarity
+* Updated all descriptions to use consistent freight calculation language
+* Improved rate card upload help text — clarified CSV/Excel only on free plan
+* Added no active carriers warning banner
+* Added postcode range editor inside plugin
+* Added test postcode tool
+
 = 1.2.1 =
 * Improved rate card and zone file upload guidance with download templates and setup guide link
 * Updated FAQ entries to accurately reflect free plan vs Pro plan features
@@ -180,6 +188,9 @@ A ShippingIQ account is required to use this plugin. Create one free inside the 
 * 5-minute rate caching
 
 == Upgrade Notice ==
+
+= 1.2.2 =
+Renamed for clarity — now ShippingIQ Freight Calculator. No changes to checkout behaviour.
 
 = 1.2.1 =
 Minor update - improved upload guidance and FAQ accuracy. No changes to checkout behaviour.
