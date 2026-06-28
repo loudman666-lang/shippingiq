@@ -1,0 +1,3 @@
+/templates/*.csv
+  Content-Disposition: attachment
+  Content-Type: text/csv
