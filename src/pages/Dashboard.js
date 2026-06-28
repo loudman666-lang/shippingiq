@@ -209,14 +209,17 @@ export default function Dashboard() {
                       <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '2px' }}>Click the circle to mark as done once complete</div>
                     )}
                     {i === 4 && (
-                      <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '8px 12px' }}>
-                        <code style={{ fontSize: '12px', color: 'var(--ink)', fontFamily: 'monospace', flex: 1 }}>{merchant?.id}</code>
-                        <button
-                          onClick={() => { navigator.clipboard.writeText(merchant?.id || ''); setCopiedMerchantId(true); setTimeout(() => setCopiedMerchantId(false), 2000) }}
-                          style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--border-mid)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
-                        >
-                          {copiedMerchantId ? 'Copied!' : 'Copy ID'}
-                        </button>
+                      <div style={{ marginTop: '10px' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginBottom: '6px' }}>Your ShippingIQ Merchant ID — the plugin saves this automatically when you sign in. You only need this if setting up manually.</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '8px 12px' }}>
+                          <code style={{ fontSize: '12px', color: 'var(--ink)', fontFamily: 'monospace', flex: 1 }}>{merchant?.id}</code>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(merchant?.id || ''); setCopiedMerchantId(true); setTimeout(() => setCopiedMerchantId(false), 2000) }}
+                            style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--border-mid)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+                          >
+                            {copiedMerchantId ? 'Copied!' : 'Copy ID'}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

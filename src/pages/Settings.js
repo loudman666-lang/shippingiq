@@ -318,7 +318,7 @@ export default function Settings() {
           <div style={{ marginTop: '16px' }}>
             <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--ink)', marginBottom: '4px' }}>API Key</div>
             <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '8px' }}>
-              Your ShippingIQ API key — used to connect the WooCommerce plugin to your account. The plugin saves this automatically when you sign in.
+              Your ShippingIQ API key — saved automatically by the plugin when you sign in. Only needed for manual plugin setup.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px' }}>
               <div style={{ fontSize: '11px', color: 'var(--ink-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>Anon Key</div>

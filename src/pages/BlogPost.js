@@ -69,7 +69,7 @@ export default function BlogPost() {
       {/* CTA STRIP */}
       <div className="blog-cta-strip">
         <div className="blog-cta-inner">
-          <h3 className="blog-cta-headline">Ready to set up accurate freight rates?</h3>
+          <h3 className="blog-cta-headline">Ready to set up accurate freight calculations?</h3>
           <p className="blog-cta-sub">Upload your carrier rate card and go live at WooCommerce checkout in under an hour.</p>
           <Link to="/signup" className="blog-btn-primary-lg">Start for free</Link>
         </div>

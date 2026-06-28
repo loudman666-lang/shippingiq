@@ -80,7 +80,7 @@ const ACCORDION = [
           Surcharges are optional but recommended. Common surcharges include fuel levy, tail lift, residential delivery, and overlength fees.
         </p>
         <p style={{ fontSize: '14px', lineHeight: '1.65', color: 'var(--ink-mid)', margin: 0 }}>
-          Ask your carrier for a surcharge schedule or ancillary charges document. CSV or Excel files work best — PDF is also accepted. Always use the original document direct from your carrier, not a photocopy or scanned copy, as these can affect how accurately ShippingIQ reads the data.
+          Ask your carrier for a surcharge schedule or ancillary charges document. CSV or Excel files work best — PDF is also accepted (Pro). Always use the original document direct from your carrier, not a photocopy or scanned copy, as these can affect how accurately ShippingIQ reads the data.
         </p>
       </div>
     ),

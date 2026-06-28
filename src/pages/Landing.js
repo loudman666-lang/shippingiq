@@ -287,9 +287,9 @@ export default function Landing() {
               <div className="use-case-title">Quote from the dashboard</div>
               <p className="use-case-body">ShippingIQ works as a standalone freight calculator from the moment setup is complete. Quote phone orders, check freight costs, or give your team accurate rates — before you've touched your website.</p>
               <ul className="use-case-feats">
-                <li className="use-case-feat"><CheckIcon />Multi-carrier comparison</li>
-                <li className="use-case-feat"><CheckIcon />Full cost breakdown with surcharges</li>
-                <li className="use-case-feat"><CheckIcon />Save and review past quotes</li>
+                <li className="use-case-feat"><CheckIcon />Multi-carrier comparison (Pro)</li>
+                <li className="use-case-feat"><CheckIcon />Full cost breakdown with surcharges (Pro)</li>
+                <li className="use-case-feat"><CheckIcon />Save and review past quotes (Pro)</li>
                 <li className="use-case-feat"><CheckIcon />No developer required</li>
               </ul>
             </div>
@@ -300,9 +300,9 @@ export default function Landing() {
               <p className="use-case-body">Install the ShippingIQ plugin, connect your account in one click, and every customer sees real carrier rates at checkout — calculated from your own contracted prices, not industry averages.</p>
               <ul className="use-case-feats">
                 <li className="use-case-feat"><CheckIcon />Automatic rate calculation</li>
-                <li className="use-case-feat"><CheckIcon />Multi-carrier display at checkout</li>
+                <li className="use-case-feat"><CheckIcon />Multi-carrier display at checkout (Pro)</li>
                 <li className="use-case-feat"><CheckIcon />Free shipping rules</li>
-                <li className="use-case-feat"><CheckIcon />Surcharge handling built in</li>
+                <li className="use-case-feat"><CheckIcon />Surcharge handling built in (Pro)</li>
               </ul>
             </div>
           </div>
@@ -374,7 +374,7 @@ export default function Landing() {
                 </svg>
               </div>
               <div className="feat-title">AI rate card parsing</div>
-              <div className="feat-body">Upload a PDF or Excel from any carrier. AI reads and extracts every zone, rate, and surcharge in seconds — no manual data entry, no spreadsheet wrangling, no IT team required.</div>
+              <div className="feat-body">Upload a CSV or Excel from any carrier, or PDF on Pro. AI reads and extracts every zone, rate, and surcharge in seconds — no manual data entry, no spreadsheet wrangling, no IT team required.</div>
             </div>
 
             <div>
