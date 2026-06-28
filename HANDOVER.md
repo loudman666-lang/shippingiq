@@ -1,34 +1,83 @@
 # ShippingIQ — Handover Document
 
-## Session 29 June 2026 (continued) — Three admin plugin improvements
+## Session 29 June 2026 (part 2) — v1.2.2 release, plugin rename, three new features
 
-### Completed this session (late 29 June)
+### Completed this session
 
-1. **Manual postcode ranges editor** (`class-shippingiq-admin.php`)
-   - "Postcode Ranges ▼" link below each real carrier name in the carrier list.
-   - Clicking expands an inline form (no modal) with From / To / Zone rows.
-   - Pre-fills existing `manualPostcodeRanges` from Supabase if already set.
-   - JS: Add Row and Remove per-row buttons without page reload.
-   - Save: fetches current `parsed_data`, merges in new `postcodeMap` (expanded from ranges) and `manualPostcodeRanges`, PATCHes carrier via Supabase REST — existing rate card data preserved.
-   - Max 5,000 postcodes per range to prevent abuse.
-   - Amber "No postcode data" badge shown next to carrier name when `postcodeMap` is empty.
-   - SVN trunk: r3588998 / GitHub: `af2f4af`
+#### Plugin rename
+1. **Display name changed** to "ShippingIQ - Freight Calculator for WooCommerce"
+   - `shippingiq.php` Plugin Name header updated
+   - `readme.txt` title (line 1) updated
+   - Slug, text domain, folder name, and `$this->id` unchanged
 
-2. **Test postcode tool**
-   - Section below the carrier list in My Carrier tab: postcode input + Test button.
-   - POSTs to `calculate-freight` edge function with a dummy 1 kg, 30×20×10 cm item via WordPress AJAX (`wp_ajax_siq_test_postcode`).
-   - Inline result: carrier name + service + price (e.g. "Allied Express — Road Express: $12.00") or a user-friendly error (no active carriers, postcode not covered, no zone file, etc.).
-   - Nonce-protected.
+#### Language updates
+2. **Consistent freight calculation language** throughout `readme.txt`
+   - Tagline: "Real-time freight calculation at checkout..."
+   - Description: "ShippingIQ calculates your real contracted freight costs at checkout automatically"
+   - How It Works step 4: "Your contracted freight is calculated at checkout automatically"
+   - "freight rates" → "freight calculation" wherever referring to the feature/product
+   - "rate card" and "rates" (actual pricing numbers shown to customers) left unchanged
 
-3. **No active carrier warning banner**
-   - Yellow `notice-warning` shown at the top of My Carrier tab when no active real carriers exist (all deactivated, or only demo present).
-   - Not shown when in `analyzed` state (mid-upload flow) to avoid confusion.
+#### Upload form text fixes
+3. **Rate card help text** (`class-shippingiq-admin.php`):
+   - "ShippingIQ AI will interpret any format automatically" → "CSV or Excel only. ShippingIQ AI will interpret the structure automatically."
+4. **Upload form description**:
+   - "set up rates at checkout automatically" → "extract your freight calculation rules automatically"
 
-4. `fetch_carriers()` updated to select `id,name,status,is_demo,parsed_data` — needed for postcode badge and ranges pre-fill.
+#### Three new plugin features
+5. **No active carriers warning banner**
+   - Yellow banner at top of My Carrier tab when no active real carriers exist
+   - Fires even with zero carriers — condition `empty($active_real) && 'analyzed' !== $state`
+   - Bug fix in same session: original condition required `!empty($carriers)` which prevented banner showing when carrier list was empty
+
+6. **Postcode ranges editor** (`class-shippingiq-admin.php`)
+   - "Postcode Ranges ▼" link inline below each real carrier name
+   - Expands form with From / To / Zone rows; Add Row / Remove (JS, no page reload)
+   - Pre-fills from `manualPostcodeRanges` in Supabase parsed_data
+   - Save: fetches current `parsed_data`, merges in new `postcodeMap` (expanded from ranges) and `manualPostcodeRanges`, PATCHes via Supabase REST — existing rate data preserved
+   - Amber "No postcode data" badge when `postcodeMap` is empty
+   - Max 5,000 postcodes per range
+
+7. **Test postcode tool**
+   - Postcode input + Test button below the carrier list
+   - WordPress AJAX (`wp_ajax_siq_test_postcode`) → `calculate-freight` edge function with dummy 1 kg, 30×20×10 cm item
+   - Inline result: carrier + service + price, or user-friendly error message
+   - Nonce-protected
+
+#### Bug fix — carrier list not rendering
+8. **`fetch_carriers()` reverted to lean select** (`id,name,status,is_demo` only)
+   - Root cause: adding `parsed_data` to the select caused WordPress HTTP layer (`wp_remote_get`) to silently return empty on Local by Flywheel — no WP_Error, just empty body — hiding all carriers
+   - Fix: keep `fetch_carriers()` lean; `fetch_real_carriers_parsed_data()` fetches `parsed_data` separately for non-demo carriers only, called only when rendering the carrier tab
+   - Rule for future: never include large JSONB columns in `fetch_carriers()` select
+
+#### Backend fixes (carried forward from session start)
+9. **admin-get-merchants v5 — service role client isolation**
+   - Two separate Supabase clients: `supabaseAuth` (anon key + user JWT, auth validation only); `supabase` (service role, created fresh after auth passes, for all DB ops)
+   - Fixes "permission denied for table quotes" on merchant delete
+
+10. **quotes FK cascade** — `quotes.merchant_id` FK changed to `ON DELETE CASCADE`
+
+11. **All test/bot accounts deleted** — only `loudman666@gmail.com` remains
+
+12. **readme.txt installation section** — expanded to 15 explicit steps for non-technical merchants
+
+#### v1.2.2 release
+13. **Plugin bumped to v1.2.2**
+    - SVN trunk: r3589034
+    - SVN tag 1.2.2: r3589036
+    - GitHub: `0f8a90a`
 
 ### Next steps
-- **End-to-end test all three features** on test site: activate a carrier, test a postcode, try ranges editor
-- **Verify WP.org listing updates** — check wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce after cache refreshes: confirm description, all 7 screenshots, and FAQ entries render correctly
+- **Verify WP.org listing** — check name, descriptions, and FAQ after v1.2.2 cache refresh
+- **Test new features on test site** — postcode ranges editor and test postcode tool end-to-end
+- **First real merchant review request**
+- **Monitor WP.org search visibility** (allow 2-4 weeks from v1.2.0 listing)
+
+---
+
+## Session 29 June 2026 (part 1) — Admin delete fix, plugin v1.2.1, WP.org updates
+
+### Completed this session
 
 #### Admin delete bug — fully fixed
 1. **admin-get-merchants v5 — service role client isolation**
