@@ -1303,7 +1303,7 @@ class ShippingIQ_Admin {
 					</th>
 					<td>
 						<input type="file" id="siq_rate_card" name="siq_rate_card" accept=".csv,.xlsx,.xls" required>
-						<p class="description"><?php esc_html_e( 'CSV or Excel (.csv, .xlsx). No PDFs.', 'shippingiq-freight-rates-for-woocommerce' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Your carrier\'s rate card file. Ask your carrier for a CSV or Excel copy. ShippingIQ AI will interpret any format automatically.', 'shippingiq-freight-rates-for-woocommerce' ); ?><br><a href="https://shippingiq.com.au/public/templates/rate-card-template.csv" target="_blank"><?php esc_html_e( 'Download template', 'shippingiq-freight-rates-for-woocommerce' ); ?></a></p>
 					</td>
 				</tr>
 				<tr>
@@ -1312,12 +1312,13 @@ class ShippingIQ_Admin {
 					</th>
 					<td>
 						<input type="file" id="siq_zone_file" name="siq_zone_file" accept=".csv,.xlsx,.xls">
-						<p class="description"><?php esc_html_e( 'Optional — maps postcodes to zones. CSV or Excel only.', 'shippingiq-freight-rates-for-woocommerce' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Your carrier\'s postcode-to-zone mapping file. Ask your carrier for this specifically if they haven\'t provided it — without it, no rates will appear at checkout.', 'shippingiq-freight-rates-for-woocommerce' ); ?><br><a href="https://shippingiq.com.au/public/templates/zone-file-template.csv" target="_blank"><?php esc_html_e( 'Download template', 'shippingiq-freight-rates-for-woocommerce' ); ?></a></p>
 					</td>
 				</tr>
 			</table>
 			<?php submit_button( __( 'Analyse', 'shippingiq-freight-rates-for-woocommerce' ), 'primary', 'submit', false ); ?>
 			<p class="description" style="margin-top:0.5em;"><?php esc_html_e( 'Analysis takes 20–40 seconds. Please wait after clicking.', 'shippingiq-freight-rates-for-woocommerce' ); ?></p>
+			<p style="margin-top: 8px; font-size: 13px;"><?php esc_html_e( 'Need help? See the', 'shippingiq-freight-rates-for-woocommerce' ); ?> <a href="https://shippingiq.com.au/resources" target="_blank"><?php esc_html_e( 'ShippingIQ setup guide', 'shippingiq-freight-rates-for-woocommerce' ); ?></a> <?php esc_html_e( 'for instructions on getting your carrier files.', 'shippingiq-freight-rates-for-woocommerce' ); ?></p>
 		</form>
 		<?php
 	}
