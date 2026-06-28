@@ -98,11 +98,13 @@ Yes. The free plan supports one carrier and includes full access to the quote to
 
 == Screenshots ==
 
-1. Freight rates displayed at WooCommerce checkout
-2. ShippingIQ carrier management — upload your rate cards
-3. Surcharge rules configuration
-4. Free shipping and margin settings
-5. WooCommerce → ShippingIQ account connection page — sign up or log in directly from WordPress
+1. Sign up or log in to your ShippingIQ account directly inside WooCommerce admin.
+2. Connected successfully — your merchant account is active and ready.
+3. Example Carrier pre-loaded with demo rates so you can see the product working immediately.
+4. AI analyses your rate card — pricing model detected, postcodes mapped, ready to save.
+5. Carrier saved and live — Free plan upgrade prompt shown when 1-carrier limit is reached.
+6. Shipping Rules — configure free shipping threshold and display mode without leaving WP admin.
+7. Your contracted carrier rates appearing at checkout automatically.
 
 == External Services ==
 This plugin connects to the ShippingIQ API for freight rate calculation, and to Supabase Auth for account creation and login.
