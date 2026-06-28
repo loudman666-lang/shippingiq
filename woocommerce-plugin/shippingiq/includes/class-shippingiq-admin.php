@@ -865,7 +865,7 @@ class ShippingIQ_Admin {
 		$anon_key = get_option( 'shippingiq_api_key', self::ANON_KEY );
 		$url      = self::SUPABASE_URL . '/rest/v1/carriers'
 			. '?merchant_id=eq.' . rawurlencode( $merchant_id )
-			. '&select=id,name,status,is_demo,parsed_data'
+			. '&select=id,name,status,is_demo'
 			. '&order=created_at.asc';
 
 		$response = wp_remote_get( esc_url_raw( $url ), array(
@@ -881,6 +881,39 @@ class ShippingIQ_Admin {
 		}
 
 		return json_decode( wp_remote_retrieve_body( $response ), true ) ?: array();
+	}
+
+	private function fetch_real_carriers_parsed_data( string $merchant_id ): array {
+		$anon_key = get_option( 'shippingiq_api_key', self::ANON_KEY );
+		$url      = self::SUPABASE_URL . '/rest/v1/carriers'
+			. '?merchant_id=eq.' . rawurlencode( $merchant_id )
+			. '&is_demo=eq.false'
+			. '&select=id,parsed_data';
+
+		$response = wp_remote_get( esc_url_raw( $url ), array(
+			'headers' => array(
+				'apikey'        => $anon_key,
+				'Authorization' => 'Bearer ' . $anon_key,
+			),
+			'timeout' => 10,
+		) );
+
+		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			return array();
+		}
+
+		$rows = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( ! is_array( $rows ) ) {
+			return array();
+		}
+
+		$map = array();
+		foreach ( $rows as $row ) {
+			if ( ! empty( $row['id'] ) && is_array( $row['parsed_data'] ?? null ) ) {
+				$map[ $row['id'] ] = $row['parsed_data'];
+			}
+		}
+		return $map;
 	}
 
 	private function fetch_merchant_rules( string $merchant_id ): array {
@@ -1410,14 +1443,16 @@ class ShippingIQ_Admin {
 	// -------------------------------------------------------------------------
 
 	private function render_carrier_tab( string $merchant_id, string $state ): void {
-		$carriers      = $this->fetch_carriers( $merchant_id );
-		$demo_carriers = array_values( array_filter( $carriers, fn( $c ) => ! empty( $c['is_demo'] ) ) );
-		$real_carriers = array_values( array_filter( $carriers, fn( $c ) => empty( $c['is_demo'] ) ) );
-		$active_real   = array_values( array_filter( $real_carriers, fn( $c ) => 'active' === $c['status'] ) );
-		$expand_id     = isset( $_GET['siq_expand_ranges'] ) ? sanitize_text_field( wp_unslash( $_GET['siq_expand_ranges'] ) ) : '';
+		$carriers          = $this->fetch_carriers( $merchant_id );
+		$demo_carriers     = array_values( array_filter( $carriers, fn( $c ) => ! empty( $c['is_demo'] ) ) );
+		$real_carriers     = array_values( array_filter( $carriers, fn( $c ) => empty( $c['is_demo'] ) ) );
+		$active_real       = array_values( array_filter( $real_carriers, fn( $c ) => 'active' === $c['status'] ) );
+		$expand_id         = isset( $_GET['siq_expand_ranges'] ) ? sanitize_text_field( wp_unslash( $_GET['siq_expand_ranges'] ) ) : '';
+		// Separate fetch for parsed_data (real carriers only — free plan = 1 carrier max).
+		$parsed_data_map   = ! empty( $real_carriers ) ? $this->fetch_real_carriers_parsed_data( $merchant_id ) : array();
 
-		// Warning: no active real carriers (but at least one carrier exists and we're not mid-upload flow).
-		if ( ! empty( $carriers ) && empty( $active_real ) && 'analyzed' !== $state ) :
+		// Warning: no active real carriers — no rates at checkout. Show any time (zero carriers, only demo, or all deactivated).
+		if ( empty( $active_real ) && 'analyzed' !== $state ) :
 			?>
 			<div class="notice notice-warning inline" style="margin-top:1em;max-width:720px;">
 				<p><strong><?php esc_html_e( 'No active carriers', 'shippingiq-freight-rates-for-woocommerce' ); ?></strong> — <?php esc_html_e( 'no rates will appear at checkout. Activate a carrier or upload your rate card.', 'shippingiq-freight-rates-for-woocommerce' ); ?></p>
@@ -1441,7 +1476,7 @@ class ShippingIQ_Admin {
 					$is_demo       = ! empty( $carrier['is_demo'] );
 					$is_active     = 'active' === $carrier['status'];
 					$cid           = esc_attr( $carrier['id'] );
-					$parsed        = is_array( $carrier['parsed_data'] ?? null ) ? $carrier['parsed_data'] : array();
+					$parsed        = $is_demo ? array() : ( $parsed_data_map[ $carrier['id'] ] ?? array() );
 					$has_postcode  = ! empty( $parsed['postcodeMap'] );
 					$manual_ranges = is_array( $parsed['manualPostcodeRanges'] ?? null ) ? $parsed['manualPostcodeRanges'] : array();
 					$is_expanded   = ( $expand_id === $carrier['id'] && ! $is_demo );
