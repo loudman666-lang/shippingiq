@@ -17,8 +17,9 @@ ShippingIQ connects your WooCommerce store to your actual carrier contracts. Ins
 **How it works**
 
 1. Install this plugin and go to WooCommerce -> ShippingIQ to create your free account
-2. Upload your carrier rate cards (CSV, Excel, or PDF - any format)
-3. Your contracted rates appear at checkout automatically
+2. Upload your carrier rate card (CSV or Excel) in the My Carrier tab
+3. Set your shipping rules in the Rules tab
+4. Your contracted rates appear at checkout automatically
 
 **What makes ShippingIQ different**
 
@@ -33,8 +34,9 @@ Any Australian carrier. ShippingIQ's AI parser handles any rate card format - Al
 * Real-time freight calculation at checkout
 * Supports weight-break, basic charge + per kg, and depot-to-depot pricing models
 * Fuel levy applied automatically
-* Surcharge rules (tailgate, overlength, residential, etc.)
 * Free shipping threshold with smart surcharge voiding
+* Carrier and rules management directly inside WooCommerce admin - no separate app needed on the free plan
+* 100 quotes/month on the free plan, unlimited on Pro
 * Carrier eligibility rules - exclude carriers when cart items exceed weight or dimension limits
 * Product tag overrides - force or exclude specific carriers per product
 * Freight margin - add a flat or percentage margin to all rates
@@ -53,10 +55,10 @@ Any Australian carrier. ShippingIQ's AI parser handles any rate card format - Al
 2. Search for "ShippingIQ" and click Install Now
 3. Activate the plugin
 4. Go to WooCommerce -> ShippingIQ and create your free account
-5. Go to WooCommerce -> Settings -> Shipping
-6. Add or edit a Shipping Zone (e.g. "Australia")
-7. Click Add shipping method -> select ShippingIQ -> Add shipping method
-8. Click Save - your contracted rates will now appear at checkout once you have uploaded a carrier rate card
+5. Upload your carrier rate card (CSV or Excel) in the My Carrier tab
+6. Configure your rules in the Rules tab (free shipping threshold, display mode)
+7. Go to WooCommerce -> Settings -> Shipping, add a Shipping Zone, click Add shipping method -> ShippingIQ -> Save
+8. Your contracted rates will now appear at checkout
 
 = Plugin Settings =
 * Method Title - label shown to customers at checkout, defaults to "Freight"
@@ -66,7 +68,7 @@ Any Australian carrier. ShippingIQ's AI parser handles any rate card format - Al
 
 = Do I need a ShippingIQ account? =
 
-Yes. After installing the plugin, go to WooCommerce -> ShippingIQ to create your free account directly inside WordPress - no need to visit shippingiq.com.au first. Once connected, upload your carrier rate cards and configure your rules at app.shippingiq.com.au, and the plugin handles the rest at checkout.
+Yes. After installing the plugin, go to WooCommerce -> ShippingIQ to create your free account directly inside WordPress - no need to visit shippingiq.com.au. Upload your rate card and configure rules in the plugin. Pro plan users get access to the full React app at app.shippingiq.com.au for advanced features.
 
 = Which carriers are supported? =
 
@@ -92,9 +94,21 @@ Yes. Set carrier eligibility limits in ShippingIQ -> Carriers -> Carrier Limits.
 
 Yes. Add a WooCommerce product tag in the format shippingiq-only-[carrier-slug] to restrict checkout to that carrier when the product is in the cart. Use shippingiq-exclude-[carrier-slug] to hide a carrier for that product.
 
+= Can I upload a PDF rate card? =
+
+PDF rate card conversion is available on the Pro plan. On the free plan, upload your rate card as CSV or Excel. If your carrier only provides a PDF, ask them for a CSV or Excel version, or upgrade to Pro to use the Rate Card Converter at shippingiq.com.au.
+
+= How many carriers can I add? =
+
+The free plan supports 1 carrier. Upgrade to Pro at shippingiq.com.au/pricing for unlimited carriers.
+
+= Is there a limit on checkout quotes? =
+
+The free plan includes 100 checkout quotes per month. If you reach the limit, a "shipping unavailable" message will show at checkout until the next calendar month. Upgrade to Pro for unlimited quotes.
+
 = Is there a free plan? =
 
-Yes. The free plan supports one carrier and includes full access to the quote tool, rules engine, and WooCommerce plugin.
+Yes. The free plan includes 1 carrier (CSV or Excel only), basic rules (free shipping threshold and display mode), and up to 100 checkout quotes per month - all managed inside WooCommerce admin. Upgrade to Pro at shippingiq.com.au/pricing for unlimited carriers, PDF rate card conversion, advanced rules, and unlimited quotes.
 
 == Screenshots ==
 
