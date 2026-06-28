@@ -4,7 +4,7 @@ Tags: shipping, freight, woocommerce, australia, rates
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -126,6 +126,15 @@ A ShippingIQ account is required to use this plugin. Create one free inside the 
 
 == Changelog ==
 
+= 1.2.0 =
+* Added carrier management inside WooCommerce admin — upload rate cards, manage carriers, and activate/deactivate without leaving WordPress
+* Added AI-powered rate card analysis — upload a CSV or Excel rate card and ShippingIQ automatically detects the pricing model and extracts rates
+* Added Rules tab inside WooCommerce admin — set free shipping threshold, free shipping mode, and display mode without visiting shippingiq.com.au
+* Added demo carrier on first signup — an example carrier is created automatically so merchants can test checkout rates immediately
+* Added monthly quote limit (100 quotes/month) for free tier merchants with real carriers
+* Fixed free shipping threshold not applying correctly when different cart values shared a cached result
+* Fixed carrier analysis failing with "Unexpected end of JSON input" due to deprecated Claude model ID
+
 = 1.1.0 =
 * Added in-plugin account signup and login — merchants can now connect their ShippingIQ account directly from WooCommerce without visiting shippingiq.com.au
 * Merchant ID is now saved automatically on signup or login — no manual entry required
@@ -142,6 +151,9 @@ A ShippingIQ account is required to use this plugin. Create one free inside the 
 * 5-minute rate caching
 
 == Upgrade Notice ==
+
+= 1.2.0 =
+Adds carrier management and rules configuration directly inside WooCommerce admin. No changes to how rates are calculated at checkout.
 
 = 1.0.0 =
 Initial release.

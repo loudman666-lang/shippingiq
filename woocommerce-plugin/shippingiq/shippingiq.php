@@ -3,7 +3,7 @@
  * Plugin Name:       ShippingIQ — Freight Rates for WooCommerce
  * Plugin URI:        https://shippingiq.com.au
  * Description:       Real-time freight rates at WooCommerce checkout, powered by ShippingIQ.
- * Version:           1.1.0
+ * Version:           1.2.0
  * Author:            ShippingIQ
  * License:           GPL v2 or later
  * Text Domain:       shippingiq
