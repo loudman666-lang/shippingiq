@@ -1645,7 +1645,7 @@ class ShippingIQ_Admin {
 		?>
 		<h2 style="margin-top:1.5em;"><?php esc_html_e( 'Upload Your Rate Card', 'shippingiq-freight-rates-for-woocommerce' ); ?></h2>
 		<p class="description" style="max-width:600px;">
-			<?php esc_html_e( 'Upload your carrier rate card and zone file. ShippingIQ AI will analyse the structure and set up rates at checkout automatically.', 'shippingiq-freight-rates-for-woocommerce' ); ?>
+			<?php esc_html_e( 'Upload your carrier rate card and zone file. ShippingIQ AI will analyse the structure and extract your freight calculation rules automatically.', 'shippingiq-freight-rates-for-woocommerce' ); ?>
 		</p>
 
 		<div id="siq_xls_error" style="display:none;" class="notice notice-warning inline">
