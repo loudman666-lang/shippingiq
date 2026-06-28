@@ -1,5 +1,65 @@
 # ShippingIQ — Handover Document
 
+## Session 28 June 2026 — Type A plugin-first build (fully tested)
+
+### Completed this session
+
+#### Core plugin admin UI (class-shippingiq-admin.php — full rewrite ~1580 lines)
+1. **My Carrier tab** — lists carriers with Demo badge (orange), active/inactive toggle, Delete button. Upload form: carrier name, rate card file (CSV/XLSX), zone file (CSV/XLSX). Analyse → Save two-step flow entirely in PHP (no browser-side JS parsing).
+2. **Rules tab** — free shipping toggle + threshold + mode (Smart/Always Free), display mode radio (All/Cheapest/Priority). Saves to `merchants.rules` JSONB and `shippingiq_display_mode` WP option. Rules tab fully tested — DB values confirmed correct after save.
+3. **Demo carrier** — shown with orange "Demo" badge and "Delete Demo" button. Subtext explains it's an example for testing. Upgrade prompt shown at carrier limit.
+4. **1-carrier limit for free tier** — free tier merchants with 1+ real carriers see upgrade prompt linking to `https://shippingiq.com.au/pricing` instead of the upload form.
+5. **Signup/Login flows** — both now call `fire_demo_carrier()` fire-and-forget after successful auth, then redirect to My Carrier tab.
+6. **PHP file parsing** — CSV and XLSX (ZipArchive + SimpleXML, no external deps). `file_bytes_to_text()` converts uploaded file to CSV text for rapid-api. `build_postcode_map()` builds postcodeMap from zone file rows. `build_model_b_rates()` extracts Model B rates using columnMap from rapid-api. `build_model_c_rates()` extracts Model C rates from standard CSV header.
+
+#### New Supabase edge function
+7. **create-demo-carrier** — fires after merchant signup/login. Checks for existing demo carrier (idempotent). Inserts "Example Carrier" (Model B, Melbourne origin, 5 zones, 5000 postcodes covering VIC/NSW/QLD/SA/WA). Uses SUPABASE_SERVICE_ROLE_KEY internally. `verify_jwt: false` — called from PHP with anon key.
+
+#### Database changes
+8. **`carriers.is_demo BOOLEAN DEFAULT false`** — migration `20260628_add_is_demo_to_carriers.sql` applied.
+9. **`quote_logs` table** — migration `20260628_create_quote_logs.sql` applied. Columns: id, merchant_id (FK), created_at. RLS enabled.
+10. **Anon RLS policies** — migration `anon_rls_policies_for_plugin` applied. Adds SELECT/INSERT/UPDATE/DELETE for `anon` role on `carriers`; SELECT/UPDATE for `anon` role on `merchants`. Required because the PHP plugin calls Supabase REST API with the anon key (stored server-side in wp_options — not browser-exposed).
+
+#### calculate-freight updates
+11. **100 quotes/month limit** — free tier merchants with at least one real (non-demo) carrier: counts `quote_logs` rows for current month. Returns `{ error: 'quote_limit_reached' }` at HTTP 200 when ≥ 100. Demo-only merchants skip the limit entirely. Quote logging is fire-and-forget.
+12. **WooCommerce plugin handles `quote_limit_reached`** — shows "Shipping unavailable — monthly quote limit reached" rate at $0, does not cache.
+
+### Bugs fixed this session
+
+13. **RLS blocked anon reads — demo carrier not appearing** — all carriers/merchants RLS policies were `FOR authenticated` only. The PHP plugin's `fetch_carriers()` and `fetch_merchant_rules()` use the anon key, which runs as `anon` role. Zero rows returned. Fixed by adding anon policies (see item 10 above). Demo carrier appeared immediately after fix without re-signup.
+
+14. **Free shipping threshold not working at checkout** — WooCommerce transient cache key was `MD5(merchant_id + postcode + items)`. `orderValue` was not part of the key. Two different cart values with identical items/postcode shared the same cache entry — the first result (no free shipping at $100) was served to carts at $200 (above threshold). Fixed: cache key now includes `orderValue` and `hasExemptItem`.
+    ```php
+    // fixed cache key in class-wc-shipping-shippingiq.php
+    $cache_key = 'shippingiq_' . md5( $this->merchant_id . $postcode . serialize( $items ) . (string) $order_value . ( $has_exempt_item ? '1' : '0' ) );
+    ```
+
+15. **rapid-api "Unexpected end of JSON input"** — two issues:
+    - Model ID `claude-sonnet-4-20250514` (original May 2025 launch ID) is deprecated. Updated to `claude-sonnet-4-6`.
+    - `callClaude()` called `data.content?.[0]?.text || ''` without checking `response.ok`. Any Claude API error (400, 401, 404) returned `undefined` → `''` → `JSON.parse('')` threw "Unexpected end of JSON input", hiding the real error. Fixed to check `response.ok` and throw with the actual Claude error message.
+
+### Test files added
+- `test-files/test-rate-card.csv` — Model B rate card, 5 zones, Melbourne origin, realistic AUD rates
+- `test-files/test-zone-file.csv` — 26 postcode rows covering VIC/NSW/QLD/SA/WA (Zones 1–5)
+
+### Architecture notes — Type A plugin
+- All Supabase REST API calls from PHP use anon key from `shippingiq_api_key` WP option
+- Analyse step stores result in WP transient (`siq_analysis_{merchant_id}`, 30 min TTL) for the Save step
+- Save step calls rapid-api mode:surcharges, then builds final `parsed_data` in PHP and INSERTs to Supabase
+- `fire_demo_carrier()` is fire-and-forget (`blocking: false, timeout: 0.01`) — won't slow signup
+- Display mode set in both `merchants.rules.displayMode` (read by React app) and `shippingiq_display_mode` WP option (read by WC plugin at init)
+
+### Next steps
+- **End-to-end test the upload flow** — use test-files/test-rate-card.csv + test-zone-file.csv in My Carrier tab. Confirm rates appear at WooCommerce checkout.
+- **Test the 1-carrier upgrade prompt** — add a real carrier, confirm the upload form is replaced by the upgrade CTA.
+- **Test the 100 quote limit** — insert 100 rows into quote_logs for the test merchant and confirm the "limit reached" message appears at checkout.
+- **WordPress.org plugin update** — once upload flow is confirmed working, rebuild the zip and submit updated plugin to WP.org SVN.
+- **Rebuild shippingiq.zip** — run `cd ~/Downloads/shippingiq/woocommerce-plugin && zip -r shippingiq.zip shippingiq/` and commit.
+- Delete test accounts (test-merchant3@example.com, test-signup@example.com) via /admin/merchants.
+- Shopify app (after Type A fully stable).
+
+---
+
 ## Session 27 June 2026 — In-plugin signup + notification email build
 
 ### Completed this session
@@ -479,8 +539,9 @@ supabase/functions/register-merchant/index.ts
 supabase/functions/get-merchant-id/index.ts
 
 ## Database (Supabase)
-Tables: profiles, merchants, carriers, quotes, upload_logs
-RLS: ENABLED on all tables (carriers, merchants, profiles, quotes, upload_logs). Policies use get_merchant_id() and get_user_role() helper functions already defined in Supabase. Performance indexes added on merchant_id columns. upload_logs had RLS enabled but no policies — now fixed.
+Tables: profiles, merchants, carriers, quotes, upload_logs, quote_logs
+RLS: ENABLED on all tables. Policies use get_merchant_id() and get_user_role() helper functions. Performance indexes on merchant_id columns.
+Anon role policies (added 28 June 2026): carriers (SELECT/INSERT/UPDATE/DELETE), merchants (SELECT/UPDATE) — required for PHP plugin using anon key from wp_options server-side.
 
 profiles columns: id, merchant_id (FK → merchants.id), full_name, email (NOT NULL), role (default 'user'), created_at, updated_at
 
@@ -488,6 +549,7 @@ merchants.settings: jsonb — { gstEnabled: true/false }
 merchants.rules: jsonb — { freeShippingEnabled, freeShippingThreshold, freeShippingMode ('smart'|'true'), freightMarginType, freightMarginValue, carrierPriority[] }
 merchants.upload_limit_exempt: boolean — if true, bypasses 10/day upload rate limit
 
+carriers.is_demo: BOOLEAN DEFAULT false — set by create-demo-carrier edge function; used to skip quote limit for demo-only merchants and show orange Demo badge in plugin
 carriers.fuel_levy_pct: numeric
 carriers.surcharge_rules: jsonb — { surcharge_key: { trigger, weightKg, lengthCm } }
   trigger values: 'manual' | 'auto' | 'auto_override' | 'item_weight' | 'consignment_weight' | 'always' | 'never'
@@ -496,6 +558,7 @@ carriers.parsed_data: full AI output — includes postcodeMap, modelBRates (Mode
 carriers.eligibility_rules: jsonb — { maxWeightKg, maxLengthCm, maxWidthCm, maxHeightCm } (0 = no limit)
 
 upload_logs: merchant_id, created_at — one row per upload attempt; rate limit checks last 24h
+quote_logs: id, merchant_id (FK), created_at — one row per quote generated; rate limit checks current calendar month (100/mo free tier)
 
 ## File parsing architecture (browser-first)
 
@@ -533,8 +596,9 @@ upload_logs: merchant_id, created_at — one row per upload attempt; rate limit 
 ### rapid-api
 Mode 'rates': returns pricingModel, service, originDepots, cubicFactor, fuelLevyPct, summary, warnings, zoneCodeCol, zoneNameCol, columnMap (B), weightBreaks + zones + rates (A), modelCRates (C)
 Mode 'surcharges': returns { surcharges: [...] } with autoWeightKg, autoLengthMinCm, autoLengthMaxCm, autoTrigger
-Model: claude-sonnet-4-20250514, max_tokens: 4000 (rates), 8000 (surcharges)
+Model: claude-sonnet-4-6 (updated 28 June 2026 — was claude-sonnet-4-20250514 which is deprecated), max_tokens: 4000 (rates), 8000 (surcharges)
 rateText capped at 8000 chars before sending
+callClaude() now checks response.ok and throws with the real Claude error message if the API returns non-2xx — previously silently returned '' causing JSON.parse to throw "Unexpected end of JSON input"
 
 ### calculate-freight
 POST { postcode, items, merchant_id, orderValue? (default 0), hasExemptItem? (default false) }
