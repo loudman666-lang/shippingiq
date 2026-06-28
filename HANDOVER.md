@@ -1,38 +1,67 @@
 # ShippingIQ — Handover Document
 
-## Session 29 June 2026 — Admin delete fix + test account cleanup
+## Session 29 June 2026 — Admin delete fix, plugin v1.2.1, WP.org updates
 
 ### Completed this session
 
-1. **admin-get-merchants v5 — service role client isolation fix**
-   - Root cause of "permission denied for table quotes": calling `supabase.auth.getUser(jwt)` on the service role client caused Supabase JS v2 to update its internal auth session to the user's JWT. All subsequent PostgREST queries then sent the user's JWT as `Authorization: Bearer` instead of the service role key, so RLS blocked the delete on `quotes`.
-   - Fix: two separate clients. `supabaseAuth` (anon key + user JWT header) used only for `auth.getUser()` validation. `supabase` (service role key, created fresh after auth passes, key read directly via `Deno.env.get()`) used for all DB operations.
-   - Deployed as v5.
+#### Admin delete bug — fully fixed
+1. **admin-get-merchants v5 — service role client isolation**
+   - Root cause: calling `supabase.auth.getUser(jwt)` on the service role client caused Supabase JS v2 to update its internal auth session to the user's JWT. All subsequent PostgREST queries used the user's JWT as `Authorization: Bearer` instead of the service role key — RLS blocked the delete on `quotes` ("permission denied for table quotes").
+   - Fix: two separate clients. `supabaseAuth` (anon key + user JWT header, used only for `auth.getUser()` validation). `supabase` (service role key, created fresh after auth passes, key read directly via `Deno.env.get()`). Used for all DB operations. Deployed as v5.
+   - This pattern applies to any edge function that validates a user JWT then does admin DB work — always create separate clients.
 
-2. **quotes FK cascade migration**
-   - `quotes.merchant_id` FK was `NO ACTION` — must be deleted explicitly before merchant. Added `ON DELETE CASCADE` as belt-and-suspenders so merchant delete works even if explicit delete step fails.
-   - Migration: `quotes_merchant_id_fk_cascade`
+2. **quotes FK cascade migration** (`quotes_merchant_id_fk_cascade`)
+   - `quotes.merchant_id` FK was `NO ACTION`. Changed to `ON DELETE CASCADE` so merchant delete cascades even if the explicit delete step fails for any reason.
 
-3. **quote_logs added to explicit delete sequence**
-   - `quote_logs` (added 28 June) was missing from the delete loop. Added before merchant delete.
-   - Each delete step now surfaces errors individually instead of swallowing them silently.
+3. **quote_logs added to delete sequence + error surfacing**
+   - `quote_logs` (added 28 June) was missing from the delete loop in admin-get-merchants. Added.
+   - Each delete step now returns its error individually rather than swallowing failures silently.
 
-4. **All test/bot accounts deleted**
-   - Ghost merchant `4394ec94-8a76-4045-b9e7-b6c1baa2946e` ("My Store") deleted directly via Supabase SQL editor (edge function path was blocked by the auth session bug).
+4. **Ghost merchant deleted via SQL**
+   - `4394ec94-8a76-4045-b9e7-b6c1baa2946e` ("My Store") — deleted directly via Supabase SQL editor in order: quotes, quote_logs, upload_logs, carriers, profiles, merchants.
    - Only `loudman666@gmail.com` remains in the database.
 
-5. **readme.txt updated for v1.2.0** — SVN r3588919 (committed end of 28 June session)
-   - Sections rewritten: How it works, Features, Installation, FAQ
-   - All non-ASCII characters replaced (em dashes → ` - `, right arrows → `->`) — WP.org parser was garbling them
+#### Plugin improvements
+5. **Upload form guidance** (`class-shippingiq-admin.php`)
+   - Rate Card field: new help text explaining what to ask carrier for + Download template link (`https://shippingiq.com.au/templates/rate-card-template.csv`)
+   - Zone File field: new help text making consequence of missing file explicit ("without it, no rates will appear at checkout") + Download template link (`https://shippingiq.com.au/templates/zone-file-template.csv`)
+   - Below Analyse button: "Need help? See the ShippingIQ setup guide" link (`https://shippingiq.com.au/resources`)
+   - SVN trunk committed: r3588954
 
-6. **screenshot-5.png re-uploaded to SVN assets** — r3588914 (committed end of 28 June session)
-   - Previous upload had rendering issues on WP.org listing; deleted and re-imported directly without checkout
+6. **Template CSV download fix** (`public/_headers`)
+   - CSV files at `/templates/*.csv` were rendering in browser instead of downloading.
+   - Fixed by creating `public/_headers` with `Content-Disposition: attachment` and `Content-Type: text/csv` for `/templates/*.csv`.
+   - Takes effect on next Netlify deploy.
+
+#### readme.txt and WP.org listing
+7. **readme.txt fully updated for v1.2.0** — SVN r3588919 (committed end of 28 June session)
+   - Description, How it works, Features, Installation, FAQ all rewritten to match v1.2.0 plugin UI
+   - All non-ASCII characters replaced (em dashes, right arrows) — WP.org parser was garbling them
+   - 3 FAQ entries corrected for free vs Pro accuracy:
+     - "Which carriers supported" — PDF is Pro only (was incorrectly listed as free)
+     - "Can I exclude oversized items" — carrier eligibility limits are Pro only
+     - "Can I force a specific carrier" — product tag overrides are Pro only
+
+8. **screenshot-2.png updated in SVN assets** — r3588956 (delete), r3588957 (import)
+   - New screenshot shows upload form with improved guidance text
+
+9. **screenshot-5.png re-uploaded to SVN assets** — r3588914 (committed end of 28 June session)
+   - Previous upload had rendering issues on WP.org listing
+
+#### v1.2.1 release
+10. **Plugin bumped to 1.2.1** — `shippingiq.php` Version: header, `readme.txt` Stable tag
+    - Changelog and upgrade notice added
+    - SVN trunk: r3588961
+    - SVN tag 1.2.1: r3588962
+    - GitHub: `8b61881`
+    - Purpose: ship upload guidance improvements + bust WP.org listing cache so updated description and screenshots go live
 
 ### Next steps
-- **Verify WP.org screenshots** — check wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce to confirm all 7 screenshots render correctly
+- **Verify WP.org listing updates** — check wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce after cache refreshes: confirm description, all 7 screenshots, and FAQ entries render correctly
+- **Deploy to Netlify** — drag `build/` to Netlify to activate CSV download headers (`_headers` file)
 - **Ask first real merchant for a WordPress.org review**
-- **End-to-end test the upload flow** — use test-files/test-rate-card.csv + test-zone-file.csv in My Carrier tab, confirm rates appear at WooCommerce checkout
-- Shopify app (after Type A fully stable)
+- **Monitor WP.org search visibility** (allow 2-4 weeks from v1.2.0 listing)
+- End-to-end test the upload flow — use test-files/test-rate-card.csv + test-zone-file.csv in My Carrier tab
 
 ---
 
@@ -92,10 +121,7 @@
 - Screenshot captions fixed (em dashes → plain hyphens, WP.org parser was rendering them as raw bytes) — **r3588435**
 - SVN shallow checkout method used throughout (`--depth files` then `svn update includes --set-depth infinity`) to avoid hanging on full checkout
 
-### Next steps (carried to 29 June session)
-- ✓ Delete test accounts — completed 29 June
-- ✓ admin delete fix — completed 29 June
-- Verify WP.org screenshots, ask first merchant for review, end-to-end upload flow test
+### Next steps (all carried to 29 June session — completed)
 
 ---
 
