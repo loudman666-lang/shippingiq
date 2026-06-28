@@ -4,7 +4,7 @@ Tags: shipping, freight, woocommerce, australia, rates
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -142,6 +142,10 @@ A ShippingIQ account is required to use this plugin. Create one free inside the 
 
 == Changelog ==
 
+= 1.2.1 =
+* Improved rate card and zone file upload guidance with download templates and setup guide link
+* Updated FAQ entries to accurately reflect free plan vs Pro plan features
+
 = 1.2.0 =
 * Added carrier management inside WooCommerce admin - upload rate cards, manage carriers, and activate/deactivate without leaving WordPress
 * Added AI-powered rate card analysis - upload a CSV or Excel rate card and ShippingIQ automatically detects the pricing model and extracts rates
@@ -167,6 +171,9 @@ A ShippingIQ account is required to use this plugin. Create one free inside the 
 * 5-minute rate caching
 
 == Upgrade Notice ==
+
+= 1.2.1 =
+Minor update - improved upload guidance and FAQ accuracy. No changes to checkout behaviour.
 
 = 1.2.0 =
 Adds carrier management and rules configuration directly inside WooCommerce admin. No changes to how rates are calculated at checkout.
