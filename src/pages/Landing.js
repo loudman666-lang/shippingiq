@@ -314,7 +314,7 @@ export default function Landing() {
         <div className="section">
           <div className="sec-label">What's included</div>
           <h2>Everything you need.<br />Nothing you don't.</h2>
-          <p className="sec-sub">Built by someone who shipped bulky and small goods nationally for 12 years. Every feature exists because it solves a real problem. And unlike Shippit, StarShipIt, or Smart Send — we never touch your carrier rates. Your negotiated pricing stays yours.</p>
+          <p className="sec-sub">Built by someone who shipped bulky and small goods nationally for 15 years. Every feature exists because it solves a real problem. And unlike Shippit, StarShipIt, or Smart Send — we never touch your carrier rates. Your negotiated pricing stays yours.</p>
 
           {/* AI PARSE CARD */}
           <div className="ai-parse-card">
