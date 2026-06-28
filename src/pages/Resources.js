@@ -25,7 +25,7 @@ const ACCORDION = [
           </p>
         </div>
         <p style={{ fontSize: '14px', lineHeight: '1.65', color: 'var(--ink-mid)', margin: 0 }}>
-          If your carrier only provides a PDF, use the <Link to="/convert" style={{ color: 'var(--color-text-info)', textDecoration: 'none', fontWeight: '500' }}>Rate Card Converter</Link> to extract your rates automatically. Always use the original PDF from your carrier — emailed directly or exported digitally. Scanned or photographed rate cards may produce errors.
+          If your carrier only provides a PDF, use the <Link to="/convert" style={{ color: 'var(--color-text-info)', textDecoration: 'none', fontWeight: '500' }}>Rate Card Converter (Pro feature)</Link> to extract your rates automatically. Always use the original PDF from your carrier — emailed directly or exported digitally. Scanned or photographed rate cards may produce errors.
         </p>
         <p style={{ fontSize: '14px', lineHeight: '1.65', color: 'var(--ink-mid)', margin: 0, borderLeft: '3px solid var(--color-border-warning)', paddingLeft: '10px' }}>
           AI conversion is not 100% accurate. Always verify destination names and rate values against your original PDF before uploading to ShippingIQ. Minor errors are possible, particularly in scanned documents or PDFs with complex formatting.
@@ -98,7 +98,7 @@ const ACCORDION = [
     content: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <p style={{ fontSize: '14px', lineHeight: '1.65', color: 'var(--ink-mid)', margin: 0 }}>
-          The ShippingIQ WooCommerce plugin displays live freight rates at checkout, calculated from your uploaded carrier rate cards. Installation takes about 10 minutes.
+          The ShippingIQ WooCommerce plugin calculates live freight costs at checkout, calculated from your uploaded carrier rate cards. Installation takes about 10 minutes.
         </p>
         <div>
           <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '6px' }}>Step 1 — Download the plugin</div>
@@ -136,14 +136,6 @@ const ACCORDION = [
           <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '6px' }}>Step 4 — Connect your account</div>
           <p style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.65', margin: '0 0 10px' }}>Go to <strong>WooCommerce → ShippingIQ</strong> and sign in. Your account credentials are saved automatically — no manual entry required.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px' }}>
-              <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Display Mode</div>
-              <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
-                <strong>All carriers</strong> — shows every eligible carrier at checkout<br/>
-                <strong>Cheapest only</strong> — shows the lowest rate only<br/>
-                <strong>Priority carrier</strong> — shows your top-ranked carrier that services the postcode
-              </div>
-            </div>
             <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px' }}>
               <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginBottom: '4px' }}>Display Mode</div>
               <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
@@ -208,8 +200,8 @@ const ACCORDION = [
             <ul style={{ margin: 0, paddingLeft: '16px' }}>
               <li>Check the carrier is set to Active in ShippingIQ → Carriers</li>
               <li>Check the carrier has a postcode zone file (amber badge = no zone file)</li>
-              <li>Check the carrier's eligibility limits — if any cart item exceeds the weight or dimension limits, the carrier is excluded</li>
-              <li>Check if a product tag is restricting the carrier (shippingiq-only-[slug] or shippingiq-exclude-[slug])</li>
+              <li>Check the carrier's eligibility limits (Pro feature) — if any cart item exceeds the weight or dimension limits, the carrier is excluded</li>
+              <li>Check if a product tag is restricting the carrier (Pro feature) — shippingiq-only-[slug] or shippingiq-exclude-[slug]</li>
             </ul>
           </div>
         </div>
