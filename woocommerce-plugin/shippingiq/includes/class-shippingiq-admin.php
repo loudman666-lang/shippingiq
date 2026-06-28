@@ -21,6 +21,7 @@ class ShippingIQ_Admin {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_init', array( $this, 'handle_form_submission' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		add_action( 'wp_ajax_siq_test_postcode', array( $this, 'ajax_test_postcode' ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -42,8 +43,9 @@ class ShippingIQ_Admin {
 		if ( 'woocommerce_page_shippingiq-account' !== $hook ) {
 			return;
 		}
-		// Inline JS for PDF file-type guard and XLS warning
+		$nonce = wp_create_nonce( 'siq_test_postcode' );
 		wp_add_inline_script( 'jquery', '
+			var siqTestNonce = ' . wp_json_encode( $nonce ) . ';
 			jQuery(function($){
 				function siqFileGuard(inputId, errorId) {
 					$(document).on("change", "#" + inputId, function() {
@@ -62,7 +64,61 @@ class ShippingIQ_Admin {
 				}
 				siqFileGuard("siq_rate_card", "siq_pdf_error_rate");
 				siqFileGuard("siq_zone_file", "siq_pdf_error_zone");
+
+				// Test postcode
+				$(document).on("click", "#siq_test_postcode_btn", function() {
+					var postcode = $("#siq_test_postcode_input").val().trim();
+					var $result  = $("#siq_test_postcode_result");
+					if (!/^\d{4}$/.test(postcode)) {
+						$result.css("color","#cc1818").text("Enter a 4-digit postcode.");
+						return;
+					}
+					$result.css("color","#555").text("Testing…");
+					var $btn = $(this).prop("disabled", true);
+					$.post(ajaxurl, {
+						action:   "siq_test_postcode",
+						postcode: postcode,
+						nonce:    siqTestNonce
+					}, function(r) {
+						if (r.success) {
+							$result.css("color","#00a32a").html(r.data.replace(/\n/g,"<br>"));
+						} else {
+							$result.css("color","#cc1818").text(r.data);
+						}
+						$btn.prop("disabled", false);
+					}).fail(function() {
+						$result.css("color","#cc1818").text("Request failed. Please try again.");
+						$btn.prop("disabled", false);
+					});
+				});
 			});
+
+			function siqAddRangeRow(cid) {
+				var tbody = document.getElementById("siq-ranges-body-" + cid);
+				if (!tbody) return;
+				var tr = document.createElement("tr");
+				var fields = [
+					{name:"siq_range_from[]", ph:"3000", sz:6, ml:4},
+					{name:"siq_range_to[]",   ph:"3999", sz:6, ml:4},
+					{name:"siq_range_zone[]", ph:"Zone 1", sz:20, ml:50}
+				];
+				fields.forEach(function(f) {
+					var td = document.createElement("td");
+					td.style.padding = "2px 4px";
+					var inp = document.createElement("input");
+					inp.type = "text"; inp.name = f.name; inp.placeholder = f.ph;
+					inp.size = f.sz; inp.maxLength = f.ml;
+					td.appendChild(inp); tr.appendChild(td);
+				});
+				var tdBtn = document.createElement("td");
+				tdBtn.style.padding = "2px 4px";
+				var btn = document.createElement("button");
+				btn.type = "button"; btn.className = "button button-small";
+				btn.textContent = "Remove";
+				btn.onclick = function() { this.closest("tr").remove(); };
+				tdBtn.appendChild(btn); tr.appendChild(tdBtn);
+				tbody.appendChild(tr);
+			}
 		' );
 	}
 
@@ -127,6 +183,11 @@ class ShippingIQ_Admin {
 			case 'save_rules':
 				check_admin_referer( 'shippingiq_save_rules' );
 				$this->process_save_rules();
+				break;
+
+			case 'save_ranges':
+				check_admin_referer( 'shippingiq_save_ranges' );
+				$this->process_save_ranges();
 				break;
 		}
 	}
@@ -554,6 +615,193 @@ class ShippingIQ_Admin {
 	}
 
 	// -------------------------------------------------------------------------
+	// Save postcode ranges
+	// -------------------------------------------------------------------------
+
+	private function process_save_ranges(): void {
+		$merchant_id = get_option( self::OPTION_KEY, '' );
+		$carrier_id  = sanitize_text_field( $_POST['siq_carrier_id'] ?? '' );
+
+		if ( empty( $carrier_id ) ) {
+			$this->redirect_with_error_tab( 'carrier', __( 'Invalid carrier.', 'shippingiq-freight-rates-for-woocommerce' ) );
+			return;
+		}
+
+		$froms = array_map( 'sanitize_text_field', (array) ( $_POST['siq_range_from'] ?? array() ) );
+		$tos   = array_map( 'sanitize_text_field', (array) ( $_POST['siq_range_to'] ?? array() ) );
+		$zones = array_map( 'sanitize_text_field', (array) ( $_POST['siq_range_zone'] ?? array() ) );
+
+		$manual_ranges = array();
+		$postcode_map  = array();
+		$seen          = array();
+		$count         = min( count( $froms ), count( $tos ), count( $zones ) );
+
+		for ( $i = 0; $i < $count; $i++ ) {
+			$from_pc = intval( $froms[ $i ] );
+			$to_pc   = intval( $tos[ $i ] );
+			$zone    = trim( $zones[ $i ] );
+
+			if ( $from_pc < 200 || $to_pc < $from_pc || '' === $zone ) {
+				continue;
+			}
+			if ( $to_pc - $from_pc > 5000 ) {
+				$to_pc = $from_pc + 5000;
+			}
+
+			$manual_ranges[] = array( 'from' => $from_pc, 'to' => $to_pc, 'zone' => $zone );
+
+			for ( $p = $from_pc; $p <= $to_pc; $p++ ) {
+				$key = str_pad( (string) $p, 4, '0', STR_PAD_LEFT );
+				if ( ! isset( $seen[ $key ] ) ) {
+					$seen[ $key ]   = true;
+					$postcode_map[] = array(
+						'postcode' => $key,
+						'zoneCode' => $zone,
+						'zone'     => $zone,
+						'state'    => '',
+						'suburb'   => '',
+					);
+				}
+			}
+		}
+
+		$existing = $this->fetch_carrier_parsed_data( $carrier_id, $merchant_id );
+		$merged   = array_merge( $existing, array(
+			'postcodeMap'          => $postcode_map,
+			'manualPostcodeRanges' => $manual_ranges,
+		) );
+
+		$anon_key = get_option( 'shippingiq_api_key', self::ANON_KEY );
+		$url      = self::SUPABASE_URL . '/rest/v1/carriers?id=eq.' . rawurlencode( $carrier_id ) . '&merchant_id=eq.' . rawurlencode( $merchant_id );
+
+		$response = wp_remote_request( esc_url_raw( $url ), array(
+			'method'  => 'PATCH',
+			'headers' => array(
+				'Content-Type'  => 'application/json',
+				'apikey'        => $anon_key,
+				'Authorization' => 'Bearer ' . $anon_key,
+				'Prefer'        => 'return=minimal',
+			),
+			'body'    => wp_json_encode( array( 'parsed_data' => $merged ) ),
+			'timeout' => 15,
+		) );
+
+		if ( is_wp_error( $response ) ) {
+			$this->redirect_with_error_tab( 'carrier', $response->get_error_message() );
+			return;
+		}
+
+		wp_safe_redirect( $this->page_url( array(
+			'siq_tab'           => 'carrier',
+			'siq_notice'        => 'ranges_saved',
+			'siq_expand_ranges' => $carrier_id,
+		) ) );
+		exit;
+	}
+
+	private function fetch_carrier_parsed_data( string $carrier_id, string $merchant_id ): array {
+		$anon_key = get_option( 'shippingiq_api_key', self::ANON_KEY );
+		$url      = self::SUPABASE_URL . '/rest/v1/carriers'
+			. '?id=eq.' . rawurlencode( $carrier_id )
+			. '&merchant_id=eq.' . rawurlencode( $merchant_id )
+			. '&select=parsed_data';
+
+		$response = wp_remote_get( esc_url_raw( $url ), array(
+			'headers' => array(
+				'apikey'        => $anon_key,
+				'Authorization' => 'Bearer ' . $anon_key,
+				'Accept'        => 'application/vnd.pgrst.object+json',
+			),
+			'timeout' => 10,
+		) );
+
+		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			return array();
+		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		return is_array( $body['parsed_data'] ?? null ) ? $body['parsed_data'] : array();
+	}
+
+	// -------------------------------------------------------------------------
+	// AJAX: test postcode
+	// -------------------------------------------------------------------------
+
+	public function ajax_test_postcode(): void {
+		check_ajax_referer( 'siq_test_postcode', 'nonce' );
+
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( 'Unauthorized.' );
+		}
+
+		$postcode    = sanitize_text_field( $_POST['postcode'] ?? '' );
+		$merchant_id = get_option( self::OPTION_KEY, '' );
+
+		if ( ! preg_match( '/^\d{4}$/', $postcode ) ) {
+			wp_send_json_error( __( 'Enter a valid 4-digit postcode.', 'shippingiq-freight-rates-for-woocommerce' ) );
+		}
+
+		$response = wp_remote_post(
+			self::SUPABASE_URL . '/functions/v1/calculate-freight',
+			array(
+				'headers' => array(
+					'Content-Type'  => 'application/json',
+					'Authorization' => 'Bearer ' . self::ANON_KEY,
+					'apikey'        => self::ANON_KEY,
+				),
+				'body'    => wp_json_encode( array(
+					'postcode'    => $postcode,
+					'merchant_id' => $merchant_id,
+					'orderValue'  => 100,
+					'items'       => array( array(
+						'weight' => 1,
+						'length' => 30,
+						'width'  => 20,
+						'height' => 10,
+						'qty'    => 1,
+					) ),
+				) ),
+				'timeout' => 15,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error( $response->get_error_message() );
+		}
+
+		$body    = json_decode( wp_remote_retrieve_body( $response ), true );
+		$results = $body['results'] ?? array();
+
+		if ( ! empty( $body['error'] ) ) {
+			$err_map = array(
+				'no_active_carriers'  => __( 'No active carriers.', 'shippingiq-freight-rates-for-woocommerce' ),
+				'postcode_not_found'  => __( 'Postcode not covered — check your zone file or postcode ranges.', 'shippingiq-freight-rates-for-woocommerce' ),
+				'no_zone_file'        => __( 'No zone file — add postcode ranges first.', 'shippingiq-freight-rates-for-woocommerce' ),
+				'quote_limit_reached' => __( 'Monthly quote limit reached.', 'shippingiq-freight-rates-for-woocommerce' ),
+			);
+			$msg = $err_map[ $body['error'] ] ?? esc_html( $body['error'] );
+			wp_send_json_error( $msg );
+		}
+
+		if ( empty( $results ) ) {
+			wp_send_json_error( __( 'No rates returned for this postcode.', 'shippingiq-freight-rates-for-woocommerce' ) );
+		}
+
+		$lines = array();
+		foreach ( $results as $r ) {
+			if ( ! empty( $r['error'] ) ) {
+				$lines[] = ( $r['carrierName'] ?? 'Unknown' ) . ': ' . $r['error'];
+				continue;
+			}
+			$name    = ( $r['carrierName'] ?? 'Unknown' ) . ' — ' . ( $r['service'] ?? 'Standard' );
+			$total   = floatval( $r['totalCost'] ?? 0 );
+			$lines[] = $name . ': ' . ( $total > 0 ? '$' . number_format( $total, 2 ) : 'FREE' );
+		}
+
+		wp_send_json_success( implode( "\n", $lines ) );
+	}
+
+	// -------------------------------------------------------------------------
 	// Save rules
 	// -------------------------------------------------------------------------
 
@@ -617,7 +865,7 @@ class ShippingIQ_Admin {
 		$anon_key = get_option( 'shippingiq_api_key', self::ANON_KEY );
 		$url      = self::SUPABASE_URL . '/rest/v1/carriers'
 			. '?merchant_id=eq.' . rawurlencode( $merchant_id )
-			. '&select=id,name,status,is_demo'
+			. '&select=id,name,status,is_demo,parsed_data'
 			. '&order=created_at.asc';
 
 		$response = wp_remote_get( esc_url_raw( $url ), array(
@@ -1090,6 +1338,8 @@ class ShippingIQ_Admin {
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Carrier deleted.', 'shippingiq-freight-rates-for-woocommerce' ); ?></p></div>
 			<?php elseif ( 'rules_saved' === $notice ) : ?>
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Rules saved.', 'shippingiq-freight-rates-for-woocommerce' ); ?></p></div>
+			<?php elseif ( 'ranges_saved' === $notice ) : ?>
+				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Postcode ranges saved.', 'shippingiq-freight-rates-for-woocommerce' ); ?></p></div>
 			<?php endif; ?>
 
 			<?php if ( ! empty( $error ) ) : ?>
@@ -1160,9 +1410,19 @@ class ShippingIQ_Admin {
 	// -------------------------------------------------------------------------
 
 	private function render_carrier_tab( string $merchant_id, string $state ): void {
-		$carriers    = $this->fetch_carriers( $merchant_id );
+		$carriers      = $this->fetch_carriers( $merchant_id );
 		$demo_carriers = array_values( array_filter( $carriers, fn( $c ) => ! empty( $c['is_demo'] ) ) );
 		$real_carriers = array_values( array_filter( $carriers, fn( $c ) => empty( $c['is_demo'] ) ) );
+		$active_real   = array_values( array_filter( $real_carriers, fn( $c ) => 'active' === $c['status'] ) );
+		$expand_id     = isset( $_GET['siq_expand_ranges'] ) ? sanitize_text_field( wp_unslash( $_GET['siq_expand_ranges'] ) ) : '';
+
+		// Warning: no active real carriers (but at least one carrier exists and we're not mid-upload flow).
+		if ( ! empty( $carriers ) && empty( $active_real ) && 'analyzed' !== $state ) :
+			?>
+			<div class="notice notice-warning inline" style="margin-top:1em;max-width:720px;">
+				<p><strong><?php esc_html_e( 'No active carriers', 'shippingiq-freight-rates-for-woocommerce' ); ?></strong> — <?php esc_html_e( 'no rates will appear at checkout. Activate a carrier or upload your rate card.', 'shippingiq-freight-rates-for-woocommerce' ); ?></p>
+			</div>
+		<?php endif;
 
 		// Carrier list
 		if ( ! empty( $carriers ) ) :
@@ -1178,9 +1438,13 @@ class ShippingIQ_Admin {
 				</thead>
 				<tbody>
 				<?php foreach ( $carriers as $carrier ) :
-					$is_demo  = ! empty( $carrier['is_demo'] );
-					$is_active = 'active' === $carrier['status'];
-					$cid       = esc_attr( $carrier['id'] );
+					$is_demo       = ! empty( $carrier['is_demo'] );
+					$is_active     = 'active' === $carrier['status'];
+					$cid           = esc_attr( $carrier['id'] );
+					$parsed        = is_array( $carrier['parsed_data'] ?? null ) ? $carrier['parsed_data'] : array();
+					$has_postcode  = ! empty( $parsed['postcodeMap'] );
+					$manual_ranges = is_array( $parsed['manualPostcodeRanges'] ?? null ) ? $parsed['manualPostcodeRanges'] : array();
+					$is_expanded   = ( $expand_id === $carrier['id'] && ! $is_demo );
 					?>
 					<tr>
 						<td>
@@ -1189,6 +1453,23 @@ class ShippingIQ_Admin {
 								<span style="display:inline-block;margin-left:8px;padding:2px 8px;background:#f0a500;color:#fff;border-radius:4px;font-size:11px;font-weight:600;vertical-align:middle;">
 									<?php esc_html_e( 'Demo', 'shippingiq-freight-rates-for-woocommerce' ); ?>
 								</span>
+							<?php else : ?>
+								<?php if ( ! $has_postcode ) : ?>
+									<span style="display:inline-block;margin-left:8px;padding:2px 8px;background:#f0a500;color:#fff;border-radius:4px;font-size:11px;font-weight:600;vertical-align:middle;" title="<?php esc_attr_e( 'No postcode data — rates won\'t appear at checkout. Upload a zone file or enter ranges manually.', 'shippingiq-freight-rates-for-woocommerce' ); ?>">
+										<?php esc_html_e( 'No postcode data', 'shippingiq-freight-rates-for-woocommerce' ); ?>
+									</span>
+								<?php endif; ?>
+								<br>
+								<?php
+								$toggle_url = $is_expanded
+									? $this->page_url( array( 'siq_tab' => 'carrier' ) )
+									: $this->page_url( array( 'siq_tab' => 'carrier', 'siq_expand_ranges' => $carrier['id'] ) );
+								?>
+								<a href="<?php echo esc_url( $toggle_url ); ?>" style="font-size:12px;">
+									<?php echo $is_expanded
+										? esc_html__( 'Hide Ranges ▲', 'shippingiq-freight-rates-for-woocommerce' )
+										: esc_html__( 'Postcode Ranges ▼', 'shippingiq-freight-rates-for-woocommerce' ); ?>
+								</a>
 							<?php endif; ?>
 						</td>
 						<td>
@@ -1237,9 +1518,69 @@ class ShippingIQ_Admin {
 						</td>
 					</tr>
 					<?php endif; ?>
+					<?php if ( $is_expanded ) : ?>
+					<tr>
+						<td colspan="3" style="background:#f9f9f9;border-top:1px solid #e0e0e0;padding:16px;">
+							<strong><?php esc_html_e( 'Postcode Ranges', 'shippingiq-freight-rates-for-woocommerce' ); ?></strong>
+							<p class="description" style="margin-bottom:12px;max-width:560px;">
+								<?php esc_html_e( 'Map postcode ranges to zone codes. These zones must match the zone column in your rate card. Click Save Ranges when done.', 'shippingiq-freight-rates-for-woocommerce' ); ?>
+							</p>
+							<form method="post" action="">
+								<?php wp_nonce_field( 'shippingiq_save_ranges' ); ?>
+								<input type="hidden" name="shippingiq_action" value="save_ranges">
+								<input type="hidden" name="siq_carrier_id" value="<?php echo $cid; ?>">
+								<table id="siq-ranges-table-<?php echo $cid; ?>" style="border-collapse:collapse;margin-bottom:10px;">
+									<thead>
+										<tr>
+											<th style="padding:4px 8px;text-align:left;font-weight:600;"><?php esc_html_e( 'From', 'shippingiq-freight-rates-for-woocommerce' ); ?></th>
+											<th style="padding:4px 8px;text-align:left;font-weight:600;"><?php esc_html_e( 'To', 'shippingiq-freight-rates-for-woocommerce' ); ?></th>
+											<th style="padding:4px 8px;text-align:left;font-weight:600;"><?php esc_html_e( 'Zone', 'shippingiq-freight-rates-for-woocommerce' ); ?></th>
+											<th></th>
+										</tr>
+									</thead>
+									<tbody id="siq-ranges-body-<?php echo $cid; ?>">
+										<?php if ( ! empty( $manual_ranges ) ) : ?>
+											<?php foreach ( $manual_ranges as $range ) : ?>
+											<tr>
+												<td style="padding:2px 4px;"><input type="text" name="siq_range_from[]" value="<?php echo esc_attr( $range['from'] ); ?>" size="6" maxlength="4"></td>
+												<td style="padding:2px 4px;"><input type="text" name="siq_range_to[]" value="<?php echo esc_attr( $range['to'] ); ?>" size="6" maxlength="4"></td>
+												<td style="padding:2px 4px;"><input type="text" name="siq_range_zone[]" value="<?php echo esc_attr( $range['zone'] ); ?>" size="20" maxlength="50"></td>
+												<td style="padding:2px 4px;"><button type="button" class="button button-small" onclick="this.closest('tr').remove()"><?php esc_html_e( 'Remove', 'shippingiq-freight-rates-for-woocommerce' ); ?></button></td>
+											</tr>
+											<?php endforeach; ?>
+										<?php else : ?>
+											<tr>
+												<td style="padding:2px 4px;"><input type="text" name="siq_range_from[]" value="" size="6" maxlength="4" placeholder="3000"></td>
+												<td style="padding:2px 4px;"><input type="text" name="siq_range_to[]" value="" size="6" maxlength="4" placeholder="3999"></td>
+												<td style="padding:2px 4px;"><input type="text" name="siq_range_zone[]" value="" size="20" maxlength="50" placeholder="Zone 1"></td>
+												<td style="padding:2px 4px;"><button type="button" class="button button-small" onclick="this.closest('tr').remove()"><?php esc_html_e( 'Remove', 'shippingiq-freight-rates-for-woocommerce' ); ?></button></td>
+											</tr>
+										<?php endif; ?>
+									</tbody>
+								</table>
+								<button type="button" class="button" onclick="siqAddRangeRow('<?php echo $cid; ?>')" style="margin-right:8px;">
+									<?php esc_html_e( '+ Add Row', 'shippingiq-freight-rates-for-woocommerce' ); ?>
+								</button>
+								<?php submit_button( __( 'Save Ranges', 'shippingiq-freight-rates-for-woocommerce' ), 'primary', 'submit', false ); ?>
+								<p class="description" style="margin-top:8px;"><?php esc_html_e( 'Each range expands to individual postcodes. Maximum 5,000 postcodes per range.', 'shippingiq-freight-rates-for-woocommerce' ); ?></p>
+							</form>
+						</td>
+					</tr>
+					<?php endif; ?>
 				<?php endforeach; ?>
 				</tbody>
 			</table>
+
+			<!-- Test a postcode -->
+			<div style="margin-top:1.5em;max-width:720px;padding:12px 16px;background:#f9f9f9;border:1px solid #e0e0e0;border-radius:4px;">
+				<strong><?php esc_html_e( 'Test a postcode', 'shippingiq-freight-rates-for-woocommerce' ); ?></strong>
+				<div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+					<input type="text" id="siq_test_postcode_input" maxlength="4" style="width:80px;" placeholder="e.g. 3000">
+					<button type="button" id="siq_test_postcode_btn" class="button"><?php esc_html_e( 'Test', 'shippingiq-freight-rates-for-woocommerce' ); ?></button>
+					<span id="siq_test_postcode_result" style="font-size:13px;"></span>
+				</div>
+				<p class="description" style="margin-top:6px;"><?php esc_html_e( 'Uses a dummy 1 kg, 30×20×10 cm item. Confirms your carrier and zone file are wired up correctly.', 'shippingiq-freight-rates-for-woocommerce' ); ?></p>
+			</div>
 		<?php endif; ?>
 
 		<?php
