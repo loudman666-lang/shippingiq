@@ -1679,7 +1679,7 @@ class ShippingIQ_Admin {
 					</th>
 					<td>
 						<input type="file" id="siq_rate_card" name="siq_rate_card" accept=".csv,.xlsx,.xls" required>
-						<p class="description"><?php esc_html_e( 'Your carrier\'s rate card file. Ask your carrier for a CSV or Excel copy. ShippingIQ AI will interpret any format automatically.', 'shippingiq-freight-rates-for-woocommerce' ); ?><br><a href="https://shippingiq.com.au/templates/rate-card-template.csv" target="_blank"><?php esc_html_e( 'Download template', 'shippingiq-freight-rates-for-woocommerce' ); ?></a></p>
+						<p class="description"><?php esc_html_e( 'Your carrier\'s rate card file. CSV or Excel only. ShippingIQ AI will interpret the structure automatically.', 'shippingiq-freight-rates-for-woocommerce' ); ?><br><a href="https://shippingiq.com.au/templates/rate-card-template.csv" target="_blank"><?php esc_html_e( 'Download template', 'shippingiq-freight-rates-for-woocommerce' ); ?></a></p>
 					</td>
 				</tr>
 				<tr>

@@ -1,4 +1,4 @@
-=== ShippingIQ - Freight Rates for WooCommerce ===
+=== ShippingIQ - Freight Calculator for WooCommerce ===
 Contributors: loudman666
 Tags: shipping, freight, woocommerce, australia, rates
 Requires at least: 6.0
@@ -8,18 +8,18 @@ Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Real-time freight rates at checkout using your own contracted carrier rate cards. Any Australian carrier supported.
+Real-time freight calculation at checkout using your own contracted carrier rate cards. Any Australian carrier supported.
 
 == Description ==
 
-ShippingIQ connects your WooCommerce store to your actual carrier contracts. Install the plugin, create your free account inside WordPress, upload your carrier rate cards, and your real contracted rates appear at checkout automatically - no separate sign-up step, no manual configuration.
+ShippingIQ connects your WooCommerce store to your actual carrier contracts. Install the plugin, create your free account inside WordPress, upload your carrier rate cards, and ShippingIQ calculates your real contracted freight costs at checkout automatically - no separate sign-up step, no manual configuration.
 
 **How it works**
 
 1. Install this plugin and go to WooCommerce -> ShippingIQ to create your free account
 2. Upload your carrier rate card (CSV or Excel) in the My Carrier tab
 3. Set your shipping rules in the Rules tab
-4. Your contracted rates appear at checkout automatically
+4. Your contracted freight is calculated at checkout automatically
 
 **What makes ShippingIQ different**
 

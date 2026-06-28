@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       ShippingIQ — Freight Rates for WooCommerce
+ * Plugin Name:       ShippingIQ - Freight Calculator for WooCommerce
  * Plugin URI:        https://shippingiq.com.au
  * Description:       Real-time freight rates at WooCommerce checkout, powered by ShippingIQ.
  * Version:           1.2.1
