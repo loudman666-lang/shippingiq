@@ -99,11 +99,11 @@ Yes. The free plan supports one carrier and includes full access to the quote to
 == Screenshots ==
 
 1. Sign up or log in to your ShippingIQ account directly inside WooCommerce admin.
-2. Connected successfully — your merchant account is active and ready.
+2. Connected successfully - your merchant account is active and ready.
 3. Example Carrier pre-loaded with demo rates so you can see the product working immediately.
-4. AI analyses your rate card — pricing model detected, postcodes mapped, ready to save.
-5. Carrier saved and live — Free plan upgrade prompt shown when 1-carrier limit is reached.
-6. Shipping Rules — configure free shipping threshold and display mode without leaving WP admin.
+4. AI analyses your rate card - pricing model detected, postcodes mapped, ready to save.
+5. Carrier saved and live - Free plan upgrade prompt shown when 1-carrier limit is reached.
+6. Shipping Rules - configure free shipping threshold and display mode without leaving WP admin.
 7. Your contracted carrier rates appearing at checkout automatically.
 
 == External Services ==
