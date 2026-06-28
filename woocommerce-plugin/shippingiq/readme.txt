@@ -72,7 +72,7 @@ Yes. After installing the plugin, go to WooCommerce -> ShippingIQ to create your
 
 = Which carriers are supported? =
 
-Any Australian carrier. ShippingIQ uses AI to parse your carrier's rate card - CSV, Excel, or PDF. If your carrier provides a rate card file, ShippingIQ can use it.
+Any Australian carrier. ShippingIQ uses AI to parse your carrier's rate card - CSV or Excel on the free plan, PDF on Pro. If your carrier provides a rate card file, ShippingIQ can use it.
 
 = Do products need weight set? =
 
@@ -88,11 +88,11 @@ Set a free shipping threshold in ShippingIQ -> Rules. When the cart value meets 
 
 = Can I exclude certain carriers for oversized items? =
 
-Yes. Set carrier eligibility limits in ShippingIQ -> Carriers -> Carrier Limits. Set maximum weight, length, width, or height per carrier. If any cart item exceeds a limit, that carrier is hidden at checkout.
+Yes. Carrier eligibility limits (maximum weight, length, width, height) are available on the Pro plan via the ShippingIQ app at app.shippingiq.com.au. Upgrade to Pro at shippingiq.com.au/pricing.
 
 = Can I force a specific carrier for certain products? =
 
-Yes. Add a WooCommerce product tag in the format shippingiq-only-[carrier-slug] to restrict checkout to that carrier when the product is in the cart. Use shippingiq-exclude-[carrier-slug] to hide a carrier for that product.
+Yes. Product tag overrides (shippingiq-only-[carrier-slug] and shippingiq-exclude-[carrier-slug]) are available on the Pro plan via the ShippingIQ app at app.shippingiq.com.au. Upgrade to Pro at shippingiq.com.au/pricing.
 
 = Can I upload a PDF rate card? =
 
