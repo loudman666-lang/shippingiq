@@ -1,4 +1,4 @@
-=== ShippingIQ — Freight Rates for WooCommerce ===
+=== ShippingIQ - Freight Rates for WooCommerce ===
 Contributors: loudman666
 Tags: shipping, freight, woocommerce, australia, rates
 Requires at least: 6.0
@@ -12,21 +12,21 @@ Real-time freight rates at checkout using your own contracted carrier rate cards
 
 == Description ==
 
-ShippingIQ connects your WooCommerce store to your actual carrier contracts. Install the plugin, create your free account inside WordPress, upload your carrier rate cards, and your real contracted rates appear at checkout automatically — no separate sign-up step, no manual configuration.
+ShippingIQ connects your WooCommerce store to your actual carrier contracts. Install the plugin, create your free account inside WordPress, upload your carrier rate cards, and your real contracted rates appear at checkout automatically - no separate sign-up step, no manual configuration.
 
 **How it works**
 
-1. Install this plugin and go to WooCommerce → ShippingIQ to create your free account
-2. Upload your carrier rate cards (CSV, Excel, or PDF — any format)
+1. Install this plugin and go to WooCommerce -> ShippingIQ to create your free account
+2. Upload your carrier rate cards (CSV, Excel, or PDF - any format)
 3. Your contracted rates appear at checkout automatically
 
 **What makes ShippingIQ different**
 
-Most shipping plugins use their own carrier accounts and add a margin. ShippingIQ uses *your* contracted rates — so your customers see exactly what you negotiated with your carrier, with no hidden markup unless you choose to add one.
+Most shipping plugins use their own carrier accounts and add a margin. ShippingIQ uses *your* contracted rates - so your customers see exactly what you negotiated with your carrier, with no hidden markup unless you choose to add one.
 
 **Supported carriers**
 
-Any Australian carrier. ShippingIQ's AI parser handles any rate card format — Allied Express, Mainfreight, StarTrack, Hunter Express, and more. If your carrier gives you a rate card, ShippingIQ can use it.
+Any Australian carrier. ShippingIQ's AI parser handles any rate card format - Allied Express, Mainfreight, StarTrack, Hunter Express, and more. If your carrier gives you a rate card, ShippingIQ can use it.
 
 **Features**
 
@@ -35,42 +35,42 @@ Any Australian carrier. ShippingIQ's AI parser handles any rate card format — 
 * Fuel levy applied automatically
 * Surcharge rules (tailgate, overlength, residential, etc.)
 * Free shipping threshold with smart surcharge voiding
-* Carrier eligibility rules — exclude carriers when cart items exceed weight or dimension limits
-* Product tag overrides — force or exclude specific carriers per product
-* Freight margin — add a flat or percentage margin to all rates
+* Carrier eligibility rules - exclude carriers when cart items exceed weight or dimension limits
+* Product tag overrides - force or exclude specific carriers per product
+* Freight margin - add a flat or percentage margin to all rates
 * Cheapest-only or all-carriers display mode
 * 5-minute rate caching for performance
 
 **Requirements**
 
-* A ShippingIQ account — create one free inside the plugin after installing
+* A ShippingIQ account - create one free inside the plugin after installing
 * At least one active carrier with an uploaded rate card
 * Products must have weight set in WooCommerce (kg)
 
 == Installation ==
 
-1. In WordPress admin go to Plugins → Add New
+1. In WordPress admin go to Plugins -> Add New
 2. Search for "ShippingIQ" and click Install Now
 3. Activate the plugin
-4. Go to WooCommerce → ShippingIQ and create your free account
-5. Go to WooCommerce → Settings → Shipping
+4. Go to WooCommerce -> ShippingIQ and create your free account
+5. Go to WooCommerce -> Settings -> Shipping
 6. Add or edit a Shipping Zone (e.g. "Australia")
-7. Click Add shipping method → select ShippingIQ → Add shipping method
-8. Click Save — your contracted rates will now appear at checkout once you have uploaded a carrier rate card
+7. Click Add shipping method -> select ShippingIQ -> Add shipping method
+8. Click Save - your contracted rates will now appear at checkout once you have uploaded a carrier rate card
 
 = Plugin Settings =
-* Method Title — label shown to customers at checkout, defaults to "Freight"
-* Display Mode — show all eligible carriers or cheapest only
+* Method Title - label shown to customers at checkout, defaults to "Freight"
+* Display Mode - show all eligible carriers or cheapest only
 
 == Frequently Asked Questions ==
 
 = Do I need a ShippingIQ account? =
 
-Yes. After installing the plugin, go to WooCommerce → ShippingIQ to create your free account directly inside WordPress — no need to visit shippingiq.com.au first. Once connected, upload your carrier rate cards and configure your rules at app.shippingiq.com.au, and the plugin handles the rest at checkout.
+Yes. After installing the plugin, go to WooCommerce -> ShippingIQ to create your free account directly inside WordPress - no need to visit shippingiq.com.au first. Once connected, upload your carrier rate cards and configure your rules at app.shippingiq.com.au, and the plugin handles the rest at checkout.
 
 = Which carriers are supported? =
 
-Any Australian carrier. ShippingIQ uses AI to parse your carrier's rate card — CSV, Excel, or PDF. If your carrier provides a rate card file, ShippingIQ can use it.
+Any Australian carrier. ShippingIQ uses AI to parse your carrier's rate card - CSV, Excel, or PDF. If your carrier provides a rate card file, ShippingIQ can use it.
 
 = Do products need weight set? =
 
@@ -78,15 +78,15 @@ Yes. WooCommerce products must have weight set in kg. Items with no weight are e
 
 = What dimension units should I use? =
 
-Set WooCommerce to kg for weight and cm for dimensions (WooCommerce → Settings → General). ShippingIQ uses these for cubic weight calculation and overlength surcharge detection.
+Set WooCommerce to kg for weight and cm for dimensions (WooCommerce -> Settings -> General). ShippingIQ uses these for cubic weight calculation and overlength surcharge detection.
 
 = How does free shipping work? =
 
-Set a free shipping threshold in ShippingIQ → Rules. When the cart value meets the threshold, free shipping is shown. Smart mode voids free shipping if surcharges apply (e.g. tailgate delivery). True mode always shows free regardless of surcharges.
+Set a free shipping threshold in ShippingIQ -> Rules. When the cart value meets the threshold, free shipping is shown. Smart mode voids free shipping if surcharges apply (e.g. tailgate delivery). True mode always shows free regardless of surcharges.
 
 = Can I exclude certain carriers for oversized items? =
 
-Yes. Set carrier eligibility limits in ShippingIQ → Carriers → Carrier Limits. Set maximum weight, length, width, or height per carrier. If any cart item exceeds a limit, that carrier is hidden at checkout.
+Yes. Set carrier eligibility limits in ShippingIQ -> Carriers -> Carrier Limits. Set maximum weight, length, width, or height per carrier. If any cart item exceeds a limit, that carrier is hidden at checkout.
 
 = Can I force a specific carrier for certain products? =
 
@@ -117,7 +117,7 @@ API endpoint: https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/calculate-fr
 
 ShippingIQ Account API (Supabase Auth)
 What it does: Creates a new ShippingIQ merchant account or authenticates an existing one directly from the WooCommerce admin.
-What data is sent: Email address and password (signup or login only — entered once by the store owner in WooCommerce → ShippingIQ).
+What data is sent: Email address and password (signup or login only - entered once by the store owner in WooCommerce -> ShippingIQ).
 When data is sent: Only when the store owner submits the signup or login form in the plugin settings page.
 API endpoints: https://soaxvqkkecqzarwmbeip.supabase.co/functions/v1/register-merchant and https://soaxvqkkecqzarwmbeip.supabase.co/auth/v1/token
 
@@ -129,17 +129,17 @@ A ShippingIQ account is required to use this plugin. Create one free inside the 
 == Changelog ==
 
 = 1.2.0 =
-* Added carrier management inside WooCommerce admin — upload rate cards, manage carriers, and activate/deactivate without leaving WordPress
-* Added AI-powered rate card analysis — upload a CSV or Excel rate card and ShippingIQ automatically detects the pricing model and extracts rates
-* Added Rules tab inside WooCommerce admin — set free shipping threshold, free shipping mode, and display mode without visiting shippingiq.com.au
-* Added demo carrier on first signup — an example carrier is created automatically so merchants can test checkout rates immediately
+* Added carrier management inside WooCommerce admin - upload rate cards, manage carriers, and activate/deactivate without leaving WordPress
+* Added AI-powered rate card analysis - upload a CSV or Excel rate card and ShippingIQ automatically detects the pricing model and extracts rates
+* Added Rules tab inside WooCommerce admin - set free shipping threshold, free shipping mode, and display mode without visiting shippingiq.com.au
+* Added demo carrier on first signup - an example carrier is created automatically so merchants can test checkout rates immediately
 * Added monthly quote limit (100 quotes/month) for free tier merchants with real carriers
 * Fixed free shipping threshold not applying correctly when different cart values shared a cached result
 * Fixed carrier analysis failing with "Unexpected end of JSON input" due to deprecated Claude model ID
 
 = 1.1.0 =
-* Added in-plugin account signup and login — merchants can now connect their ShippingIQ account directly from WooCommerce without visiting shippingiq.com.au
-* Merchant ID is now saved automatically on signup or login — no manual entry required
+* Added in-plugin account signup and login - merchants can now connect their ShippingIQ account directly from WooCommerce without visiting shippingiq.com.au
+* Merchant ID is now saved automatically on signup or login - no manual entry required
 
 = 1.0.0 =
 * Initial release
