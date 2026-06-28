@@ -52,13 +52,22 @@ Any Australian carrier. ShippingIQ's AI parser handles any rate card format - Al
 == Installation ==
 
 1. In WordPress admin go to Plugins -> Add New
-2. Search for "ShippingIQ" and click Install Now
-3. Activate the plugin
-4. Go to WooCommerce -> ShippingIQ and create your free account
-5. Upload your carrier rate card (CSV or Excel) in the My Carrier tab
-6. Configure your rules in the Rules tab (free shipping threshold, display mode)
-7. Go to WooCommerce -> Settings -> Shipping, add a Shipping Zone, click Add shipping method -> ShippingIQ -> Save
-8. Your contracted rates will now appear at checkout
+2. Search for "ShippingIQ" and click Install Now, then Activate
+3. In the left menu go to WooCommerce -> ShippingIQ
+4. Click Sign Up and create your free ShippingIQ account
+5. You will see three tabs: My Carrier, Rules, and Account
+6. Go to the My Carrier tab and enter your carrier name
+7. Upload your carrier rate card file (CSV or Excel) and your zone file, then click Analyse
+8. Review the analysis result and click Save Carrier - your rates are now stored
+9. Go to the Rules tab to set your free shipping threshold and display preferences, then click Save Rules
+10. Now go to WooCommerce -> Settings -> Shipping
+11. Click on your Shipping Zone (e.g. "Australia") - if you don't have one, click Add shipping zone, name it "Australia", and set the region to Australia
+12. Inside the zone, click Add shipping method
+13. Select ShippingIQ from the list and click Add shipping method
+14. Click Save changes
+15. Your contracted carrier rates will now appear automatically at checkout when customers enter their postcode
+
+Note: Rates will only appear for postcodes covered by your zone file. If no rates show at checkout, check that your zone file was uploaded correctly in the My Carrier tab.
 
 = Plugin Settings =
 * Method Title - label shown to customers at checkout, defaults to "Freight"
