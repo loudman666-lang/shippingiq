@@ -1,8 +1,34 @@
 # ShippingIQ — Handover Document
 
-## Session 29 June 2026 — Admin delete fix, plugin v1.2.1, WP.org updates
+## Session 29 June 2026 (continued) — Three admin plugin improvements
 
-### Completed this session
+### Completed this session (late 29 June)
+
+1. **Manual postcode ranges editor** (`class-shippingiq-admin.php`)
+   - "Postcode Ranges ▼" link below each real carrier name in the carrier list.
+   - Clicking expands an inline form (no modal) with From / To / Zone rows.
+   - Pre-fills existing `manualPostcodeRanges` from Supabase if already set.
+   - JS: Add Row and Remove per-row buttons without page reload.
+   - Save: fetches current `parsed_data`, merges in new `postcodeMap` (expanded from ranges) and `manualPostcodeRanges`, PATCHes carrier via Supabase REST — existing rate card data preserved.
+   - Max 5,000 postcodes per range to prevent abuse.
+   - Amber "No postcode data" badge shown next to carrier name when `postcodeMap` is empty.
+   - SVN trunk: r3588998 / GitHub: `af2f4af`
+
+2. **Test postcode tool**
+   - Section below the carrier list in My Carrier tab: postcode input + Test button.
+   - POSTs to `calculate-freight` edge function with a dummy 1 kg, 30×20×10 cm item via WordPress AJAX (`wp_ajax_siq_test_postcode`).
+   - Inline result: carrier name + service + price (e.g. "Allied Express — Road Express: $12.00") or a user-friendly error (no active carriers, postcode not covered, no zone file, etc.).
+   - Nonce-protected.
+
+3. **No active carrier warning banner**
+   - Yellow `notice-warning` shown at the top of My Carrier tab when no active real carriers exist (all deactivated, or only demo present).
+   - Not shown when in `analyzed` state (mid-upload flow) to avoid confusion.
+
+4. `fetch_carriers()` updated to select `id,name,status,is_demo,parsed_data` — needed for postcode badge and ranges pre-fill.
+
+### Next steps
+- **End-to-end test all three features** on test site: activate a carrier, test a postcode, try ranges editor
+- **Verify WP.org listing updates** — check wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce after cache refreshes: confirm description, all 7 screenshots, and FAQ entries render correctly
 
 #### Admin delete bug — fully fixed
 1. **admin-get-merchants v5 — service role client isolation**
@@ -56,7 +82,7 @@
     - GitHub: `8b61881`
     - Purpose: ship upload guidance improvements + bust WP.org listing cache so updated description and screenshots go live
 
-### Next steps
+### Next steps (29 June v1.2.1 session)
 - **Verify WP.org listing updates** — check wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce after cache refreshes: confirm description, all 7 screenshots, and FAQ entries render correctly
 - **Deploy to Netlify** — drag `build/` to Netlify to activate CSV download headers (`_headers` file)
 - **Ask first real merchant for a WordPress.org review**
