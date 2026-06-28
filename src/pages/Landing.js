@@ -419,7 +419,7 @@ export default function Landing() {
                   <circle cx="18.5" cy="18.5" r="2.5"/>
                 </svg>
               </div>
-              <div className="feat-title">Surcharge control</div>
+              <div className="feat-title">Surcharge control (Pro)</div>
               <div className="feat-body">Tailgate, residential, hand unload, dangerous goods, overlength. Pass through at cost, add margin, or absorb. Per order or per product.</div>
             </div>
 
@@ -432,7 +432,7 @@ export default function Landing() {
                   <line x1="6" y1="9" x2="6" y2="21"/>
                 </svg>
               </div>
-              <div className="feat-title">Multi-carrier routing</div>
+              <div className="feat-title">Multi-carrier routing (Pro)</div>
               <div className="feat-body">Route orders to different carriers based on item size, weight, or zone. The customer always sees the right rate for the right carrier.</div>
             </div>
 
