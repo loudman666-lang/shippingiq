@@ -20,18 +20,27 @@ serve(async (req) => {
     return json({ error: 'Unauthorized' }, 401, corsHeaders)
   }
 
-  const supabaseUrl    = Deno.env.get('SUPABASE_URL')!
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
-
-  // Validate caller is the super-admin.
-  const { data: { user }, error: userError } = await supabase.auth.getUser(jwt)
+  // Validate the caller's JWT using a user-context client (never used for DB ops).
+  const supabaseAuth = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    {
+      global: { headers: { Authorization: `Bearer ${jwt}` } },
+      auth: { autoRefreshToken: false, persistSession: false },
+    }
+  )
+  const { data: { user }, error: userError } = await supabaseAuth.auth.getUser()
   if (userError || !user || user.email !== ADMIN_EMAIL) {
     return json({ error: 'Forbidden' }, 403, corsHeaders)
   }
+
+  // Brand-new service role client created after auth validation.
+  // Reads the key directly — not reusing any variable set before the auth check.
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
 
   const method = req.method
 
@@ -104,11 +113,20 @@ serve(async (req) => {
     }
 
     if (action === 'delete') {
-      // Delete profile rows first (FK constraint), then merchant.
-      await supabase.from('profiles').delete().eq('merchant_id', merchant_id)
-      await supabase.from('carriers').delete().eq('merchant_id', merchant_id)
-      await supabase.from('quotes').delete().eq('merchant_id', merchant_id)
-      await supabase.from('upload_logs').delete().eq('merchant_id', merchant_id)
+      // quotes has NO ACTION FK — must be deleted before merchant.
+      // Other tables (profiles, carriers, upload_logs, quote_logs) have CASCADE
+      // but we delete them explicitly too and surface any errors.
+      const deletes: [string, string][] = [
+        ['quotes',      'merchant_id'],
+        ['quote_logs',  'merchant_id'],
+        ['upload_logs', 'merchant_id'],
+        ['carriers',    'merchant_id'],
+        ['profiles',    'merchant_id'],
+      ]
+      for (const [table, col] of deletes) {
+        const { error: delErr } = await supabase.from(table).delete().eq(col, merchant_id)
+        if (delErr) return json({ error: `Failed to delete from ${table}: ${delErr.message}` }, 500, corsHeaders)
+      }
 
       const { error } = await supabase.from('merchants').delete().eq('id', merchant_id)
       if (error) return json({ error: error.message }, 500, corsHeaders)

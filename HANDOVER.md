@@ -1,5 +1,41 @@
 # ShippingIQ — Handover Document
 
+## Session 29 June 2026 — Admin delete fix + test account cleanup
+
+### Completed this session
+
+1. **admin-get-merchants v5 — service role client isolation fix**
+   - Root cause of "permission denied for table quotes": calling `supabase.auth.getUser(jwt)` on the service role client caused Supabase JS v2 to update its internal auth session to the user's JWT. All subsequent PostgREST queries then sent the user's JWT as `Authorization: Bearer` instead of the service role key, so RLS blocked the delete on `quotes`.
+   - Fix: two separate clients. `supabaseAuth` (anon key + user JWT header) used only for `auth.getUser()` validation. `supabase` (service role key, created fresh after auth passes, key read directly via `Deno.env.get()`) used for all DB operations.
+   - Deployed as v5.
+
+2. **quotes FK cascade migration**
+   - `quotes.merchant_id` FK was `NO ACTION` — must be deleted explicitly before merchant. Added `ON DELETE CASCADE` as belt-and-suspenders so merchant delete works even if explicit delete step fails.
+   - Migration: `quotes_merchant_id_fk_cascade`
+
+3. **quote_logs added to explicit delete sequence**
+   - `quote_logs` (added 28 June) was missing from the delete loop. Added before merchant delete.
+   - Each delete step now surfaces errors individually instead of swallowing them silently.
+
+4. **All test/bot accounts deleted**
+   - Ghost merchant `4394ec94-8a76-4045-b9e7-b6c1baa2946e` ("My Store") deleted directly via Supabase SQL editor (edge function path was blocked by the auth session bug).
+   - Only `loudman666@gmail.com` remains in the database.
+
+5. **readme.txt updated for v1.2.0** — SVN r3588919 (committed end of 28 June session)
+   - Sections rewritten: How it works, Features, Installation, FAQ
+   - All non-ASCII characters replaced (em dashes → ` - `, right arrows → `->`) — WP.org parser was garbling them
+
+6. **screenshot-5.png re-uploaded to SVN assets** — r3588914 (committed end of 28 June session)
+   - Previous upload had rendering issues on WP.org listing; deleted and re-imported directly without checkout
+
+### Next steps
+- **Verify WP.org screenshots** — check wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce to confirm all 7 screenshots render correctly
+- **Ask first real merchant for a WordPress.org review**
+- **End-to-end test the upload flow** — use test-files/test-rate-card.csv + test-zone-file.csv in My Carrier tab, confirm rates appear at WooCommerce checkout
+- Shopify app (after Type A fully stable)
+
+---
+
 ## Session 28 June 2026 — Type A plugin-first build + v1.2.0 shipped to WordPress.org
 
 ### Completed this session
@@ -56,12 +92,10 @@
 - Screenshot captions fixed (em dashes → plain hyphens, WP.org parser was rendering them as raw bytes) — **r3588435**
 - SVN shallow checkout method used throughout (`--depth files` then `svn update includes --set-depth infinity`) to avoid hanging on full checkout
 
-### Next steps
-- **Delete test accounts** — remove test-merchant3@example.com and test-signup@example.com via /admin/merchants
-- **Verify WP.org screenshots** — check wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce to confirm all 7 screenshots render correctly
-- **Ask first real merchant for a WordPress.org review**
-- **End-to-end test the upload flow** — use test-files/test-rate-card.csv + test-zone-file.csv in My Carrier tab, confirm rates appear at WooCommerce checkout
-- Shopify app (after Type A fully stable)
+### Next steps (carried to 29 June session)
+- ✓ Delete test accounts — completed 29 June
+- ✓ admin delete fix — completed 29 June
+- Verify WP.org screenshots, ask first merchant for review, end-to-end upload flow test
 
 ---
 
