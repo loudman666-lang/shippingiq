@@ -1303,7 +1303,7 @@ class ShippingIQ_Admin {
 					</th>
 					<td>
 						<input type="file" id="siq_rate_card" name="siq_rate_card" accept=".csv,.xlsx,.xls" required>
-						<p class="description"><?php esc_html_e( 'Your carrier\'s rate card file. Ask your carrier for a CSV or Excel copy. ShippingIQ AI will interpret any format automatically.', 'shippingiq-freight-rates-for-woocommerce' ); ?><br><a href="https://shippingiq.com.au/public/templates/rate-card-template.csv" target="_blank"><?php esc_html_e( 'Download template', 'shippingiq-freight-rates-for-woocommerce' ); ?></a></p>
+						<p class="description"><?php esc_html_e( 'Your carrier\'s rate card file. Ask your carrier for a CSV or Excel copy. ShippingIQ AI will interpret any format automatically.', 'shippingiq-freight-rates-for-woocommerce' ); ?><br><a href="https://shippingiq.com.au/templates/rate-card-template.csv" target="_blank"><?php esc_html_e( 'Download template', 'shippingiq-freight-rates-for-woocommerce' ); ?></a></p>
 					</td>
 				</tr>
 				<tr>
@@ -1312,7 +1312,7 @@ class ShippingIQ_Admin {
 					</th>
 					<td>
 						<input type="file" id="siq_zone_file" name="siq_zone_file" accept=".csv,.xlsx,.xls">
-						<p class="description"><?php esc_html_e( 'Your carrier\'s postcode-to-zone mapping file. Ask your carrier for this specifically if they haven\'t provided it — without it, no rates will appear at checkout.', 'shippingiq-freight-rates-for-woocommerce' ); ?><br><a href="https://shippingiq.com.au/public/templates/zone-file-template.csv" target="_blank"><?php esc_html_e( 'Download template', 'shippingiq-freight-rates-for-woocommerce' ); ?></a></p>
+						<p class="description"><?php esc_html_e( 'Your carrier\'s postcode-to-zone mapping file. Ask your carrier for this specifically if they haven\'t provided it — without it, no rates will appear at checkout.', 'shippingiq-freight-rates-for-woocommerce' ); ?><br><a href="https://shippingiq.com.au/templates/zone-file-template.csv" target="_blank"><?php esc_html_e( 'Download template', 'shippingiq-freight-rates-for-woocommerce' ); ?></a></p>
 					</td>
 				</tr>
 			</table>
