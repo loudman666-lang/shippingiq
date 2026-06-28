@@ -244,7 +244,7 @@ const STEPS = [
       </svg>
     ),
     title: 'Upload Your Carrier Files',
-    body: 'Upload your rate card, zone file, and optional surcharge document. ShippingIQ reads CSV, Excel, and PDF — any format your carrier provides.',
+    body: 'Upload your rate card, zone file, and optional surcharge document. ShippingIQ reads CSV and Excel on the free plan, plus PDF on Pro.',
   },
   {
     num: 2,
@@ -392,7 +392,7 @@ export default function Resources() {
           <p style={{ fontSize: '13px', color: 'var(--ink-muted)', marginBottom: '24px' }}>
             Have a PDF rate card?{' '}
             <a href="/convert" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '500' }}>
-              Use the Rate Card Converter →
+              Use the Rate Card Converter (Pro feature) →
             </a>
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '12px' }}>

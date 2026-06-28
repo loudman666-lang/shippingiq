@@ -48,7 +48,7 @@ export default function Landing() {
 
             <h1>Your carrier rates.<br />Live at checkout.<br /><em>In under an hour.</em></h1>
 
-            <p className="hero-sub">ShippingIQ's AI reads your carrier rate card — any format, any carrier — and turns it into accurate freight quotes at WooCommerce checkout. No developer. No manual data entry. No platform markup. Unlike Shippit or StarShipIt, we use your contracted carrier rates — not ours.</p>
+            <p className="hero-sub">ShippingIQ's AI reads your carrier rate card — CSV or Excel on the free plan, any format including PDF on Pro — and turns it into accurate freight calculations at WooCommerce checkout.</p>
 
             <div className="hero-cta">
               <Link to="/signup" className="btn-primary-lg">Start for free</Link>
@@ -148,7 +148,7 @@ export default function Landing() {
           </div>
           <div className="stat-item">
             <div className="stat-value">Any format</div>
-            <div className="stat-label">CSV, Excel or PDF</div>
+            <div className="stat-label">CSV, Excel or PDF (Pro)</div>
           </div>
           <div className="stat-item">
             <div className="stat-value">Under an hour</div>
@@ -242,7 +242,7 @@ export default function Landing() {
                 </svg>
               </div>
               <div className="step-title">Upload your rate card</div>
-              <div className="step-body">PDF, Excel, or CSV — whatever your carrier sent you. ShippingIQ's AI reads every format including messy legacy files with merged cells and inconsistent layouts.</div>
+              <div className="step-body">CSV or Excel on the free plan, PDF on Pro — whatever format your carrier provides. ShippingIQ's AI reads every format including messy legacy files with merged cells and inconsistent layouts.</div>
               <span className="step-time">About 5 minutes</span>
             </div>
 
@@ -267,7 +267,7 @@ export default function Landing() {
                 </svg>
               </div>
               <div className="step-title">Connect your store</div>
-              <div className="step-body">Install the plugin for your platform, paste your API key, and test a quote. Every customer gets the right freight rate automatically at checkout — no flat rates, no guessing.</div>
+              <div className="step-body">Install the ShippingIQ plugin, sign in to connect your account directly inside WooCommerce — no API key needed. Every customer gets accurate freight calculated from your contracted prices at checkout.</div>
               <span className="step-time">About 10 minutes</span>
             </div>
           </div>
@@ -458,11 +458,10 @@ export default function Landing() {
               <div className="plan-desc">One carrier. Prove it works before you commit.</div>
               <div className="plan-divider"></div>
               <ul className="plan-features">
-                <li className="plan-feat"><CheckIcon />1 carrier</li>
+                <li className="plan-feat"><CheckIcon />1 carrier (CSV or Excel)</li>
+                <li className="plan-feat"><CheckIcon />100 checkout quotes/month</li>
+                <li className="plan-feat"><CheckIcon />Basic rules (free shipping + display mode)</li>
                 <li className="plan-feat"><CheckIcon />WooCommerce plugin</li>
-                <li className="plan-feat"><CheckIcon />Full quote tool</li>
-                <li className="plan-feat"><CheckIcon />Freight rules engine</li>
-                <li className="plan-feat"><CheckIcon />Surcharge management</li>
               </ul>
               <Link to="/signup" className="btn-plan btn-outline">Get started free</Link>
             </div>
@@ -479,13 +478,16 @@ export default function Landing() {
               <div className="plan-divider"></div>
               <ul className="plan-features">
                 <li className="plan-feat"><CheckIcon />Unlimited carriers</li>
-                <li className="plan-feat"><CheckIcon />WooCommerce plugin</li>
+                <li className="plan-feat"><CheckIcon />Unlimited checkout quotes</li>
+                <li className="plan-feat"><CheckIcon />PDF rate card conversion</li>
                 <li className="plan-feat"><CheckIcon />Full quote tool</li>
+                <li className="plan-feat"><CheckIcon />Saved quotes</li>
                 <li className="plan-feat"><CheckIcon />Freight rules engine</li>
                 <li className="plan-feat"><CheckIcon />Surcharge management</li>
                 <li className="plan-feat"><CheckIcon />Rate Card Converter</li>
                 <li className="plan-feat"><CheckIcon />Team members</li>
                 <li className="plan-feat"><CheckIcon />Priority email support</li>
+                <li className="plan-feat"><CheckIcon />WooCommerce plugin</li>
               </ul>
               <Link to="/signup" className="btn-plan btn-filled">Start free trial</Link>
             </div>
@@ -516,12 +518,12 @@ export default function Landing() {
 
             <div className="faq-item">
               <div className="faq-q">Do I need a developer to set this up?</div>
-              <div className="faq-a">No. The dashboard is fully self-serve — upload your files, confirm the data, set your rules, and you're quoting freight. Connecting to your store requires installing a plugin and pasting an API key. If you can install a plugin, you can set up ShippingIQ.</div>
+              <div className="faq-a">No. Install the plugin, sign in inside WooCommerce admin, upload your rate card, and you're live. No API keys, no developer, no manual data entry.</div>
             </div>
 
             <div className="faq-item">
               <div className="faq-q">What format does my rate card need to be in?</div>
-              <div className="faq-a">PDF, Excel, or CSV — whatever your carrier sent you. ShippingIQ's AI reads all three, including messy legacy formats with merged cells and inconsistent layouts. You don't need to reformat anything before uploading.</div>
+              <div className="faq-a">CSV or Excel on the free plan. PDF on Pro — ShippingIQ's AI reads all three including messy legacy formats with merged cells and inconsistent layouts. You don't need to reformat anything before uploading.</div>
             </div>
 
             <div className="faq-item">
