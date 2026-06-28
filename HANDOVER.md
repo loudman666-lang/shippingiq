@@ -1,6 +1,6 @@
 # ShippingIQ — Handover Document
 
-## Session 28 June 2026 — Type A plugin-first build (fully tested)
+## Session 28 June 2026 — Type A plugin-first build + v1.2.0 shipped to WordPress.org
 
 ### Completed this session
 
@@ -49,14 +49,19 @@
 - `fire_demo_carrier()` is fire-and-forget (`blocking: false, timeout: 0.01`) — won't slow signup
 - Display mode set in both `merchants.rules.displayMode` (read by React app) and `shippingiq_display_mode` WP option (read by WC plugin at init)
 
+### v1.2.0 shipped to WordPress.org
+- Plugin bumped to v1.2.0 in shippingiq.php and readme.txt
+- SVN trunk committed **r3588429**, tagged 1.2.0 at **r3588430**
+- 7 new screenshots added to plugin folder and SVN /assets/ — **r3588432**
+- Screenshot captions fixed (em dashes → plain hyphens, WP.org parser was rendering them as raw bytes) — **r3588435**
+- SVN shallow checkout method used throughout (`--depth files` then `svn update includes --set-depth infinity`) to avoid hanging on full checkout
+
 ### Next steps
-- **End-to-end test the upload flow** — use test-files/test-rate-card.csv + test-zone-file.csv in My Carrier tab. Confirm rates appear at WooCommerce checkout.
-- **Test the 1-carrier upgrade prompt** — add a real carrier, confirm the upload form is replaced by the upgrade CTA.
-- **Test the 100 quote limit** — insert 100 rows into quote_logs for the test merchant and confirm the "limit reached" message appears at checkout.
-- **WordPress.org plugin update** — once upload flow is confirmed working, rebuild the zip and submit updated plugin to WP.org SVN.
-- **Rebuild shippingiq.zip** — run `cd ~/Downloads/shippingiq/woocommerce-plugin && zip -r shippingiq.zip shippingiq/` and commit.
-- Delete test accounts (test-merchant3@example.com, test-signup@example.com) via /admin/merchants.
-- Shopify app (after Type A fully stable).
+- **Delete test accounts** — remove test-merchant3@example.com and test-signup@example.com via /admin/merchants
+- **Verify WP.org screenshots** — check wordpress.org/plugins/shippingiq-freight-rates-for-woocommerce to confirm all 7 screenshots render correctly
+- **Ask first real merchant for a WordPress.org review**
+- **End-to-end test the upload flow** — use test-files/test-rate-card.csv + test-zone-file.csv in My Carrier tab, confirm rates appear at WooCommerce checkout
+- Shopify app (after Type A fully stable)
 
 ---
 
