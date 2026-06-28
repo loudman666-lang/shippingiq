@@ -41,6 +41,12 @@ class ShippingIQ_Shipping_Method extends WC_Shipping_Method {
 		$this->supabase_anon_key = $this->get_option( 'supabase_anon_key', '' );
 		$this->display_mode      = $this->get_option( 'display_mode', 'all' );
 
+		// Rules tab in WP admin can override display mode via the shippingiq_display_mode option.
+		$rules_display_mode = get_option( 'shippingiq_display_mode', '' );
+		if ( ! empty( $rules_display_mode ) ) {
+			$this->display_mode = $rules_display_mode;
+		}
+
 		// merchant_id comes from the account connection page, not per-instance settings.
 		$this->merchant_id = (string) get_option( 'shippingiq_merchant_id', '' );
 
@@ -133,7 +139,8 @@ class ShippingIQ_Shipping_Method extends WC_Shipping_Method {
 		}
 
 		// Check transient cache before calling the API.
-		$cache_key = 'shippingiq_' . md5( $this->merchant_id . $postcode . serialize( $items ) );
+		// orderValue and hasExemptItem are part of the key — different cart values must not share a cached result.
+		$cache_key = 'shippingiq_' . md5( $this->merchant_id . $postcode . serialize( $items ) . (string) $order_value . ( $has_exempt_item ? '1' : '0' ) );
 		$body      = get_transient( $cache_key );
 
 		if ( false === $body ) {
@@ -170,6 +177,17 @@ class ShippingIQ_Shipping_Method extends WC_Shipping_Method {
 			}
 
 			$body = json_decode( $response_body, true );
+
+			// Quote limit reached — show a single informational rate, don't cache.
+			if ( isset( $body['error'] ) && 'quote_limit_reached' === $body['error'] ) {
+				$this->add_rate( array(
+					'id'    => $this->get_rate_id( 'limit-reached' ),
+					'label' => __( 'Shipping unavailable — monthly quote limit reached. Contact store owner.', 'shippingiq-freight-rates-for-woocommerce' ),
+					'cost'  => 0,
+				) );
+				return;
+			}
+
 			set_transient( $cache_key, $body, 300 );
 		}
 

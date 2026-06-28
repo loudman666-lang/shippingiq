@@ -1,0 +1,27 @@
+Postcode,Zone,Suburb,State
+3000,Zone 1,Melbourne CBD,VIC
+3001,Zone 1,Melbourne GPO,VIC
+3121,Zone 1,Richmond,VIC
+3141,Zone 1,South Yarra,VIC
+3182,Zone 1,St Kilda,VIC
+3207,Zone 1,Port Melbourne,VIC
+3220,Zone 1,Geelong,VIC
+3350,Zone 1,Ballarat,VIC
+2000,Zone 2,Sydney CBD,NSW
+2010,Zone 2,Surry Hills,NSW
+2060,Zone 2,North Sydney,NSW
+2150,Zone 2,Parramatta,NSW
+2300,Zone 2,Newcastle,NSW
+2500,Zone 2,Wollongong,NSW
+4000,Zone 3,Brisbane CBD,QLD
+4101,Zone 3,South Brisbane,QLD
+4300,Zone 3,Springfield,QLD
+4700,Zone 3,Rockhampton,QLD
+5000,Zone 4,Adelaide CBD,SA
+5067,Zone 4,Norwood,SA
+5162,Zone 4,Morphett Vale,SA
+5600,Zone 4,Whyalla,SA
+6000,Zone 5,Perth CBD,WA
+6018,Zone 5,Karrinyup,WA
+6155,Zone 5,Willetton,WA
+6530,Zone 5,Geraldton,WA

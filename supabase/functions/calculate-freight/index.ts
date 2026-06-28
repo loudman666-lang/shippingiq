@@ -248,14 +248,43 @@ serve(async (req) => {
 
     const [carriersRes, merchantRes] = await Promise.all([
       supabase.from('carriers').select('*').eq('merchant_id', merchant_id).eq('status', 'active'),
-      supabase.from('merchants').select('settings, rules').eq('id', merchant_id).single()
+      supabase.from('merchants').select('settings, rules, subscription').eq('id', merchant_id).single()
     ])
 
     if (carriersRes.error) throw new Error(carriersRes.error.message)
     if (merchantRes.error) throw new Error(merchantRes.error.message)
 
     const carriers = carriersRes.data || []
-    const merchantRules = merchantRes.data?.rules || {}
+    const merchantData = merchantRes.data
+    const merchantRules = merchantData?.rules || {}
+    const subscriptionTier: string = (merchantData?.subscription as Record<string, unknown>)?.tier as string || 'free'
+
+    // Quote limit enforcement — free tier only, skipped when all carriers are demo
+    const hasRealCarrier = carriers.some((c: Record<string, unknown>) => !c.is_demo)
+    if (subscriptionTier === 'free' && hasRealCarrier) {
+      const now = new Date()
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+
+      const { count, error: countError } = await supabase
+        .from('quote_logs')
+        .select('id', { count: 'exact', head: true })
+        .eq('merchant_id', merchant_id)
+        .gte('created_at', monthStart)
+
+      if (!countError && count !== null) {
+        if (count >= 100) {
+          return new Response(
+            JSON.stringify({
+              error: 'quote_limit_reached',
+              message: "You've used your 100 free quotes this month. Upgrade to Pro for unlimited quotes at shippingiq.com.au/pricing",
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+        // Fire-and-forget — don't fail the quote if logging errors
+        supabase.from('quote_logs').insert({ merchant_id }).catch(() => {})
+      }
+    }
 
     const rawResults = carriers.map(c => {
       const postcodeMap = c.parsed_data?.postcodeMap

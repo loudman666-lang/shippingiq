@@ -15,13 +15,21 @@ async function callClaude(userContent: unknown[], maxTokens = 8000): Promise<str
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: maxTokens,
       messages: [{ role: 'user', content: userContent }],
     }),
   })
   const data = await response.json()
-  return data.content?.[0]?.text || ''
+  if (!response.ok) {
+    const errMsg = data?.error?.message ?? data?.message ?? `Claude API error ${response.status}`
+    throw new Error(`Claude API error ${response.status}: ${errMsg}`)
+  }
+  const text = data.content?.[0]?.text
+  if (!text) {
+    throw new Error(`Claude returned no content. Stop reason: ${data.stop_reason ?? 'unknown'}. Response: ${JSON.stringify(data).slice(0, 300)}`)
+  }
+  return text
 }
 
 function addPdfs(userContent: unknown[], pdfs: { data: string; name: string; slot: string }[]) {
