@@ -1,5 +1,57 @@
 # ShippingIQ — Handover Document
 
+## Session 29 June 2026 (part 3) — Full site copy audit, free vs Pro accuracy pass
+
+### Completed this session
+
+#### Full copy audit — all src/pages/ and src/components/ files reviewed
+1. **Audit scope** — every user-facing string checked against free vs Pro plan rules across: Landing.js, Resources.js, Pricing.js (in-app), Carriers.js, Dashboard.js, Settings.js, BlogPost.js, Quote.js, SavedQuotes.js, Rules.js, PdfConverter.js, Team.js, SignIn.js, SignUp.js, Blog.js, Admin.js, Terms.js, Privacy.js, LegalModals.js, BillingSuccess.js, ForgotPassword.js, ResetPassword.js
+2. **Final CC audit confirmed all clear** — second pass after all fixes found zero remaining issues
+
+#### Copy changes — Landing.js
+3. **AI rate card parsing card**: `"Upload a PDF or Excel from any carrier."` → `"Upload a CSV or Excel from any carrier, or PDF on Pro."`
+4. **"Quote from the dashboard" use-case card**: added `(Pro)` to Multi-carrier comparison, Full cost breakdown with surcharges, Save and review past quotes
+5. **"Live rates at checkout" use-case card**: added `(Pro)` to Multi-carrier display at checkout, Surcharge handling built in
+6. **Feature section titles**: "Surcharge control" → "Surcharge control (Pro)", "Multi-carrier routing" → "Multi-carrier routing (Pro)"
+
+#### Copy changes — Carriers.js
+7. **Rate Card form label**: `(required — CSV, Excel or PDF)` → `(required — CSV or Excel. PDF on Pro)`
+8. **Helper text below file input**: `Only have a PDF? Convert it to CSV first →` → `Only have a PDF? Use the Rate Card Converter (Pro feature) →`
+9. **Blue info box**: added `(Pro feature)` after "Rate Card Converter" reference
+
+#### Copy changes — Resources.js
+10. **Surcharge Schedule accordion**: `PDF is also accepted` → `PDF is also accepted (Pro)`
+
+#### Copy changes — Dashboard.js
+11. **WooCommerce plugin onboarding step (step 5)**: added description text above the merchant ID copy block — `"Your ShippingIQ Merchant ID — the plugin saves this automatically when you sign in. You only need this if setting up manually."`
+
+#### Copy changes — Settings.js
+12. **API Key section description**: `"used to connect the WooCommerce plugin to your account. The plugin saves this automatically when you sign in."` → `"saved automatically by the plugin when you sign in. Only needed for manual plugin setup."`
+
+#### Copy changes — BlogPost.js
+13. **Blog CTA headline**: `"Ready to set up accurate freight rates?"` → `"Ready to set up accurate freight calculations?"`
+
+#### Earlier in session (parts 1–2 of 29 June)
+14. **Landing.js "15 years experience"** — updated from 12 to 15 years in hero subtext
+15. **Pricing copy pass** — free vs Pro split correctly reflected on landing page pricing section and in-app Pricing.js; feature lists audited and confirmed accurate
+16. **`freight rates` → `freight calculation`** throughout marketing copy where referring to the ShippingIQ product feature (not carrier rate data)
+17. **Sign-in flow language** — removed all "paste your API key" and "copy your Merchant ID into the plugin" references; replaced with sign-in-inside-plugin language across Landing.js, Resources.js, Dashboard.js, Settings.js
+
+### Commits this session
+- `40df9a1` — (earlier session copy updates)
+- `797a491` — (earlier session copy updates)
+- `3a45747` — (earlier session copy updates)
+- `d94666c` — Fix free vs Pro plan copy accuracy across 6 files
+- `7c816fe` — Add (Pro) to Surcharge control and Multi-carrier routing feature titles
+
+### Next steps
+- **Monitor WP.org listing** — check name and description update after v1.2.2 cache refresh
+- **Test postcode ranges editor and test postcode tool** on test site — not yet tested end-to-end
+- **First real merchant review request** — ask Bradshaw (or first live merchant) for a WordPress.org review
+- **Consider blog post** about the Type A plugin-first flow (how it works, free vs Pro, why no API key needed)
+
+---
+
 ## Session 29 June 2026 (part 2) — v1.2.2 release, plugin rename, three new features
 
 ### Completed this session
